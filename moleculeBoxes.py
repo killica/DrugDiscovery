@@ -35,7 +35,7 @@ class MoleculeBoxes:
         boxLayout.addWidget(descriptionLabel)
         box.setLayout(boxLayout)
 
-        # Formula to determine the shade of green - the darker the shade, the greater the QED
+        # Formula to determine the shade of green - darker the shade, greater the QED
         # box.setStyleSheet(f"QGroupBox {{ background-color: rgb({0}, {int(255-(qed*155))}, {0}); border: 2px solid green; padding: 10px; }}")
         
         box.setStyleSheet(f"""
