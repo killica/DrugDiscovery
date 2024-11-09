@@ -53,5 +53,15 @@
         "SMILES": "",
         "Description": "Unknown",
         "QED": 0.33942358984550913
+    },
+    {
+        "SMILES": "CSC",
+        "Description": "Dimethyle-sulfide",
+        "QED": 0.40281681078552906
+    },
+    {
+        "SMILES": "O",
+        "Description": "Oxidane",
+        "QED": 0.3277476769246249
     }
 ]

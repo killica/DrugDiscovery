@@ -8,6 +8,7 @@ from rdkit.Chem import Draw
 from moleculeBoxes import MoleculeBoxes
 from insertMolecule import NewMoleculeForm
 from hyperParameters import HyperParameters
+from gaParameters import GAParameters
 
 class Application(QWidget):
     def __init__(self):
@@ -33,6 +34,7 @@ class Application(QWidget):
         self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width(), self.scrollArea)
         self.newMoleculeForm = NewMoleculeForm(self)
         self.hyperParamLayout = HyperParameters(self)
+        self.gaParameters = GAParameters(self)
 
         # h1 will contain form on the left and slide bars on the right
         self.cnt = QWidget()
@@ -44,6 +46,7 @@ class Application(QWidget):
 
         self.cnt.setLayout(self.h1)
         self.cnt.setFixedWidth(765)
+        self.cnt.setFixedHeight(300)
 
         self.scrollWidget.setLayout(self.gridLayout)
         self.scrollArea.setWidget(self.scrollWidget)
@@ -51,17 +54,19 @@ class Application(QWidget):
         self.leftLayout.addWidget(self.scrollArea)
         self.leftLayout.addSpacing(30)
         self.leftLayout.addWidget(self.cnt)
+        self.leftLayout.addSpacing(30)
+        self.leftLayout.addWidget(self.gaParameters.getGAParametersWidget())
         
 
         self.leftWrapper = QWidget()
         self.leftWrapper.setLayout(self.leftLayout)
-        self.leftWrapper.setFixedHeight(700)
+        self.leftWrapper.setFixedHeight(880)
         self.mainLayout.addWidget(self.leftWrapper)
         self.mainLayout.addWidget(QLabel("123123123", self))
         self.mainLayout.setAlignment(Qt.AlignTop)
 
         self.setLayout(self.mainLayout)
-        self.setFixedSize(1700, 800)
+        self.setFixedSize(1700, 880)
 
         self.show()
 
@@ -69,7 +74,8 @@ class Application(QWidget):
         painter = QPainter(self)
         painter.begin(self)
         painter.setPen(QPen(QColor(128, 128, 128), 2))
-        painter.drawLine(10, 700, 770, 700)
+        painter.drawLine(10, 650, 800, 650)
+        painter.drawLine(800, 20, 800, 880)
         painter.end()
 
 

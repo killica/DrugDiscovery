@@ -58,9 +58,6 @@ class NewMoleculeForm:
 
         self.container = QWidget()
         self.container.setLayout(self.inputVLayout)
-        self.container.setStyleSheet("""
-            padding-top: 0px;
-        """)
         # self.container.setFixedWidth(270)
         self.container.setFixedSize(270, 200)
 

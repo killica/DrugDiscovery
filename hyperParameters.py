@@ -68,7 +68,5 @@ class HyperParameters:
         for i in range(len(self.names)):
             self.hBoxes[i].itemAt(1).widget().setValue(self.defaultValues[i] * 100)
 
-
-
     def getSlidersWidget(self):
         return self.container
