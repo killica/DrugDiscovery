@@ -33,5 +33,25 @@
         "SMILES": "CC(=O)NC1=CC=C(C=C1)O",
         "Description": "Paracetamol",
         "QED": 0.5950261967780849
+    },
+    {
+        "SMILES": "C1CCCCC1",
+        "Description": "Cyclohexane",
+        "QED": 0.42231618686094674
+    },
+    {
+        "SMILES": "",
+        "Description": "Unknown",
+        "QED": 0.33942358984550913
+    },
+    {
+        "SMILES": "",
+        "Description": "Unknown",
+        "QED": 0.33942358984550913
+    },
+    {
+        "SMILES": "",
+        "Description": "Unknown",
+        "QED": 0.33942358984550913
     }
 ]

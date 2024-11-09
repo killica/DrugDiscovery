@@ -1,19 +1,22 @@
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QLabel, QLineEdit
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QLabel, QLineEdit, QWidget
 from PyQt5.QtCore import Qt
 
 class NewMoleculeForm:
     def __init__(self, application):
         self.customMoleculeTitle = QLabel("Or, add your own molecule:", application)
-        self.customMoleculeTitle.setAlignment(Qt.AlignCenter)
+        # self.customMoleculeTitle.setAlignment(Qt.AlignCenter)
 
-        self.customMoleculeTitle.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
+        self.customMoleculeTitle.setStyleSheet("font-size: 17px; font-weight: bold; padding-bottom: 10px; border: none;")
 
         self.inputSMILES = QLineEdit(application)
-        self.inputSMILES.setPlaceholderText("Enter SMILES format of designated molecule...")
+        self.inputSMILES.setPlaceholderText("Enter SMILES format...")
+        self.inputSMILES.setFixedWidth(250)
         self.inputDescription = QLineEdit(application)
         self.inputDescription.setPlaceholderText("Enter name of the molecule...")
+        self.inputDescription.setFixedWidth(250)
         self.submitButton = QPushButton("Add to catalogue", application)
         self.submitButton.clicked.connect(application.onSubmitButtonClicked)
+        self.submitButton.setFixedWidth(250)
 
         self.inputSMILES.setStyleSheet("""
             QLineEdit {
@@ -51,12 +54,19 @@ class NewMoleculeForm:
         self.inputVLayout.addWidget(self.customMoleculeTitle)
         self.inputVLayout.addWidget(self.inputSMILES)
         self.inputVLayout.addWidget(self.inputDescription)
+        self.inputVLayout.addWidget(self.submitButton)
 
-    def getLayout(self):
-        return self.inputVLayout
+        self.container = QWidget()
+        self.container.setLayout(self.inputVLayout)
+        self.container.setStyleSheet("""
+            border-right: 2px solid gray;
+            border-bottom: 2px solid gray;   
+            padding-top: 0px;
+        """)
+        self.container.setFixedWidth(270)
 
-    def getSubmitButton(self):
-        return self.submitButton
+    def getForm(self):
+        return self.container
 
     def getInputSmilesText(self):
         return self.inputSMILES.text()

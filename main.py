@@ -1,12 +1,13 @@
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QScrollArea, QGroupBox
+from PyQt5.QtWidgets import QApplication, QWidget, QSlider, QDesktopWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QScrollArea, QGroupBox
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt
 from rdkit import Chem
 from rdkit.Chem import Draw
 from moleculeBoxes import MoleculeBoxes
 from insertMolecule import NewMoleculeForm
+from hyperParameters import HyperParameters
 
 class Application(QWidget):
     def __init__(self):
@@ -23,7 +24,7 @@ class Application(QWidget):
 
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidgetResizable(False)
-        self.scrollArea.setFixedSize(800, 570)
+        self.scrollArea.setFixedSize(760, 290)
         self.scrollWidget = QWidget()
         self.gridLayout = QGridLayout()
 
@@ -31,13 +32,26 @@ class Application(QWidget):
 
         self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width(), self.scrollArea)
         self.newMoleculeForm = NewMoleculeForm(self)
+        self.hyperParamLayout = HyperParameters(self)
+
+
+        # h1 will contain form on the left and slide bars on the right
+        self.cnt = QWidget()
+        self.h1 = QHBoxLayout()
+        self.h1.setSizeConstraint(760)
+
+        self.h1.addWidget(self.newMoleculeForm.getForm())
+        self.h1.addWidget(self.hyperParamLayout.getSlidersWidget())
+
+        self.cnt.setLayout(self.h1)
+        self.cnt.setFixedWidth(765)
 
         self.scrollWidget.setLayout(self.gridLayout)
         self.scrollArea.setWidget(self.scrollWidget)
         self.mainLayout.addWidget(self.selectionLabel)
         self.mainLayout.addWidget(self.scrollArea)
-        self.mainLayout.addLayout(self.newMoleculeForm.getLayout())
-        self.mainLayout.addWidget(self.newMoleculeForm.getSubmitButton())
+        self.mainLayout.addSpacing(30)
+        self.mainLayout.addWidget(self.cnt)
 
         self.setLayout(self.mainLayout)
         self.show()

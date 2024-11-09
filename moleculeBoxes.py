@@ -63,10 +63,6 @@ class MoleculeBoxes:
         col = index % self.columnsPerRow
         fit = Fitness(Chem.MolFromSmiles(smiles))
         qed = fit.qed()
-        description += "\n" + "QED: " + str(round(qed, 4))
-        moleculeBox = self.createMoleculeBox(smiles, description, qed)
-        self.layout.addWidget(moleculeBox, row, col)
-        self.scrollArea.verticalScrollBar().setValue(self.scrollArea.verticalScrollBar().maximum())
         with open('molecules.json', 'r') as file:
             data = json.load(file)
         data.append({
@@ -76,6 +72,10 @@ class MoleculeBoxes:
         })
         with open('molecules.json', 'w') as file:
             json.dump(data, file, indent = 4)
+        description += "\n" + "QED: " + str(round(qed, 4))
+        moleculeBox = self.createMoleculeBox(smiles, description, qed)
+        self.layout.addWidget(moleculeBox, row, col)
+        self.scrollArea.verticalScrollBar().setValue(self.scrollArea.verticalScrollBar().maximum())
     
     def addToCatalogue(self, smiles, description):
         molecule = None
