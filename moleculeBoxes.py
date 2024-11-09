@@ -1,16 +1,62 @@
 import json
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QImage, QPixmap, QColor
+from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea
+from PyQt5.QtGui import QImage, QPixmap, QColor, QFont
+from PyQt5.QtCore import QEvent, Qt
 from rdkit import Chem
 from rdkit.Chem import Draw
 from fitness import Fitness
 
-class MoleculeBoxes:
-    def __init__(self, molecules, layout, windowWidth, scrollArea):
+class ClickableGroupBox(QGroupBox):
+    def __init__(self, moleculeBoxes, index, parent=None):
+        super().__init__(parent)
+        self.moleculeBoxes = moleculeBoxes
+        self.index = index
+        
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            # print("LUJKO! " + self.layout().itemAt(1).widget().text())
+            self.moleculeBoxes.removeBoxes()
+            self.moleculeBoxes.molecules.pop(self.index)
+            self.moleculeBoxes.loadBoxes()
+        super().mousePressEvent(event)
+
+    def enterEvent(self, event):
+        self.layout().itemAt(1).widget().setStyleSheet("color: darkgreen; font-weight: bold;")
+
+    def leaveEvent(self, event):
+        self.layout().itemAt(1).widget().setStyleSheet("color: black; font-weight: normal;")
+
+class MoleculeBoxes(QWidget):
+    def __init__(self, molecules, windowWidth):
         self.molecules = molecules
-        self.layout = layout
         self.windowWidth = windowWidth
-        self.scrollArea = scrollArea
+        self.layout = QGridLayout()
+
+        self.vbox = QVBoxLayout()
+
+        self.selectionLabel = QLabel("Select molecules for the first generation:")
+        self.selectionLabel.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
+
+
+        self.scrollArea = QScrollArea()
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setFixedSize(760, 290)
+        self.scrollWidget = QWidget()
+
+        self.scrollWidget.setLayout(self.layout)
+        self.scrollArea.setWidget(self.scrollWidget)
+
+        self.vbox.addWidget(self.selectionLabel)
+        self.vbox.addWidget(self.scrollArea)
+
+        self.container = QWidget()
+        self.container.setLayout(self.vbox)
+        self.container.setFixedSize(760, 350)
+
+        self.loadBoxes()
+        
+    def loadBoxes(self):
+        self.boxes = []
         self.boxWidth = 220
         self.columnsPerRow = self.windowWidth // self.boxWidth
         self.columnsPerRow = max(1, self.columnsPerRow)
@@ -20,11 +66,21 @@ class MoleculeBoxes:
             # fit = Fitness(Chem.MolFromSmiles(smiles))
             # qed = fit.qed()
             description += "\n" + "QED: " + str(round(qed, 4))
-            moleculeBox = self.createMoleculeBox(smiles, description, qed)
-            self.layout.addWidget(moleculeBox, row, col)
+            self.moleculeBox = self.createMoleculeBox(smiles, description, qed, index)
+            self.boxes.append(self.moleculeBox)
+            self.layout.addWidget(self.moleculeBox, row, col)
 
-    def createMoleculeBox(self, smiles, description, qed):
-        box = QGroupBox()
+    def removeBoxes(self):
+        for box in self.boxes:
+            self.layout.removeWidget(box)
+            box.deleteLater()
+        self.boxes = []
+
+    def getSelectionWidget(self):
+        return self.container
+
+    def createMoleculeBox(self, smiles, description, qed, index):
+        box = ClickableGroupBox(self, index)
         boxLayout = QVBoxLayout()
         mol = Chem.MolFromSmiles(smiles)
         molImage = Draw.MolToImage(mol, size=(200, 200))
@@ -53,7 +109,6 @@ class MoleculeBoxes:
         shadowEffect.setOffset(5, 5)              
         shadowEffect.setBlurRadius(15)            
         shadowEffect.setColor(QColor(0, 0, 0, 160))
-        
         box.setGraphicsEffect(shadowEffect)
         return box
 

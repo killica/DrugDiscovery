@@ -96,7 +96,7 @@ class GAParameters:
         self.mainLayout.addWidget(self.rightWrapper)
         self.container = QWidget()
         self.container.setLayout(self.mainLayout)
-        self.container.setFixedWidth(760)
+        self.container.setFixedSize(760, 180)
 
     def getGAParametersWidget(self):
         return self.container

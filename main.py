@@ -16,22 +16,22 @@ class Application(QWidget):
         self.setWindowTitle('Drug Discovery')
         self.resize(800, 600)
 
-        self.selectionLabel = QLabel("Select molecules for the first generation:", self)
+        # self.selectionLabel = QLabel("Select molecules for the first generation:", self)
 
-        self.selectionLabel.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
+        #self.selectionLabel.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
 
         self.mainLayout = QHBoxLayout()
         self.leftLayout = QVBoxLayout()
 
-        self.scrollArea = QScrollArea()
-        self.scrollArea.setWidgetResizable(False)
-        self.scrollArea.setFixedSize(760, 290)
-        self.scrollWidget = QWidget()
-        self.gridLayout = QGridLayout()
+        # self.scrollArea = QScrollArea()
+        # self.scrollArea.setWidgetResizable(True)
+        # self.scrollArea.setFixedSize(760, 290)
+        # self.scrollWidget = QWidget()
+        # self.gridLayout = QGridLayout()
 
         self.molecules = self.readMolecules()
 
-        self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width(), self.scrollArea)
+        self.moleculeBoxes = MoleculeBoxes(self.molecules, self.width())
         self.newMoleculeForm = NewMoleculeForm(self)
         self.hyperParamLayout = HyperParameters(self)
         self.gaParameters = GAParameters(self)
@@ -48,10 +48,9 @@ class Application(QWidget):
         self.cnt.setFixedWidth(765)
         self.cnt.setFixedHeight(300)
 
-        self.scrollWidget.setLayout(self.gridLayout)
-        self.scrollArea.setWidget(self.scrollWidget)
-        self.leftLayout.addWidget(self.selectionLabel)
-        self.leftLayout.addWidget(self.scrollArea)
+        # self.scrollWidget.setLayout(self.gridLayout)
+        # self.scrollArea.setWidget(self.scrollWidget)
+        self.leftLayout.addWidget(self.moleculeBoxes.getSelectionWidget())
         self.leftLayout.addSpacing(30)
         self.leftLayout.addWidget(self.cnt)
         self.leftLayout.addSpacing(30)
@@ -66,15 +65,14 @@ class Application(QWidget):
         self.mainLayout.setAlignment(Qt.AlignTop)
 
         self.setLayout(self.mainLayout)
-        self.setFixedSize(1700, 880)
+        self.setFixedSize(1700, 900)
 
         self.show()
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.begin(self)
         painter.setPen(QPen(QColor(128, 128, 128), 2))
-        painter.drawLine(10, 650, 800, 650)
+        painter.drawLine(10, 685, 800, 685)
         painter.drawLine(800, 20, 800, 880)
         painter.end()
 
