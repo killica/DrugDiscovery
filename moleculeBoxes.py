@@ -1,3 +1,4 @@
+import json
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QImage, QPixmap, QColor
 from rdkit import Chem
@@ -5,18 +6,19 @@ from rdkit.Chem import Draw
 from fitness import Fitness
 
 class MoleculeBoxes:
-    def __init__(self, molecules, layout, windowWidth):
+    def __init__(self, molecules, layout, windowWidth, scrollArea):
         self.molecules = molecules
         self.layout = layout
         self.windowWidth = windowWidth
+        self.scrollArea = scrollArea
         self.boxWidth = 220
         self.columnsPerRow = self.windowWidth // self.boxWidth
         self.columnsPerRow = max(1, self.columnsPerRow)
-        for index, (smiles, description) in enumerate(self.molecules):
+        for index, (smiles, description, qed) in enumerate(self.molecules):
             row = index // self.columnsPerRow 
             col = index % self.columnsPerRow
-            fit = Fitness(Chem.MolFromSmiles(smiles))
-            qed = fit.qed()
+            # fit = Fitness(Chem.MolFromSmiles(smiles))
+            # qed = fit.qed()
             description += "\n" + "QED: " + str(round(qed, 4))
             moleculeBox = self.createMoleculeBox(smiles, description, qed)
             self.layout.addWidget(moleculeBox, row, col)
@@ -64,6 +66,16 @@ class MoleculeBoxes:
         description += "\n" + "QED: " + str(round(qed, 4))
         moleculeBox = self.createMoleculeBox(smiles, description, qed)
         self.layout.addWidget(moleculeBox, row, col)
+        self.scrollArea.verticalScrollBar().setValue(self.scrollArea.verticalScrollBar().maximum())
+        with open('molecules.json', 'r') as file:
+            data = json.load(file)
+        data.append({
+            "SMILES": smiles,
+            "Description": description,
+            "QED": qed
+        })
+        with open('molecules.json', 'w') as file:
+            json.dump(data, file, indent = 4)
     
     def addToCatalogue(self, smiles, description):
         molecule = None

@@ -1,4 +1,5 @@
 import sys
+import json
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QScrollArea, QGroupBox
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt
@@ -18,33 +19,27 @@ class Application(QWidget):
 
         self.selectionLabel.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
 
-        mainLayout = QVBoxLayout()
+        self.mainLayout = QVBoxLayout()
 
-        scrollArea = QScrollArea()
-        scrollWidget = QWidget()
+        self.scrollArea = QScrollArea()
+        self.scrollArea.setWidgetResizable(False)
+        self.scrollArea.setFixedSize(800, 570)
+        self.scrollWidget = QWidget()
         self.gridLayout = QGridLayout()
 
-        self.molecules = [
-            ('CC(=O)Oc1ccccc1C(=O)O', 'Aspirin (acetylsalicylic acid)'),
-            ('CC(=O)N1CCCC1C(=O)O', 'Ibuprofen'),
-            ('C1=CC=C(C=C1)C(=O)O', 'Benzoic Acid'),
-            ('CC(=O)OCC(C(=O)O)C', 'Malonic Acid'),
-            ('CC1=CC=CC=C1C(=O)O', 'Salicylic Acid'),
-            ('CC(=O)Nc1ccc(C)cc1', 'Acetanilide'),
-            ('C', 'Methane')
-        ]
+        self.molecules = self.readMolecules()
 
-        self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width())
+        self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width(), self.scrollArea)
         self.newMoleculeForm = NewMoleculeForm(self)
 
-        scrollWidget.setLayout(self.gridLayout)
-        scrollArea.setWidget(scrollWidget)
-        mainLayout.addWidget(self.selectionLabel)
-        mainLayout.addWidget(scrollArea)
-        mainLayout.addLayout(self.newMoleculeForm.getLayout())
-        mainLayout.addWidget(self.newMoleculeForm.getSubmitButton())
+        self.scrollWidget.setLayout(self.gridLayout)
+        self.scrollArea.setWidget(self.scrollWidget)
+        self.mainLayout.addWidget(self.selectionLabel)
+        self.mainLayout.addWidget(self.scrollArea)
+        self.mainLayout.addLayout(self.newMoleculeForm.getLayout())
+        self.mainLayout.addWidget(self.newMoleculeForm.getSubmitButton())
 
-        self.setLayout(mainLayout)
+        self.setLayout(self.mainLayout)
         self.show()
 
     def onSubmitButtonClicked(self):
@@ -60,10 +55,10 @@ class Application(QWidget):
             (screen.height() - windowSize.height()) // 2
         )
 
-    def resizeEvent(self, event):
-        self.clearLayout(self.gridLayout)
-        self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width())
-        super().resizeEvent(event)
+    # def resizeEvent(self, event):
+    #     self.clearLayout(self.gridLayout)
+    #     self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width(), self.scrollArea)
+    #     super().resizeEvent(event)
 
     def clearLayout(self, layout):
         while layout.count():
@@ -72,6 +67,12 @@ class Application(QWidget):
                 item.widget().deleteLater()
             elif item.layout():
                 self.clearLayout(item.layout())
+
+    def readMolecules(self):
+        with open('molecules.json', 'r') as file:
+            data = json.load(file)
+
+        return [(item['SMILES'], item['Description'], item['QED']) for item in data]
 
 
 if __name__ == '__main__':
