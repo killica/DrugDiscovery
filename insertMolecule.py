@@ -6,7 +6,7 @@ class NewMoleculeForm:
         self.customMoleculeTitle = QLabel("Or, add your own molecule:", application)
         # self.customMoleculeTitle.setAlignment(Qt.AlignCenter)
 
-        self.customMoleculeTitle.setStyleSheet("font-size: 17px; font-weight: bold; padding-bottom: 10px; border: none;")
+        self.customMoleculeTitle.setStyleSheet("font-size: 17px; font-weight: bold; border: none;")
 
         self.inputSMILES = QLineEdit(application)
         self.inputSMILES.setPlaceholderText("Enter SMILES format...")
@@ -59,11 +59,10 @@ class NewMoleculeForm:
         self.container = QWidget()
         self.container.setLayout(self.inputVLayout)
         self.container.setStyleSheet("""
-            border-right: 2px solid gray;
-            border-bottom: 2px solid gray;   
             padding-top: 0px;
         """)
-        self.container.setFixedWidth(270)
+        # self.container.setFixedWidth(270)
+        self.container.setFixedSize(270, 200)
 
     def getForm(self):
         return self.container

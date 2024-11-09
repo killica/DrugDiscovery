@@ -1,7 +1,7 @@
 import sys
 import json
 from PyQt5.QtWidgets import QApplication, QWidget, QSlider, QDesktopWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QScrollArea, QGroupBox
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
 from PyQt5.QtCore import Qt
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -14,13 +14,13 @@ class Application(QWidget):
         super().__init__()
         self.setWindowTitle('Drug Discovery')
         self.resize(800, 600)
-        self.center()
 
         self.selectionLabel = QLabel("Select molecules for the first generation:", self)
 
         self.selectionLabel.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
 
-        self.mainLayout = QVBoxLayout()
+        self.mainLayout = QHBoxLayout()
+        self.leftLayout = QVBoxLayout()
 
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidgetResizable(False)
@@ -33,7 +33,6 @@ class Application(QWidget):
         self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width(), self.scrollArea)
         self.newMoleculeForm = NewMoleculeForm(self)
         self.hyperParamLayout = HyperParameters(self)
-
 
         # h1 will contain form on the left and slide bars on the right
         self.cnt = QWidget()
@@ -48,31 +47,36 @@ class Application(QWidget):
 
         self.scrollWidget.setLayout(self.gridLayout)
         self.scrollArea.setWidget(self.scrollWidget)
-        self.mainLayout.addWidget(self.selectionLabel)
-        self.mainLayout.addWidget(self.scrollArea)
-        self.mainLayout.addSpacing(30)
-        self.mainLayout.addWidget(self.cnt)
+        self.leftLayout.addWidget(self.selectionLabel)
+        self.leftLayout.addWidget(self.scrollArea)
+        self.leftLayout.addSpacing(30)
+        self.leftLayout.addWidget(self.cnt)
+        
+
+        self.leftWrapper = QWidget()
+        self.leftWrapper.setLayout(self.leftLayout)
+        self.leftWrapper.setFixedHeight(700)
+        self.mainLayout.addWidget(self.leftWrapper)
+        self.mainLayout.addWidget(QLabel("123123123", self))
+        self.mainLayout.setAlignment(Qt.AlignTop)
 
         self.setLayout(self.mainLayout)
+        self.setFixedSize(1700, 800)
+
         self.show()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.begin(self)
+        painter.setPen(QPen(QColor(128, 128, 128), 2))
+        painter.drawLine(10, 700, 770, 700)
+        painter.end()
+
 
     def onSubmitButtonClicked(self):
         smiles = self.newMoleculeForm.getInputSmilesText()
         description = self.newMoleculeForm.getInputDescriptionText()
         self.moleculeBoxes.addToCatalogue(smiles, description)
-
-    def center(self):
-        screen = QDesktopWidget().screenGeometry()
-        windowSize = self.geometry()
-        self.move(
-            (screen.width() - windowSize.width()) // 2,
-            (screen.height() - windowSize.height()) // 2
-        )
-
-    # def resizeEvent(self, event):
-    #     self.clearLayout(self.gridLayout)
-    #     self.moleculeBoxes = MoleculeBoxes(self.molecules, self.gridLayout, self.width(), self.scrollArea)
-    #     super().resizeEvent(event)
 
     def clearLayout(self, layout):
         while layout.count():
