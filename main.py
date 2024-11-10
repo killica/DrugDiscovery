@@ -20,8 +20,9 @@ class Application(QWidget):
         self.leftLayout = QVBoxLayout()
 
         self.molecules = self.readMolecules()
+        self.sliderValues = [0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95]
 
-        self.moleculeBoxes = MoleculeBoxes(self.molecules, self.width())
+        self.moleculeBoxes = MoleculeBoxes(self)
         self.newMoleculeForm = NewMoleculeForm(self)
         self.hyperParamLayout = HyperParameters(self)
         self.gaParameters = GAParameters(self)
@@ -78,7 +79,7 @@ class Application(QWidget):
     def readMolecules(self):
         with open('molecules.json', 'r') as file:
             data = json.load(file)
-        return [(item['SMILES'], item['Description'], item['QED']) for item in data]
+        return [(item['SMILES'], item['Description']) for item in data]
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -3,6 +3,8 @@ from PyQt5.QtCore import Qt
 
 class HyperParameters:
     def __init__(self, application):
+        self.application = application
+        self.moleculeBoxes = application.moleculeBoxes
         self.names = ['MW', 'ALOGP', 'HBA', 'HBD', 'PSA', 'ROTB', 'AROM', 'ALERTS']
         self.defaultValues = [0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95]
         self.hBoxes = []
@@ -63,6 +65,12 @@ class HyperParameters:
         name = self.names[idx]
         label = self.hBoxes[idx].itemAt(0).widget()
         label.setText(f"{name}: {value/100}")
+        self.application.sliderValues[idx] = value/100
+        self.moleculeBoxes.removeBoxes()
+        sliderValues = []
+        for box in self.hBoxes:
+            sliderValues.append(box.itemAt(1).widget().value())
+        self.moleculeBoxes.loadBoxes(tuple([value/100 for value in sliderValues]))
 
     def onResetButtonClicked(self):
         for i in range(len(self.names)):

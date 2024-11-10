@@ -1,52 +1,46 @@
 [
     {
         "SMILES": "CC(=O)Oc1ccccc1C(=O)O",
-        "Description": "Aspirin (acetylsalicylic acid)",
-        "QED": 0.5501
+        "Description": "Aspirin (acetylsalicylic acid)"
     },
     {
         "SMILES": "CC(=O)N1CCCC1C(=O)O",
-        "Description": "Ibuprofen",
-        "QED": 0.5861
+        "Description": "Ibuprofen"
     },
     {
         "SMILES": "C1=CC=C(C=C1)C(=O)O",
-        "Description": "Benzoic acid",
-        "QED": 0.6106
+        "Description": "Benzoic acid"
     },
     {
         "SMILES": "CC(=O)OCC(C(=O)O)C",
-        "Description": "Malonic acid",
-        "QED": 0.5803
+        "Description": "Malonic acid"
     },
     {
         "SMILES": "CC1=CC=CC=C1C(=O)O",
-        "Description": "Salicylic acid",
-        "QED": 0.6375
+        "Description": "Salicylic acid"
     },
     {
         "SMILES": "CC(=O)Nc1ccc(C)cc1",
-        "Description": "Acetanilide",
-        "QED": 0.6493
+        "Description": "Acetanilide"
     },
     {
         "SMILES": "CC(=O)NC1=CC=C(C=C1)O",
-        "Description": "Paracetamol",
-        "QED": 0.5950261967780849
+        "Description": "Paracetamol"
     },
     {
         "SMILES": "C1CCCCC1",
-        "Description": "Cyclohexane",
-        "QED": 0.42231618686094674
+        "Description": "Cyclohexane"
     },
     {
         "SMILES": "CSC",
-        "Description": "Dimethyle-sulfide",
-        "QED": 0.40281681078552906
+        "Description": "Dimethyle-sulfide"
     },
     {
         "SMILES": "CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl",
-        "Description": "Chlorpromazine",
-        "QED": 0.7918053413291345
+        "Description": "Chlorpromazine"
+    },
+    {
+        "SMILES": "CCCCC",
+        "Description": "Pentane"
     }
 ]

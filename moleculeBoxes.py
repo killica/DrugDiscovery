@@ -23,7 +23,7 @@ class ClickableGroupBox(QGroupBox):
             elif self.ind == 1:
                 self.moleculeBoxes.molecules.append(self.moleculeBoxes.selectedMolecules[self.index])
                 self.moleculeBoxes.selectedMolecules.pop(self.index)
-            self.moleculeBoxes.loadBoxes()
+            self.moleculeBoxes.loadBoxes(tuple(self.moleculeBoxes.application.sliderValues))
         super().mousePressEvent(event)
 
     def enterEvent(self, event):
@@ -33,9 +33,10 @@ class ClickableGroupBox(QGroupBox):
         self.layout().itemAt(1).widget().setStyleSheet("color: black; font-weight: normal;")
 
 class MoleculeBoxes(QWidget):
-    def __init__(self, molecules, windowWidth):
-        self.molecules = molecules
-        self.windowWidth = windowWidth
+    def __init__(self, application):
+        self.application = application
+        self.molecules = application.molecules
+        self.windowWidth = application.width()
         self.layout = QGridLayout()
 
         self.vbox = QVBoxLayout()
@@ -85,31 +86,35 @@ class MoleculeBoxes(QWidget):
 
         self.loadBoxes()
         
-    def loadBoxes(self):
+    def loadBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.boxes = []
         self.selectedBoxes = []
         self.boxWidth = 220
         self.columnsPerRow = self.windowWidth // self.boxWidth
         self.columnsPerRow = max(1, self.columnsPerRow)
-        for index, (smiles, description, qed) in enumerate(self.molecules):
+        for index, (smiles, description) in enumerate(self.molecules):
             row = index // self.columnsPerRow 
             col = index % self.columnsPerRow
-            # fit = Fitness(Chem.MolFromSmiles(smiles))
-            # qed = fit.qed()
+            fit = Fitness(Chem.MolFromSmiles(smiles), weights)
+            qed = fit.qed()
             description += "\n" + "QED: " + str(round(qed, 4))
             self.moleculeBox = self.createMoleculeBox(smiles, description, qed, index, 0)
             self.boxes.append(self.moleculeBox)
             self.layout.addWidget(self.moleculeBox, row, col)
 
-        for index, (smiles, description, qed) in enumerate(self.selectedMolecules):
+        for index, (smiles, description) in enumerate(self.selectedMolecules):
             row = index // self.columnsPerRow 
             col = index % self.columnsPerRow
-            # fit = Fitness(Chem.MolFromSmiles(smiles))
-            # qed = fit.qed()
+            fit = Fitness(Chem.MolFromSmiles(smiles), weights)
+            qed = fit.qed()
             description += "\n" + "QED: " + str(round(qed, 4))
             self.selectedMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, 1)
             self.selectedBoxes.append(self.selectedMoleculeBox)
             self.precedentLayout.addWidget(self.selectedMoleculeBox, row, col)
+
+        # Move to bottom when a new moleecule box is added
+        # self.scrollArea.verticalScrollBar().setValue(self.scrollArea.verticalScrollBar().maximum())
+        # self.precedentScrollArea.verticalScrollBar().setValue(self.precedentScrollArea.verticalScrollBar().maximum())
 
     def removeBoxes(self):
         for box in self.boxes:
@@ -170,20 +175,15 @@ class MoleculeBoxes(QWidget):
             return
         if not description:
             description = "Unknown"
-        fit = Fitness(Chem.MolFromSmiles(smiles))
-        qed = fit.qed()
         
         self.removeBoxes()
-        self.molecules.append((smiles, description, qed))
+        self.molecules.append((smiles, description))
         with open('molecules.json', 'r') as file:
             data = json.load(file)
         data.append({
             "SMILES": smiles,
-            "Description": description,
-            "QED": qed
+            "Description": description
         })
         with open('molecules.json', 'w') as file:
             json.dump(data, file, indent = 4)
         self.loadBoxes()
-        
-        # self.addMoleculeBox(smiles, description, qed, ind)
