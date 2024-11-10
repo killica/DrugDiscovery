@@ -43,5 +43,10 @@
         "SMILES": "CSC",
         "Description": "Dimethyle-sulfide",
         "QED": 0.40281681078552906
+    },
+    {
+        "SMILES": "CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl",
+        "Description": "Chlorpromazine",
+        "QED": 0.7918053413291345
     }
 ]
