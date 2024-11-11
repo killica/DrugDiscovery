@@ -23,6 +23,9 @@ class Application(QWidget):
         self.molecules = self.readMolecules()
         self.sliderValues = [0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95]
 
+        # Allow transfering molecule boxes between scroll areas
+        self.blockTransfer = False
+
         self.moleculeBoxes = MoleculeBoxes(self)
         self.newMoleculeForm = NewMoleculeForm(self)
         self.hyperParamLayout = HyperParameters(self)
@@ -40,7 +43,7 @@ class Application(QWidget):
         self.cnt.setFixedHeight(300)
 
         self.leftLayout.addWidget(self.moleculeBoxes.getSelectionWidget())
-        self.leftLayout.addSpacing(30)
+        self.leftLayout.addSpacing(70)
         self.leftLayout.addWidget(self.cnt)
         self.leftLayout.addSpacing(30)
         self.leftLayout.addWidget(self.gaParameters.getGAParametersWidget())

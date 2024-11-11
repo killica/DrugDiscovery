@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QWidget, QPushButton, QLineEdit, QCheckBox
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
+import geneticAlgorithm
 
 class GAParameters:
     def __init__(self, application):
@@ -20,7 +21,7 @@ class GAParameters:
         self.rouletteCheckBox = QCheckBox("Roulette selection", application)
         self.rouletteCheckBox.setStyleSheet("""
             QCheckBox {
-                text-decoration: none; /* Disable text underlining */
+                text-decoration: none; 
             }
             QCheckBox::indicator {
                 width: 20px;
@@ -30,12 +31,12 @@ class GAParameters:
                 background-color: white;
             }
             QCheckBox::indicator:checked {
-                background-color: #45a049;  /* Green when checked */
-                border: 2px solid green;  /* Border also green when checked */
+                background-color: #45a049; 
+                border: 2px solid green;
             }
             QCheckBox::indicator:unchecked {
-                background-color: white;  /* White when unchecked */
-                border: 2px solid #777;   /* Gray border when unchecked */
+                background-color: white;
+                border: 2px solid #777;
             }
         """)
 
@@ -134,6 +135,9 @@ class GAParameters:
         else:
             self.tournamentSpin.setDisabled(False)
 
+    def getGAParametersWidget(self):
+        return self.container
+
     def onLaunchButtonClicked(self):
         # moleculeBoxes is a reference to the right half of the scene
         moleculeBoxes = self.application.moleculeBoxes
@@ -192,23 +196,50 @@ class GAParameters:
             }
         """)
 
+        # Necessary parameters for genetic algorithm
         rouletteSelection = self.rouletteCheckBox.isChecked()
         numberOfGenerations = self.generationSpin.value()
         tournamentSize = self.tournamentSpin.value()
         elitismSize = self.elitismSpin.value()
         mutationProbability = float(self.mutationLineEdit.text())
 
-        # Necessary parameters for genetic algorithm
-        print(rouletteSelection)
-        print(numberOfGenerations)
-        print(tournamentSize)
-        print(elitismSize)
-        print(mutationProbability)
-        for individual in moleculeBoxes.selectedMolecules:
-            print(individual.getDescription())
+        self.rouletteCheckBox.setDisabled(True)
+        self.rouletteCheckBox.setStyleSheet("""
+            QCheckBox {
+                text-decoration: none;
+            }
+            QCheckBox::indicator {
+                width: 20px;
+                height: 20px;
+                border: 2px solid #777;
+                border-radius: 5px;
+                background-color: white;
+            }
+            QCheckBox::indicator:checked {
+                background-color: lightgray;
+                border: 2px solid gray;
+            }
+            QCheckBox::indicator:unchecked {
+                background-color: lightgray;
+                border: 2px solid gray;
+            }
+        """)
+        self.generationSpin.setDisabled(True)
+        self.tournamentSpin.setDisabled(True)
+        self.elitismSpin.setDisabled(True)
+        self.mutationLineEdit.setDisabled(True)
 
-    def getGAParametersWidget(self):
-        return self.container
+        self.application.blockTransfer = True
 
+        geneticAlgorithm.geneticAlgorithm(
+            moleculeBoxes.selectedMolecules,
+            True,
+            numberOfGenerations,
+            rouletteSelection,
+            tournamentSize,
+            elitismSize,
+            mutationProbability
+        )
+        
         
 

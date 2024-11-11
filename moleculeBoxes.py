@@ -14,10 +14,11 @@ class ClickableGroupBox(QGroupBox):
         self.ind = ind
         
     def mousePressEvent(self, event):
+        if self.moleculeBoxes.application.blockTransfer:
+            return
         if self.ind != 0 and self.ind != 1:
             return
         if event.button() == Qt.LeftButton:
-            # print("LUJKO! " + self.layout().itemAt(1).widget().text())
             self.moleculeBoxes.removeBoxes()
             if self.ind == 0:
                 self.moleculeBoxes.selectedMolecules.append(self.moleculeBoxes.molecules[self.index])
@@ -29,10 +30,12 @@ class ClickableGroupBox(QGroupBox):
         super().mousePressEvent(event)
 
     def enterEvent(self, event):
-        self.layout().itemAt(1).widget().setStyleSheet("color: darkgreen; font-weight: bold;")
+        if not self.moleculeBoxes.application.blockTransfer:
+            self.layout().itemAt(1).widget().setStyleSheet("color: darkgreen; font-weight: bold;")
 
     def leaveEvent(self, event):
-        self.layout().itemAt(1).widget().setStyleSheet("color: black; font-weight: normal;")
+        if not self.moleculeBoxes.application.blockTransfer:
+            self.layout().itemAt(1).widget().setStyleSheet("color: black; font-weight: normal;")
 
 class MoleculeBoxes(QWidget):
     def __init__(self, application):

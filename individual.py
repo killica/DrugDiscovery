@@ -30,3 +30,6 @@ class Individual:
     def setWeights(self, weights):
         self.__weights = weights
         self.calcFitness()
+
+    def setDescription(self, description):
+        self.__description = description
