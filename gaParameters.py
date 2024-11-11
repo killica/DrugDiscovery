@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QWidget, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QWidget, QPushButton, QLineEdit, QCheckBox
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 
@@ -16,6 +16,30 @@ class GAParameters:
         self.generationSpin = QSpinBox(application)
         self.generationSpin.setMaximum(100)
         self.generationSpin.setFixedWidth(70)
+        self.rouletteCheckBox = QCheckBox("Roulette selection", application)
+        self.rouletteCheckBox.setStyleSheet("""
+            QCheckBox {
+                text-decoration: none; /* Disable text underlining */
+            }
+            QCheckBox::indicator {
+                width: 20px;
+                height: 20px;
+                border: 2px solid #777;
+                border-radius: 5px;
+                background-color: white;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #45a049;  /* Green when checked */
+                border: 2px solid green;  /* Border also green when checked */
+            }
+            QCheckBox::indicator:unchecked {
+                background-color: white;  /* White when unchecked */
+                border: 2px solid #777;   /* Gray border when unchecked */
+            }
+        """)
+
+        self.rouletteCheckBox.stateChanged.connect(self.onRouletteChanged)
+
         self.tournamentSpin = QSpinBox(application)
         self.tournamentSpin.setMaximum(100)
         self.tournamentSpin.setFixedWidth(70)
@@ -36,9 +60,11 @@ class GAParameters:
         self.h2 = QHBoxLayout()
         self.h2.addWidget(self.tournamentSizeLabel)
         self.h2.addWidget(self.tournamentSpin)
+        self.h2.addSpacing(20)
+        self.h2.addWidget(self.rouletteCheckBox)
         self.h2Cont = QWidget()
         self.h2Cont.setLayout(self.h2)
-        self.h2Cont.setFixedSize(300, 37)
+        self.h2Cont.setFixedSize(540, 37)
 
         self.h3 = QHBoxLayout()
         self.h3.addWidget(self.elitismSizeLabel)
@@ -89,17 +115,22 @@ class GAParameters:
 
         self.leftWrapper = QWidget()
         self.leftWrapper.setLayout(self.leftLayout)
-        #self.leftWrapper.setFixedWidth(300)
-
+        
         self.rightWrapper = QWidget()
         self.rightWrapper.setLayout(self.rightLayout)
-        self.rightWrapper.setFixedWidth(450)
+        self.rightWrapper.setFixedWidth(230)
 
         self.mainLayout.addWidget(self.leftWrapper)
         self.mainLayout.addWidget(self.rightWrapper)
         self.container = QWidget()
         self.container.setLayout(self.mainLayout)
-        self.container.setFixedSize(760, 180)
+        self.container.setFixedSize(760, 200)
+
+    def onRouletteChanged(self, state):
+        if state == 2:
+            self.tournamentSpin.setDisabled(True)
+        else:
+            self.tournamentSpin.setDisabled(False)
 
     def onLaunchButtonClicked(self):
         # moleculeBoxes is a reference to the right half of the scene
