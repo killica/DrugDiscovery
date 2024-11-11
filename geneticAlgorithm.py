@@ -50,7 +50,14 @@ def rouletteWheelSelection(population):
     return population[-1]
 
 def tournamentSelection(population, tournamentSize):
-    pass
+    populationSample = random.sample(population, k = tournamentSize)
+    bestQED = -1
+    bestIndividual = None
+    for individual in populationSample:
+        if individual.getQED() > bestQED:
+            bestQED = individual.getQED()
+            bestIndividual = individual
+    return bestIndividual
 
 def crossover(parent1, parent2, child1, child2):
     pass
