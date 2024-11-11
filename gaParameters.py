@@ -4,6 +4,7 @@ from PyQt5.QtGui import QIcon
 
 class GAParameters:
     def __init__(self, application):
+        self.application = application
         self.mainLayout = QHBoxLayout()
         self.leftLayout = QVBoxLayout()
         self.gaLabel = QLabel("Parameters for genetic algorithm:", application)
@@ -81,6 +82,8 @@ class GAParameters:
                 background-color: #45a049;
             }
         """)
+        self.launchButton.clicked.connect(self.onLaunchButtonClicked)
+
 
         self.rightLayout.addWidget(self.launchButton)
 
@@ -97,6 +100,64 @@ class GAParameters:
         self.container = QWidget()
         self.container.setLayout(self.mainLayout)
         self.container.setFixedSize(760, 180)
+
+    def onLaunchButtonClicked(self):
+        # moleculeBoxes is a reference to the right half of the scene
+        moleculeBoxes = self.application.moleculeBoxes
+        moleculeBoxes.generateButton.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        moleculeBoxes.generateButton.setDisabled(False)
+        moleculeBoxes.finalButton.setStyleSheet("""
+            QPushButton {
+                background-color: #6495ED;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #0047AB;
+            }
+        """)
+        moleculeBoxes.finalButton.setDisabled(False)
+        moleculeBoxes.saveButton.setStyleSheet("""
+            QPushButton {
+                background-color: #606060;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: black;
+            }
+        """)
+        moleculeBoxes.saveButton.setDisabled(False)
+        self.launchButton.setDisabled(True)
+        self.launchButton.setStyleSheet("""
+            QPushButton {
+                background-color: #757575;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+                font-weight: bold;
+            }
+        """)
 
     def getGAParametersWidget(self):
         return self.container

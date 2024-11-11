@@ -1,5 +1,5 @@
 import json
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea
+from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton
 from PyQt5.QtGui import QImage, QPixmap, QColor, QFont
 from PyQt5.QtCore import QEvent, Qt
 from rdkit import Chem
@@ -14,6 +14,8 @@ class ClickableGroupBox(QGroupBox):
         self.ind = ind
         
     def mousePressEvent(self, event):
+        if self.ind != 0 and self.ind != 1:
+            return
         if event.button() == Qt.LeftButton:
             # print("LUJKO! " + self.layout().itemAt(1).widget().text())
             self.moleculeBoxes.removeBoxes()
@@ -63,7 +65,7 @@ class MoleculeBoxes(QWidget):
 
         self.precedentLayout = QGridLayout()
 
-        self.rightVBox1 = QVBoxLayout()
+        self.rightHBox1 = QHBoxLayout()
 
         self.precedentScrollArea = QScrollArea()
         self.precedentScrollArea.setWidgetResizable(True)
@@ -74,15 +76,91 @@ class MoleculeBoxes(QWidget):
         self.precedentScrollArea.setWidget(self.precedentScrollWidget)
 
         self.precedentLabel = QLabel("1. generation")
-        self.precedentLabel.setStyleSheet("font-size: 20px; font-weight: bold;")
+        self.precedentLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
 
-        self.rightVBox1.addWidget(self.precedentLabel)
-        self.rightVBox1.addWidget(self.precedentScrollArea)
-        self.rightVBox1.setAlignment(Qt.AlignTop)
+        self.rightHBox1.addWidget(self.precedentScrollArea)
+        self.rightHBox1.addSpacing(20)
+        self.rightHBox1.addWidget(self.precedentLabel)
+
+        self.rightHBox1.setAlignment(Qt.AlignTop)
 
         self.rightCont1 = QWidget()
-        self.rightCont1.setLayout(self.rightVBox1)
-        self.rightCont1.setFixedSize(800, 350)
+        self.rightCont1.setLayout(self.rightHBox1)
+        self.rightCont1.setFixedSize(920, 325)
+        
+        self.secondLayout = QGridLayout()
+
+        self.rightHB = QHBoxLayout()
+
+        self.secondScrollArea = QScrollArea()
+        self.secondScrollArea.setWidgetResizable(True)
+        self.secondScrollArea.setFixedSize(760, 290)
+
+        self.secondScrollWidget = QWidget()
+        self.secondScrollWidget.setLayout(self.secondLayout)
+        self.secondScrollArea.setWidget(self.secondScrollWidget)
+
+        self.secondLabel = QLabel("2. generation")
+        self.secondLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
+
+        self.rightHB.addWidget(self.secondScrollArea)
+        self.rightHB.addSpacing(20)
+        self.rightHB.addWidget(self.secondLabel)
+
+        self.rightHB.setAlignment(Qt.AlignTop)
+
+        self.rightCont2 = QWidget()
+        self.rightCont2.setLayout(self.rightHB)
+        self.rightCont2.setFixedSize(920, 325)
+
+        self.rightHBox2 = QHBoxLayout()
+
+        self.rightVBox3 = QVBoxLayout()
+        self.generateButton = QPushButton("Generate next")
+
+        self.generateButton.setDisabled(True)
+        self.generateButton.setFixedWidth(150)
+
+        self.finalButton = QPushButton("Jump to final")
+
+        self.finalButton.setDisabled(True)
+        self.finalButton.setFixedWidth(150)
+
+        self.saveButton = QPushButton("Save the best")
+        # self.saveButton.setStyleSheet("""
+        #     QPushButton {
+        #         background-color: #6495ED;
+        #         color: white;
+        #         border: none;
+        #         border-radius: 5px;
+        #         padding: 10px;
+        #         font-size: 16px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #0047AB;
+        #     }
+        # """)
+        self.saveButton.setDisabled(True)
+        self.saveButton.setFixedWidth(150)
+
+        self.rightVBox3.addWidget(self.generateButton)
+        self.rightVBox3.addWidget(self.finalButton)
+        self.rightVBox3.addWidget(self.saveButton)
+
+        self.rightBtnCnt = QWidget()
+        self.rightBtnCnt.setLayout(self.rightVBox3)
+        self.rightBtnCnt.setFixedSize(350, 180)
+
+        self.bestBox = self.createMoleculeBox("CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl", "Chlorpromazine", 0.55, 0, -1)
+        self.bestBox.setAlignment(Qt.AlignCenter)
+
+        self.rightHBox2.addWidget(self.rightBtnCnt)
+        self.rightHBox2.addWidget(self.bestBox)
+        self.rightHBox2.setAlignment(Qt.AlignHCenter)
+
+        self.rightCont3 = QWidget()
+        self.rightCont3.setLayout(self.rightHBox2)
+        self.rightCont3.setFixedSize(520, 270)
 
         self.loadBoxes()
         
@@ -97,7 +175,6 @@ class MoleculeBoxes(QWidget):
             col = index % self.columnsPerRow
             fit = Fitness(Chem.MolFromSmiles(smiles), weights)
             qed = fit.qed()
-            description += "\n" + "QED: " + str(round(qed, 4))
             self.moleculeBox = self.createMoleculeBox(smiles, description, qed, index, 0)
             self.boxes.append(self.moleculeBox)
             self.layout.addWidget(self.moleculeBox, row, col)
@@ -107,7 +184,6 @@ class MoleculeBoxes(QWidget):
             col = index % self.columnsPerRow
             fit = Fitness(Chem.MolFromSmiles(smiles), weights)
             qed = fit.qed()
-            description += "\n" + "QED: " + str(round(qed, 4))
             self.selectedMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, 1)
             self.selectedBoxes.append(self.selectedMoleculeBox)
             self.precedentLayout.addWidget(self.selectedMoleculeBox, row, col)
@@ -132,8 +208,15 @@ class MoleculeBoxes(QWidget):
     def getPrecedentScrollArea(self):
         return self.rightCont1
 
+    def getSecondScrollArea(self):
+        return self.rightCont2
+
+    def getBest(self):
+        return self.rightCont3
+
     def createMoleculeBox(self, smiles, description, qed, index, ind):
         box = ClickableGroupBox(self, index, ind)
+        box.setFixedWidth(230)
         boxLayout = QVBoxLayout()
         mol = Chem.MolFromSmiles(smiles)
         molImage = Draw.MolToImage(mol, size=(200, 200))
@@ -141,7 +224,7 @@ class MoleculeBoxes(QWidget):
         pixmap = QPixmap(qimage)
         imageLabel = QLabel()
         imageLabel.setPixmap(pixmap)
-        descriptionLabel = QLabel(description)
+        descriptionLabel = QLabel(description + "\n" + "QED: " + str(round(qed, 4)))
         boxLayout.addWidget(imageLabel)
         boxLayout.addWidget(descriptionLabel)
         box.setLayout(boxLayout)

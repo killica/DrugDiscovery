@@ -51,6 +51,8 @@ class Application(QWidget):
 
         self.rightLayout = QVBoxLayout()
         self.rightLayout.addWidget(self.moleculeBoxes.getPrecedentScrollArea())
+        self.rightLayout.addWidget(self.moleculeBoxes.getSecondScrollArea())
+        self.rightLayout.addWidget(self.moleculeBoxes.getBest())
 
         self.rightWrapper = QWidget()
         self.rightWrapper.setLayout(self.rightLayout)
@@ -59,7 +61,7 @@ class Application(QWidget):
         self.mainLayout.setAlignment(Qt.AlignTop)
 
         self.setLayout(self.mainLayout)
-        self.setFixedSize(1700, 900)
+        self.setFixedSize(1750, 900)
 
         self.show()
 
