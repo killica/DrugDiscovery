@@ -1,3 +1,5 @@
+import random
+
 def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, rouletteSelection, tournamentSize, elitismSize, mutationProbability):
     populationSize = len(population)
     newPopulation = population.copy()
@@ -27,6 +29,27 @@ def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, roulett
     return population
 
 def selection(population, rouletteSelection, tournamentSize):
+    if rouletteSelection:
+        return rouletteWheelSelection(population)
+    return tournamentSelection(population, tournamentSize)
+
+def rouletteWheelSelection(population):
+    totalFitness = sum([individual.getQED() for individual in population])
+    probabilitiesPartialSums = []
+    tmp = 0
+    for individual in population:
+        tmp += individual.getQED() / totalFitness
+        probabilitiesPartialSums.append(tmp)
+    
+    randomValue = random.random()
+    
+    for i, partialSum in enumerate(probabilitiesPartialSums):
+        if randomValue <= partialSum:
+            return population[i]
+    
+    return population[-1]
+
+def tournamentSelection(population, tournamentSize):
     pass
 
 def crossover(parent1, parent2, child1, child2):
