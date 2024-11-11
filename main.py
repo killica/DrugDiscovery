@@ -9,6 +9,7 @@ from moleculeBoxes import MoleculeBoxes
 from insertMolecule import NewMoleculeForm
 from hyperParameters import HyperParameters
 from gaParameters import GAParameters
+from individual import Individual
 
 class Application(QWidget):
     def __init__(self):
@@ -81,7 +82,7 @@ class Application(QWidget):
     def readMolecules(self):
         with open('molecules.json', 'r') as file:
             data = json.load(file)
-        return [(item['SMILES'], item['Description']) for item in data]
+        return [Individual(item['SMILES'], item['Description']) for item in data]
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

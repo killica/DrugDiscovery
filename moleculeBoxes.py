@@ -127,19 +127,6 @@ class MoleculeBoxes(QWidget):
         self.finalButton.setFixedWidth(150)
 
         self.saveButton = QPushButton("Save the best")
-        # self.saveButton.setStyleSheet("""
-        #     QPushButton {
-        #         background-color: #6495ED;
-        #         color: white;
-        #         border: none;
-        #         border-radius: 5px;
-        #         padding: 10px;
-        #         font-size: 16px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #0047AB;
-        #     }
-        # """)
         self.saveButton.setDisabled(True)
         self.saveButton.setFixedWidth(150)
 
@@ -151,7 +138,8 @@ class MoleculeBoxes(QWidget):
         self.rightBtnCnt.setLayout(self.rightVBox3)
         self.rightBtnCnt.setFixedSize(350, 180)
 
-        self.bestBox = self.createMoleculeBox("CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl", "Chlorpromazine", 0.55, 0, -1)
+        # self.bestBox = self.createMoleculeBox("CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl", "Chlorpromazine", 0.55, 0, -1)
+        self.bestBox = self.createMoleculeBox("", "To be determined", 0.0, 0, -1)
         self.bestBox.setAlignment(Qt.AlignCenter)
 
         self.rightHBox2.addWidget(self.rightBtnCnt)
@@ -170,20 +158,26 @@ class MoleculeBoxes(QWidget):
         self.boxWidth = 220
         self.columnsPerRow = self.windowWidth // self.boxWidth
         self.columnsPerRow = max(1, self.columnsPerRow)
-        for index, (smiles, description) in enumerate(self.molecules):
+        self.molecules.sort(reverse=True)
+        self.selectedMolecules.sort(reverse=True)
+        for index, individual in enumerate(self.molecules):
             row = index // self.columnsPerRow 
             col = index % self.columnsPerRow
-            fit = Fitness(Chem.MolFromSmiles(smiles), weights)
-            qed = fit.qed()
+            smiles = individual.getSmiles()
+            description = individual.getDescription()
+            individual.setWeights(weights)
+            qed = individual.getQED()
             self.moleculeBox = self.createMoleculeBox(smiles, description, qed, index, 0)
             self.boxes.append(self.moleculeBox)
             self.layout.addWidget(self.moleculeBox, row, col)
 
-        for index, (smiles, description) in enumerate(self.selectedMolecules):
+        for index, individual in enumerate(self.selectedMolecules):
             row = index // self.columnsPerRow 
             col = index % self.columnsPerRow
-            fit = Fitness(Chem.MolFromSmiles(smiles), weights)
-            qed = fit.qed()
+            smiles = individual.getSmiles()
+            description = individual.getDescription()
+            individual.setWeights(weights)
+            qed = individual.getQED()
             self.selectedMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, 1)
             self.selectedBoxes.append(self.selectedMoleculeBox)
             self.precedentLayout.addWidget(self.selectedMoleculeBox, row, col)

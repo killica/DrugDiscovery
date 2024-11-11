@@ -14,8 +14,9 @@ class GAParameters:
         self.elitismSizeLabel = QLabel("Elitism size: ", application)
         self.mutationProbabilityLabel = QLabel("Mutation probability: ", application)
         self.generationSpin = QSpinBox(application)
-        self.generationSpin.setMaximum(100)
+        self.generationSpin.setMaximum(200)
         self.generationSpin.setFixedWidth(70)
+        self.generationSpin.setValue(100)
         self.rouletteCheckBox = QCheckBox("Roulette selection", application)
         self.rouletteCheckBox.setStyleSheet("""
             QCheckBox {
@@ -43,12 +44,14 @@ class GAParameters:
         self.tournamentSpin = QSpinBox(application)
         self.tournamentSpin.setMaximum(100)
         self.tournamentSpin.setFixedWidth(70)
+        self.tournamentSpin.setValue(7)
         self.elitismSpin = QSpinBox(application)
         self.elitismSpin.setMaximum(100)
         self.elitismSpin.setFixedWidth(70)
+        self.elitismSpin.setValue(10)
         self.mutationLineEdit = QLineEdit(application)
         self.mutationLineEdit.setFixedWidth(70)
-        self.mutationLineEdit.setText("0.1")
+        self.mutationLineEdit.setText("0.05")
 
         self.h1 = QHBoxLayout()
         self.h1.addWidget(self.numGenLabel)
@@ -110,12 +113,11 @@ class GAParameters:
         """)
         self.launchButton.clicked.connect(self.onLaunchButtonClicked)
 
-
         self.rightLayout.addWidget(self.launchButton)
 
         self.leftWrapper = QWidget()
         self.leftWrapper.setLayout(self.leftLayout)
-        
+
         self.rightWrapper = QWidget()
         self.rightWrapper.setLayout(self.rightLayout)
         self.rightWrapper.setFixedWidth(230)
@@ -189,6 +191,21 @@ class GAParameters:
                 font-weight: bold;
             }
         """)
+
+        rouletteSelection = self.rouletteCheckBox.isChecked()
+        numberOfGenerations = self.generationSpin.value()
+        tournamentSize = self.tournamentSpin.value()
+        elitismSize = self.elitismSpin.value()
+        mutationProbability = float(self.mutationLineEdit.text())
+
+        # Necessary parameters for genetic algorithm
+        print(rouletteSelection)
+        print(numberOfGenerations)
+        print(tournamentSize)
+        print(elitismSize)
+        print(mutationProbability)
+        for individual in moleculeBoxes.selectedMolecules:
+            print(individual.getDescription())
 
     def getGAParametersWidget(self):
         return self.container
