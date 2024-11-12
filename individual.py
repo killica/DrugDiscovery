@@ -33,3 +33,6 @@ class Individual:
 
     def setDescription(self, description):
         self.__description = description
+
+    def setSmiles(self, smiles):
+        self.__smiles = smiles

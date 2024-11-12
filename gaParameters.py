@@ -231,7 +231,7 @@ class GAParameters:
 
         self.application.blockTransfer = True
 
-        geneticAlgorithm.geneticAlgorithm(
+        moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             moleculeBoxes.selectedMolecules,
             True,
             numberOfGenerations,
@@ -240,6 +240,8 @@ class GAParameters:
             elitismSize,
             mutationProbability
         )
+
+        moleculeBoxes.loadNewGeneration(tuple(self.application.sliderValues))
         
         
 

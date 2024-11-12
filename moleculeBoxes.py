@@ -65,6 +65,7 @@ class MoleculeBoxes(QWidget):
         self.container.setFixedSize(760, 350)
 
         self.selectedMolecules = []
+        self.newGenerationMolecules = []
 
         self.precedentLayout = QGridLayout()
 
@@ -188,6 +189,20 @@ class MoleculeBoxes(QWidget):
         # Move to bottom when a new moleecule box is added
         # self.scrollArea.verticalScrollBar().setValue(self.scrollArea.verticalScrollBar().maximum())
         # self.precedentScrollArea.verticalScrollBar().setValue(self.precedentScrollArea.verticalScrollBar().maximum())
+
+    def loadNewGeneration(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+        self.newGenerationBoxes = []
+        self.newGenerationMolecules.sort(reverse=True)
+        for index, individual in enumerate(self.newGenerationMolecules):
+            row = index // self.columnsPerRow 
+            col = index % self.columnsPerRow
+            smiles = individual.getSmiles()
+            description = individual.getDescription()
+            individual.setWeights(weights)
+            qed = individual.getQED()
+            self.newGenerationMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, -1)
+            self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
+            self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
 
     def removeBoxes(self):
         for box in self.boxes:
