@@ -1,2 +1,8 @@
-O S
-C=O C(O)O
+S O
+C=O C(C(=O)O)
+CC COC
+C(=O)O C(=O)N
+C=O CN
+C#N C=O
+CC CC(=O)C
+CC CCC

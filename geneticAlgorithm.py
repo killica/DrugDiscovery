@@ -1,4 +1,5 @@
 import random
+import re
 from rdkit import Chem
 import mutationInfo
 
@@ -130,35 +131,30 @@ def atomSwitchMutation(individual, mi):
 
 def groupSwitchMutation(individual, mi):
     smiles = individual.getSmiles()
-    mol = Chem.MolFromSmiles(smiles)
-    modifiedMol = []
+    modifiedSmiles = []
 
     # try with all known group mutations, and pick a random one
     for replaceFrom, options in mi.groupSwitchMap.items():
-        molFrom = Chem.MolFromSmiles(replaceFrom)
         for replaceWith in options:
-            molWith = Chem.MolFromSmiles(replaceWith)
-            newMols = list(Chem.ReplaceSubstructs(mol, molFrom, molWith))
-            if len(newMols) > 1 or Chem.MolToSmiles(newMols[0]) != smiles:
-                modifiedMol += newMols
+            # Find all the start positions of replaceFrom in smiles
+            matches = [match.start() for match in re.finditer(re.escape(replaceFrom), smiles)]
+            if not matches:
+                continue
+            
+            # Generate all replacements by replacing each occurrence of smilesFrom
+            for match in matches:
+                # Replace only the specific occurrence at the current position
+                modSmiles = smiles[:match] + replaceWith + smiles[match + len(replaceFrom):]
+                modifiedSmiles.append(modSmiles)
 
-    while True:
-        if len(modifiedMol) == 0:
-            newMol = mol
-            break
-        newMol = random.choice(modifiedMol)
-        if newMol is None:
-            modifiedMol.remove(newMol)
-        else:
-            break
-    individual.setSmiles(Chem.MolToSmiles(newMol))
+    newSmiles = smiles
+    if len(modifiedSmiles) > 0:
+        newSmiles = random.choice(modifiedSmiles)
+    individual.setSmiles(newSmiles)
 
     with open('log.txt', 'a') as file:
-        file.write(f"Changing:{smiles} with {Chem.MolToSmiles(newMol)}\n")
+        file.write(f"Changing:{smiles} with {newSmiles}\n")
     
-
-
-
 def insertionMutation(individual):
     pass
 
