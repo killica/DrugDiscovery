@@ -31,6 +31,9 @@ class Application(QWidget):
         self.hyperParamLayout = HyperParameters(self)
         self.gaParameters = GAParameters(self)
 
+        self.sbmtBtn = self.newMoleculeForm.submitButton
+        self.resBtn = self.hyperParamLayout.resetButton
+
         self.cnt = QWidget()
         self.h1 = QHBoxLayout()
         self.h1.setSizeConstraint(760)
@@ -75,7 +78,6 @@ class Application(QWidget):
         painter.drawLine(10, 685, 800, 685)
         painter.drawLine(800, 20, 800, 880)
         painter.end()
-
 
     def onSubmitButtonClicked(self):
         smiles = self.newMoleculeForm.getInputSmilesText()

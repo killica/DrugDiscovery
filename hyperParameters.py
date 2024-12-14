@@ -67,10 +67,12 @@ class HyperParameters:
         label.setText(f"{name}: {value/100}")
         self.application.sliderValues[idx] = value/100
         self.moleculeBoxes.removeBoxes()
+        self.moleculeBoxes.removeSelectedBoxes()
         sliderValues = []
         for box in self.hBoxes:
             sliderValues.append(box.itemAt(1).widget().value())
         self.moleculeBoxes.loadBoxes(tuple([value/100 for value in sliderValues]))
+        self.moleculeBoxes.loadSelectedBoxes(tuple([value/100 for value in sliderValues]))
 
     def onResetButtonClicked(self):
         for i in range(len(self.names)):

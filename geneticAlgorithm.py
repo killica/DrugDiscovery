@@ -1,7 +1,8 @@
 import random
 from rdkit import Chem
+import mutationInfo
 
-def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, rouletteSelection, tournamentSize, elitismSize, mutationProbability):
+def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, rouletteSelection, tournamentSize, elitismSize, mutationProbability, mi):
     populationSize = len(population)
     newPopulation = population.copy()
     if onlyOneGeneration:
@@ -16,8 +17,8 @@ def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, roulett
 
             crossover(parent1, parent2, child1 = newPopulation[j], child2 = newPopulation[j+1])
 
-            # mutation(newPopulation[j], mutationProbability)
-            # mutation(newPopulation[j+1], mutationProbability)
+            mutation(newPopulation[j], mutationProbability, mi)
+            mutation(newPopulation[j+1], mutationProbability, mi)
 
             newPopulation[j].setDescription("")
             newPopulation[j].calcFitness()
@@ -80,8 +81,88 @@ def crossover(parent1, parent2, child1, child2):
             child2.setSmiles(childSmiles2)
             break
 
+def mutation(individual, mutationProbability, mi):
+    if random.random() > mutationProbability:
+        return
 
+    # Mutation will take place
+    mutationType = random.randrange(0, 4);
+    # 0 - atom switch
+    # 1 - group switch
+    # 2 - insertion of an atom or a group
+    # 3 - deletion of an atom or a group
 
-def mutation(individual, mutationProbability):
-    pass
+    # if mutationType == 0:
+    #     atomSwitchMutation(individual)
+    # elif mutationType == 1:
+    #     groupSwitchMutation(individual)
+    # elif mutationType == 2:
+    #     insertionMutation(individual)
+    # else:
+    #     deletionMutation(individual)
+
+    groupSwitchMutation(individual, mi)
+
     
+def atomSwitchMutation(individual, mi):
+    smiles = individual.getSmiles()
+    heteroAtoms = ['O', 'S', 'N', 'P']
+    indicesOfHeteroAtoms = []
+    for i, ch in enumerate(smiles):
+        if ch in heteroAtoms:
+            indicesOfHeteroAtoms.append(i)
+
+    randomHeteroIndex = random.randrange(len(indicesOfHeteroAtoms))
+    heteroAtom = smiles[indicesOfHeteroAtoms[randomHeteroIndex]]
+
+    rnd = random.random()
+    cum_prob = 0 # cumulative probability, similar to roulette selection
+    changeWith = heteroAtom
+    for (second, prob) in mi.atomSwitchMap[heteroAtom]:
+        cum_prob += prob
+        if rnd <= cum_prob:
+            changeWith = second
+            break
+    # with open('log.txt', 'w') as file:
+    #     file.write(f"Changing:{heteroAtom} with {changeWith}, new smiles: {smiles}")
+    smiles = smiles[:indicesOfHeteroAtoms[randomHeteroIndex]] + changeWith + smiles[indicesOfHeteroAtoms[randomHeteroIndex] + 1:]
+    individual.setSmiles(smiles)
+
+def groupSwitchMutation(individual, mi):
+    smiles = individual.getSmiles()
+    mol = Chem.MolFromSmiles(smiles)
+    modifiedMol = []
+
+    # try with all known group mutations, and pick a random one
+    for replaceFrom, options in mi.groupSwitchMap.items():
+        molFrom = Chem.MolFromSmiles(replaceFrom)
+        for replaceWith in options:
+            molWith = Chem.MolFromSmiles(replaceWith)
+            newMols = list(Chem.ReplaceSubstructs(mol, molFrom, molWith))
+            if len(newMols) > 1 or Chem.MolToSmiles(newMols[0]) != smiles:
+                modifiedMol += newMols
+
+    while True:
+        if len(modifiedMol) == 0:
+            newMol = mol
+            break
+        newMol = random.choice(modifiedMol)
+        if newMol is None:
+            modifiedMol.remove(newMol)
+        else:
+            break
+    individual.setSmiles(Chem.MolToSmiles(newMol))
+
+    with open('log.txt', 'a') as file:
+        file.write(f"Changing:{smiles} with {Chem.MolToSmiles(newMol)}\n")
+    
+
+
+
+def insertionMutation(individual):
+    pass
+
+def deletionMutation(individual):
+    pass
+
+

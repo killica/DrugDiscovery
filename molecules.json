@@ -42,5 +42,21 @@
     {
         "SMILES": "CCCCC",
         "Description": "Pentane"
+    },
+    {
+        "SMILES": "CC",
+        "Description": "Ethane"
+    },
+    {
+        "SMILES": "CCC",
+        "Description": "Propane"
+    },
+    {
+        "SMILES": "C1CCC2CCCC2C1",
+        "Description": "New"
+    },
+    {
+        "SMILES": "C1CCC2CCCC2C1",
+        "Description": "New"
     }
 ]

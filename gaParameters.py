@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QWidget,
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 import geneticAlgorithm
+from mutationInfo import MutationInfo
 
 class GAParameters:
     def __init__(self, application):
@@ -229,7 +230,13 @@ class GAParameters:
         self.elitismSpin.setDisabled(True)
         self.mutationLineEdit.setDisabled(True)
 
+        # Prettify the style of a disabled button
+        self.application.sbmtBtn.setDisabled(True)
+        self.application.resBtn.setDisabled(True)
+
         self.application.blockTransfer = True
+
+        mi = MutationInfo()
 
         moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             moleculeBoxes.selectedMolecules,
@@ -238,7 +245,8 @@ class GAParameters:
             rouletteSelection,
             tournamentSize,
             elitismSize,
-            mutationProbability
+            mutationProbability,
+            mi
         )
 
         moleculeBoxes.loadNewGeneration(tuple(self.application.sliderValues))

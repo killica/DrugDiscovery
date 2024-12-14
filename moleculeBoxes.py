@@ -5,6 +5,7 @@ from PyQt5.QtCore import QEvent, Qt
 from rdkit import Chem
 from rdkit.Chem import Draw
 from fitness import Fitness
+from individual import Individual
 
 class ClickableGroupBox(QGroupBox):
     def __init__(self, moleculeBoxes, index, ind, parent=None):
@@ -20,6 +21,7 @@ class ClickableGroupBox(QGroupBox):
             return
         if event.button() == Qt.LeftButton:
             self.moleculeBoxes.removeBoxes()
+            self.moleculeBoxes.removeSelectedBoxes()
             if self.ind == 0:
                 self.moleculeBoxes.selectedMolecules.append(self.moleculeBoxes.molecules[self.index])
                 self.moleculeBoxes.molecules.pop(self.index)
@@ -27,6 +29,8 @@ class ClickableGroupBox(QGroupBox):
                 self.moleculeBoxes.molecules.append(self.moleculeBoxes.selectedMolecules[self.index])
                 self.moleculeBoxes.selectedMolecules.pop(self.index)
             self.moleculeBoxes.loadBoxes(tuple(self.moleculeBoxes.application.sliderValues))
+            self.moleculeBoxes.loadSelectedBoxes(tuple(self.moleculeBoxes.application.sliderValues))
+
         super().mousePressEvent(event)
 
     def enterEvent(self, event):
@@ -42,6 +46,8 @@ class MoleculeBoxes(QWidget):
         self.application = application
         self.molecules = application.molecules
         self.windowWidth = application.width()
+        self.boxWidth = 220
+        self.columnsPerRow = 3
         self.layout = QGridLayout()
 
         self.vbox = QVBoxLayout()
@@ -120,19 +126,21 @@ class MoleculeBoxes(QWidget):
         self.rightHBox2 = QHBoxLayout()
 
         self.rightVBox3 = QVBoxLayout()
-        self.generateButton = QPushButton("Generate next")
 
+        self.generateButton = QPushButton("Generate next")
         self.generateButton.setDisabled(True)
         self.generateButton.setFixedWidth(150)
+        self.generateButton.clicked.connect(self.onGenerateButtonClicked)
 
         self.finalButton = QPushButton("Jump to final")
-
         self.finalButton.setDisabled(True)
         self.finalButton.setFixedWidth(150)
+        self.finalButton.clicked.connect(self.onFinalButtonClicked)
 
         self.saveButton = QPushButton("Save the best")
         self.saveButton.setDisabled(True)
         self.saveButton.setFixedWidth(150)
+        self.saveButton.clicked.connect(self.onSaveButtonClicked)
 
         self.rightVBox3.addWidget(self.generateButton)
         self.rightVBox3.addWidget(self.finalButton)
@@ -155,18 +163,14 @@ class MoleculeBoxes(QWidget):
         self.rightCont3.setFixedSize(520, 270)
 
         self.loadBoxes()
+        self.loadSelectedBoxes()
         
     def loadBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.boxes = []
-        self.selectedBoxes = []
-        self.boxWidth = 220
-        self.columnsPerRow = self.windowWidth // self.boxWidth
-        self.columnsPerRow = max(1, self.columnsPerRow)
         self.molecules.sort(reverse=True)
-        self.selectedMolecules.sort(reverse=True)
         for index, individual in enumerate(self.molecules):
-            row = index // self.columnsPerRow 
-            col = index % self.columnsPerRow
+            row = index // 3
+            col = index % 3
             smiles = individual.getSmiles()
             description = individual.getDescription()
             individual.setWeights(weights)
@@ -175,9 +179,12 @@ class MoleculeBoxes(QWidget):
             self.boxes.append(self.moleculeBox)
             self.layout.addWidget(self.moleculeBox, row, col)
 
+    def loadSelectedBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+        self.selectedBoxes = []
+        self.selectedMolecules.sort(reverse=True)
         for index, individual in enumerate(self.selectedMolecules):
-            row = index // self.columnsPerRow 
-            col = index % self.columnsPerRow
+            row = index // 3
+            col = index % 3
             smiles = individual.getSmiles()
             description = individual.getDescription()
             individual.setWeights(weights)
@@ -203,12 +210,19 @@ class MoleculeBoxes(QWidget):
             self.newGenerationMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, -1)
             self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
             self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
+        
+        self.bestBox.deleteLater()
+        self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "ladidadi", self.newGenerationMolecules[0].getQED(), 0, -1)
+        self.bestBox.setAlignment(Qt.AlignCenter)
+        self.rightHBox2.addWidget(self.bestBox)
 
     def removeBoxes(self):
         for box in self.boxes:
             self.layout.removeWidget(box)
             box.deleteLater()
         self.boxes = []
+
+    def removeSelectedBoxes(self):
         for selectedBox in self.selectedBoxes:
             self.precedentLayout.removeWidget(selectedBox)
             selectedBox.deleteLater()
@@ -272,7 +286,8 @@ class MoleculeBoxes(QWidget):
             description = "Unknown"
         
         self.removeBoxes()
-        self.molecules.append((smiles, description))
+        self.removeSelectedBoxes()
+        self.molecules.append(Individual(smiles, description, self.application.sliderValues))
         with open('molecules.json', 'r') as file:
             data = json.load(file)
         data.append({
@@ -282,3 +297,17 @@ class MoleculeBoxes(QWidget):
         with open('molecules.json', 'w') as file:
             json.dump(data, file, indent = 4)
         self.loadBoxes()
+        self.loadSelectedBoxes()
+
+    def onGenerateButtonClicked(self):
+        # self.removeBoxes()
+        self.removeSelectedBoxes()
+        self.selectedMolecules = []
+        # self.selectedBoxes = self.newGenerationBoxes.copy()
+        # self.loadSelectedBoxes(tuple(self.application.sliderValues))
+        
+    def onFinalButtonClicked(self):
+        pass
+
+    def onSaveButtonClicked(self):
+        pass
