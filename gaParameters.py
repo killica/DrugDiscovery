@@ -184,6 +184,22 @@ class GAParameters:
             }
         """)
         moleculeBoxes.saveButton.setDisabled(False)
+
+        moleculeBoxes.restartButton.setStyleSheet("""
+            QPushButton {
+                background-color: #ff4040;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: red;
+            }
+        """)
+        moleculeBoxes.restartButton.setDisabled(False)
+
         self.launchButton.setDisabled(True)
         self.launchButton.setStyleSheet("""
             QPushButton {

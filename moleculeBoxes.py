@@ -10,6 +10,7 @@ from fitness import Fitness
 from individual import Individual
 import geneticAlgorithm
 from mutationInfo import MutationInfo
+from datetime import datetime
 
 class ClickableGroupBox(QGroupBox):
     def __init__(self, moleculeBoxes, index, ind, parent=None):
@@ -147,13 +148,34 @@ class MoleculeBoxes(QWidget):
         self.saveButton.setFixedWidth(150)
         self.saveButton.clicked.connect(self.onSaveButtonClicked)
 
+        self.saveLabel = QLabel("Saved!")
+        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
+
+        self.saveBox = QHBoxLayout()
+        self.saveBox.addSpacing(-7)
+        self.saveBox.addWidget(self.saveButton)
+        self.saveBox.addSpacing(10)
+        self.saveBox.addWidget(self.saveLabel)
+        # self.saveBox.setAlignment(Qt.AlignLeft)
+
+        self.saveCnt = QWidget()
+        self.saveCnt.setLayout(self.saveBox)
+        self.saveCnt.setFixedWidth(350)
+
+        self.restartButton = QPushButton("Restart analysis")
+        self.restartButton.setDisabled(True)
+        self.restartButton.setFixedWidth(150)
+        self.restartButton.clicked.connect(self.onRestartButtonClicked)
+
         self.rightVBox3.addWidget(self.generateButton)
+        self.rightVBox3.addSpacing(13)
         self.rightVBox3.addWidget(self.finalButton)
-        self.rightVBox3.addWidget(self.saveButton)
+        self.rightVBox3.addWidget(self.saveCnt)
+        self.rightVBox3.addWidget(self.restartButton)
 
         self.rightBtnCnt = QWidget()
         self.rightBtnCnt.setLayout(self.rightVBox3)
-        self.rightBtnCnt.setFixedSize(350, 180)
+        self.rightBtnCnt.setFixedSize(350, 215)
 
         # self.bestBox = self.createMoleculeBox("CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl", "Chlorpromazine", 0.55, 0, -1)
         self.bestBox = self.createMoleculeBox("", "To be determined", 0.0, 0, -1)
@@ -311,8 +333,7 @@ class MoleculeBoxes(QWidget):
         self.loadSelectedBoxes()
 
     def onGenerateButtonClicked(self):
-        with open('log1.txt', 'a') as file:
-            file.write('Clicked generate button!!!!')
+        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
         self.removeSelectedBoxes()
         self.selectedMolecules = []
         for ind in self.newGenerationMolecules:
@@ -345,7 +366,22 @@ class MoleculeBoxes(QWidget):
 
         
     def onFinalButtonClicked(self):
-        pass
+        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
+        labelText = self.secondLabel.text()
+        # Regular expression to match a number at the start of the string
+        match = re.match(r'^\d+', labelText)
+        # Check if a match was found and extract the number
+        labelNumber = int(match.group(0))
+        for _ in range(self.application.numberOfGenerations - labelNumber):
+            self.onGenerateButtonClicked()
+
 
     def onSaveButtonClicked(self):
-        pass
+        formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open('best_candidate_molecules.txt', 'a') as candidatesFile:
+            candidatesFile.write(f"SMILES: {self.newGenerationMolecules[0].getSmiles()}\nQED: {round(self.newGenerationMolecules[0].getQED(), 4)}\nDate created: {formattedDatetime}\n-------------------------------------------\n")
+        self.saveLabel.setStyleSheet("color: green; font-style: italic;")
+
+    def onRestartButtonClicked(self):
+        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
+
