@@ -10,6 +10,7 @@ from insertMolecule import NewMoleculeForm
 from hyperParameters import HyperParameters
 from gaParameters import GAParameters
 from individual import Individual
+from mutationInfo import MutationInfo
 
 class Application(QWidget):
     def __init__(self):
@@ -30,6 +31,19 @@ class Application(QWidget):
         self.newMoleculeForm = NewMoleculeForm(self)
         self.hyperParamLayout = HyperParameters(self)
         self.gaParameters = GAParameters(self)
+
+        # Necessary parameters for genetic algorithm
+        # self.rouletteSelection = self.rouletteCheckBox.isChecked()
+        # self.numberOfGenerations = self.generationSpin.value()
+        # self.tournamentSize = self.tournamentSpin.value()
+        # self.elitismSize = self.elitismSpin.value()
+        # self.mutationProbability = float(self.mutationLineEdit.text())
+        self.mi = MutationInfo()
+        self.rouletteSelection = False
+        self.numberOfGenerations = 100
+        self.tournamentSize = 4
+        self.elitismSize = 1
+        self.mutationProbability = 0.05
 
         self.sbmtBtn = self.newMoleculeForm.submitButton
         self.resBtn = self.hyperParamLayout.resetButton

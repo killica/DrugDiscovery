@@ -87,22 +87,20 @@ def mutation(individual, mutationProbability, mi):
         return
 
     # Mutation will take place
-    mutationType = random.randrange(0, 4);
+    mutationType = random.randrange(0, 2)
     # 0 - atom switch
     # 1 - group switch
-    # 2 - insertion of an atom or a group
-    # 3 - deletion of an atom or a group
+    # 2 - insertion of an atom or a group - future idea
+    # 3 - deletion of an atom or a group - future idea
 
-    # if mutationType == 0:
-    #     atomSwitchMutation(individual)
-    # elif mutationType == 1:
-    #     groupSwitchMutation(individual)
+    if mutationType == 0:
+        atomSwitchMutation(individual, mi)
+    elif mutationType == 1:
+        groupSwitchMutation(individual, mi)
     # elif mutationType == 2:
-    #     insertionMutation(individual)
+    #     insertionMutation(individual, mi)
     # else:
-    #     deletionMutation(individual)
-
-    groupSwitchMutation(individual, mi)
+    #     deletionMutation(individual, mi)
 
     
 def atomSwitchMutation(individual, mi):
@@ -113,6 +111,10 @@ def atomSwitchMutation(individual, mi):
         if ch in heteroAtoms:
             indicesOfHeteroAtoms.append(i)
 
+    if len(indicesOfHeteroAtoms) == 0:
+        # Can't perform hetero atom switching
+        groupSwitchMutation(individual, mi)
+        return
     randomHeteroIndex = random.randrange(len(indicesOfHeteroAtoms))
     heteroAtom = smiles[indicesOfHeteroAtoms[randomHeteroIndex]]
 
@@ -124,10 +126,11 @@ def atomSwitchMutation(individual, mi):
         if rnd <= cum_prob:
             changeWith = second
             break
-    # with open('log.txt', 'w') as file:
-    #     file.write(f"Changing:{heteroAtom} with {changeWith}, new smiles: {smiles}")
     smiles = smiles[:indicesOfHeteroAtoms[randomHeteroIndex]] + changeWith + smiles[indicesOfHeteroAtoms[randomHeteroIndex] + 1:]
     individual.setSmiles(smiles)
+
+    with open('log.txt', 'a') as file:
+        file.write(f"Changing:{heteroAtom} with {changeWith}, new smiles: {smiles}")
 
 def groupSwitchMutation(individual, mi):
     smiles = individual.getSmiles()
@@ -155,10 +158,10 @@ def groupSwitchMutation(individual, mi):
     with open('log.txt', 'a') as file:
         file.write(f"Changing:{smiles} with {newSmiles}\n")
     
-def insertionMutation(individual):
+def insertionMutation(individual, mi):
     pass
 
-def deletionMutation(individual):
+def deletionMutation(individual, mi):
     pass
 
 

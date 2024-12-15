@@ -198,11 +198,11 @@ class GAParameters:
         """)
 
         # Necessary parameters for genetic algorithm
-        rouletteSelection = self.rouletteCheckBox.isChecked()
-        numberOfGenerations = self.generationSpin.value()
-        tournamentSize = self.tournamentSpin.value()
-        elitismSize = self.elitismSpin.value()
-        mutationProbability = float(self.mutationLineEdit.text())
+        self.application.rouletteSelection = self.rouletteCheckBox.isChecked()
+        self.application.numberOfGenerations = self.generationSpin.value()
+        self.application.tournamentSize = self.tournamentSpin.value()
+        self.application.elitismSize = self.elitismSpin.value()
+        self.application.mutationProbability = float(self.mutationLineEdit.text())
 
         self.rouletteCheckBox.setDisabled(True)
         self.rouletteCheckBox.setStyleSheet("""
@@ -236,17 +236,15 @@ class GAParameters:
 
         self.application.blockTransfer = True
 
-        mi = MutationInfo()
-
         moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             moleculeBoxes.selectedMolecules,
             True,
-            numberOfGenerations,
-            rouletteSelection,
-            tournamentSize,
-            elitismSize,
-            mutationProbability,
-            mi
+            self.application.numberOfGenerations,
+            self.application.rouletteSelection,
+            self.application.tournamentSize,
+            self.application.elitismSize,
+            self.application.mutationProbability,
+            self.application.mi
         )
 
         moleculeBoxes.loadNewGeneration(tuple(self.application.sliderValues))

@@ -1,4 +1,6 @@
 import json
+import copy
+import re
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton
 from PyQt5.QtGui import QImage, QPixmap, QColor, QFont
 from PyQt5.QtCore import QEvent, Qt
@@ -6,6 +8,8 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 from fitness import Fitness
 from individual import Individual
+import geneticAlgorithm
+from mutationInfo import MutationInfo
 
 class ClickableGroupBox(QGroupBox):
     def __init__(self, moleculeBoxes, index, ind, parent=None):
@@ -43,6 +47,7 @@ class ClickableGroupBox(QGroupBox):
 
 class MoleculeBoxes(QWidget):
     def __init__(self, application):
+        super().__init__(application)
         self.application = application
         self.molecules = application.molecules
         self.windowWidth = application.width()
@@ -127,7 +132,7 @@ class MoleculeBoxes(QWidget):
 
         self.rightVBox3 = QVBoxLayout()
 
-        self.generateButton = QPushButton("Generate next")
+        self.generateButton = QPushButton("Generate next", application)
         self.generateButton.setDisabled(True)
         self.generateButton.setFixedWidth(150)
         self.generateButton.clicked.connect(self.onGenerateButtonClicked)
@@ -228,6 +233,12 @@ class MoleculeBoxes(QWidget):
             selectedBox.deleteLater()
         self.selectedBoxes = []
 
+    def removeNewGenerationBoxes(self):
+        for newGenerationBox in self.newGenerationBoxes:
+            self.secondLayout.removeWidget(newGenerationBox)
+            newGenerationBox.deleteLater()
+        self.newGenerationBoxes = []
+
     def getSelectionWidget(self):
         return self.container
 
@@ -300,11 +311,38 @@ class MoleculeBoxes(QWidget):
         self.loadSelectedBoxes()
 
     def onGenerateButtonClicked(self):
-        # self.removeBoxes()
+        with open('log1.txt', 'a') as file:
+            file.write('Clicked generate button!!!!')
         self.removeSelectedBoxes()
         self.selectedMolecules = []
-        # self.selectedBoxes = self.newGenerationBoxes.copy()
-        # self.loadSelectedBoxes(tuple(self.application.sliderValues))
+        for ind in self.newGenerationMolecules:
+            self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription()))
+        self.loadSelectedBoxes(tuple(self.application.sliderValues))
+        self.removeNewGenerationBoxes()
+        with open('log2.txt', 'a') as file:
+            for ind in self.selectedMolecules:
+                file.write(ind.getSmiles() + "\n")
+
+        self.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
+            self.selectedMolecules,
+            True,
+            self.application.numberOfGenerations,
+            self.application.rouletteSelection,
+            self.application.tournamentSize,
+            self.application.elitismSize,
+            self.application.mutationProbability,
+            self.application.mi
+        )
+
+        self.loadNewGeneration(tuple(self.application.sliderValues))
+        labelText = self.secondLabel.text()
+        self.precedentLabel.setText(labelText)
+        # Regular expression to match a number at the start of the string
+        match = re.match(r'^\d+', labelText)
+        # Check if a match was found and extract the number
+        labelNumber = int(match.group(0)) + 1
+        self.secondLabel.setText(str(labelNumber) + ". generation")
+
         
     def onFinalButtonClicked(self):
         pass
