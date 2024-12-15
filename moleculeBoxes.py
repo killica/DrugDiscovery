@@ -239,7 +239,7 @@ class MoleculeBoxes(QWidget):
             self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
         
         self.bestBox.deleteLater()
-        self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "ladidadi", self.newGenerationMolecules[0].getQED(), 0, -1)
+        self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
         self.bestBox.setAlignment(Qt.AlignCenter)
         self.rightHBox2.addWidget(self.bestBox)
 
@@ -340,9 +340,6 @@ class MoleculeBoxes(QWidget):
             self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription()))
         self.loadSelectedBoxes(tuple(self.application.sliderValues))
         self.removeNewGenerationBoxes()
-        with open('log2.txt', 'a') as file:
-            for ind in self.selectedMolecules:
-                file.write(ind.getSmiles() + "\n")
 
         self.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             self.selectedMolecules,

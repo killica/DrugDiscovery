@@ -1,5 +1,8 @@
 import random
 import re
+import sys
+import os
+import contextlib
 from rdkit import Chem
 import mutationInfo
 
@@ -62,25 +65,53 @@ def tournamentSelection(population, tournamentSize):
             bestIndividual = individual
     return bestIndividual
 
+# Function to suppress the RDKit warnings and errors
+@contextlib.contextmanager
+def suppress_rdkit_warnings():
+    # Save the current stdout and stderr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    # Redirect stdout and stderr to devnull (i.e., ignore them)
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+    try:
+        yield  # Continue execution
+    finally:
+        # Restore the original stdout and stderr
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+
+def isValidSmiles(smiles):
+    # Use context manager to suppress output during RDKit validation
+    with suppress_rdkit_warnings():
+        mol = Chem.MolFromSmiles(smiles)
+    return mol is not None
+
 def crossover(parent1, parent2, child1, child2):
     # Assuming smiles strings have more than 1 character (in order to be eligible for crossover)
     smiles1 = parent1.getSmiles()
     smiles2 = parent2.getSmiles()
-
-    while True:
+    MAXITERS = 2000
+    i = 0
+    while i < MAXITERS:
+        i += 1
         cp1 = random.randrange(1, len(smiles1))
         cp2 = random.randrange(1, len(smiles2))
 
         childSmiles1 = smiles1[:cp1] + smiles2[cp2:]
         childSmiles2 = smiles1[cp1:] + smiles2[:cp2]
 
-        mol1 = Chem.MolFromSmiles(childSmiles1)
-        mol2 = Chem.MolFromSmiles(childSmiles2)
-
-        if mol1 is not None and mol2 is not None:
+        if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
             child1.setSmiles(childSmiles1)
             child2.setSmiles(childSmiles2)
             break
+    
+    if i == MAXITERS:
+        print('Maximum number of iterations for crossover of following molecules exceeded:\n')
+        print(f'{smiles1}\n{smiles2}\n')
+        print('Passing them to the new generation.\n')
+        child1.setSmiles(smiles1)
+        child2.setSmiles(smiles2)
 
 def mutation(individual, mutationProbability, mi):
     if random.random() > mutationProbability:
