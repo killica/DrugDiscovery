@@ -1,7 +1,7 @@
 import json
 import copy
 import re
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton
+from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar
 from PyQt5.QtGui import QImage, QPixmap, QColor, QFont
 from PyQt5.QtCore import QEvent, Qt
 from rdkit import Chem
@@ -181,13 +181,41 @@ class MoleculeBoxes(QWidget):
         self.bestBox = self.createMoleculeBox("", "To be determined", 0.0, 0, -1)
         self.bestBox.setAlignment(Qt.AlignCenter)
 
-        self.rightHBox2.addWidget(self.rightBtnCnt)
-        self.rightHBox2.addWidget(self.bestBox)
-        self.rightHBox2.setAlignment(Qt.AlignHCenter)
+        # self.progressVBox = QVBoxLayout()
+
+        # self.generationLabel = QLabel("")
+        # self.generationLabel.setStyleSheet("color: transparent; font-weight: bold;")
+        # self.generationProgress = QProgressBar()
+        # self.generationProgress.setRange(0, 100)
+        # self.generationProgress.setValue(30)
+        # self.generationProgress.hide()
+
+        # self.individualLabel = QLabel("ind")
+        # self.individualLabel.hide()
+        # self.individualProgress = QProgressBar()
+        # self.individualProgress.setRange(0, 12)
+        # self.individualProgress.setValue(5)
+        # self.individualProgress.hide()
+
+        # self.progressVBox.addWidget(self.generationLabel)
+        # self.progressVBox.addWidget(self.generationProgress)
+        # self.progressVBox.addSpacing(30)
+        # self.progressVBox.addWidget(self.individualLabel)
+        # self.progressVBox.addWidget(self.individualProgress)
+
+        # self.progressCnt = QWidget()
+        # self.progressCnt.setLayout(self.progressVBox)
+        # self.progressCnt.setFixedSize(350, 120)
+
+        # self.rightHBox2.addWidget(self.rightBtnCnt)
+        # self.rightHBox2.addWidget(self.bestBox)
+        # self.rightHBox2.addSpacing(50)
+        # self.rightHBox2.addWidget(self.progressCnt)
+        # self.rightHBox2.setAlignment(Qt.AlignHCenter)
 
         self.rightCont3 = QWidget()
-        self.rightCont3.setLayout(self.rightHBox2)
-        self.rightCont3.setFixedSize(520, 270)
+        # self.rightCont3.setLayout(self.rightHBox2)
+        # self.rightCont3.setFixedSize(850, 270)
 
         self.loadBoxes()
         self.loadSelectedBoxes()
@@ -238,10 +266,11 @@ class MoleculeBoxes(QWidget):
             self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
             self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
         
-        self.bestBox.deleteLater()
-        self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
-        self.bestBox.setAlignment(Qt.AlignCenter)
-        self.rightHBox2.addWidget(self.bestBox)
+        if len(self.newGenerationMolecules) > 0:
+            self.bestBox.deleteLater()
+            self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
+            self.bestBox.setAlignment(Qt.AlignCenter)
+            self.rightHBox2.insertWidget(1, self.bestBox)
 
     def removeBoxes(self):
         for box in self.boxes:
@@ -349,7 +378,9 @@ class MoleculeBoxes(QWidget):
             self.application.tournamentSize,
             self.application.elitismSize,
             self.application.mutationProbability,
-            self.application.mi
+            self.application.mi,
+            self.individualLabel,
+            self.individualProgress
         )
 
         self.loadNewGeneration(tuple(self.application.sliderValues))
@@ -360,8 +391,9 @@ class MoleculeBoxes(QWidget):
         # Check if a match was found and extract the number
         labelNumber = int(match.group(0)) + 1
         self.secondLabel.setText(str(labelNumber) + ". generation")
+        self.generationLabel.setText(f"Generation: {labelNumber}/{self.application.numberOfGenerations}")
+        self.generationProgress.setValue(labelNumber)
 
-        
     def onFinalButtonClicked(self):
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
         labelText = self.secondLabel.text()

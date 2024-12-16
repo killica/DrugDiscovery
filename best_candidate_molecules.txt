@@ -38,3 +38,27 @@ SMILES: C2=COC=C2SC3=C1C=C(C=C3)C(C(=O)N)C(C)N(C)C1
 QED: 0.9469
 Date created: 2024-12-15 23:47:28
 -------------------------------------------
+SMILES: CN(C)CN1C2=CC=CC=C2SC3=C1C=C(C=C3)C(=O)O
+QED: 0.9395
+Date created: 2024-12-16 01:14:57
+-------------------------------------------
+SMILES: CC1=CC=CC=C1C=C1OCC(C(=O)O)CC1=CC=CC
+QED: 0.9135
+Date created: 2024-12-16 01:41:36
+-------------------------------------------
+SMILES: CC(=O)N1CCCC1Nc1ccc(C)cc1CC1=CC=CC=C1
+QED: 0.9268
+Date created: 2024-12-16 01:53:23
+-------------------------------------------
+SMILES: CCC1=CC=CC=C1C(=O)N1CCCC1N1CCCC1N(C)
+QED: 0.9277
+Date created: 2024-12-16 01:54:07
+-------------------------------------------
+SMILES: CN(C)CCC1C2=CC(=O)C=CC=C2SC3=C1C=C(C=C3)O
+QED: 0.9437
+Date created: 2024-12-16 01:57:22
+-------------------------------------------
+SMILES: CN(C)CC(=O)C1C2=CC=CC=C2SC3=C1C=C(C=C3)O
+QED: 0.9451
+Date created: 2024-12-16 01:58:41
+-------------------------------------------

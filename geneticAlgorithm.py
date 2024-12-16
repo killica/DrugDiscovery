@@ -6,7 +6,7 @@ import contextlib
 from rdkit import Chem
 import mutationInfo
 
-def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, rouletteSelection, tournamentSize, elitismSize, mutationProbability, mi):
+def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, rouletteSelection, tournamentSize, elitismSize, mutationProbability, mi, individualLabel, individualProgress):
     populationSize = len(population)
     newPopulation = population.copy()
     if onlyOneGeneration:
@@ -30,7 +30,12 @@ def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, roulett
             newPopulation[j+1].setDescription("")
             newPopulation[j+1].calcFitness()
 
+            individualLabel.setText(f"Individual: {j+1}/{len(population)}")
+            individualProgress.setValue(j+1)
+
         population = newPopulation.copy()
+        individualLabel.setText(f"Individual: {j+2}/{len(population)}")
+        individualProgress.setValue(j+2)
     
     return population
 

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QWidget, QPushButton, QLineEdit, QCheckBox
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QWidget, QPushButton, QLineEdit, QCheckBox, QProgressBar
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 import geneticAlgorithm
@@ -220,6 +220,41 @@ class GAParameters:
         self.application.elitismSize = self.elitismSpin.value()
         self.application.mutationProbability = float(self.mutationLineEdit.text())
 
+        moleculeBoxes.progressVBox = QVBoxLayout()
+
+        moleculeBoxes.generationLabel = QLabel(f"Generation: 2/{self.application.numberOfGenerations}")
+        moleculeBoxes.generationLabel.setStyleSheet("color: blue; font-style: bold;")
+
+        moleculeBoxes.generationProgress = QProgressBar()
+        moleculeBoxes.generationProgress.setRange(0, self.application.numberOfGenerations)
+        moleculeBoxes.generationProgress.setValue(2)
+
+        moleculeBoxes.individualLabel = QLabel(f"Individual: 1/{len(moleculeBoxes.selectedMolecules)}")
+        moleculeBoxes.individualLabel.setStyleSheet("color: blue; font-style: bold;")
+
+        moleculeBoxes.individualProgress = QProgressBar()
+        moleculeBoxes.individualProgress.setRange(0, len(moleculeBoxes.selectedMolecules))
+        moleculeBoxes.individualProgress.setValue(1)
+
+        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.generationLabel)
+        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.generationProgress)
+        moleculeBoxes.progressVBox.addSpacing(30)
+        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.individualLabel)
+        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.individualProgress)
+
+        moleculeBoxes.progressCnt = QWidget()
+        moleculeBoxes.progressCnt.setLayout(moleculeBoxes.progressVBox)
+        moleculeBoxes.progressCnt.setFixedSize(350, 120)
+
+        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.rightBtnCnt)
+        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.bestBox)
+        moleculeBoxes.rightHBox2.addSpacing(50)
+        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.progressCnt)
+        moleculeBoxes.rightHBox2.setAlignment(Qt.AlignHCenter)
+
+        moleculeBoxes.rightCont3.setLayout(moleculeBoxes.rightHBox2)
+        moleculeBoxes.rightCont3.setFixedSize(850, 270)
+
         self.rouletteCheckBox.setDisabled(True)
         self.rouletteCheckBox.setStyleSheet("""
             QCheckBox {
@@ -260,7 +295,9 @@ class GAParameters:
             self.application.tournamentSize,
             self.application.elitismSize,
             self.application.mutationProbability,
-            self.application.mi
+            self.application.mi,
+            moleculeBoxes.individualLabel,
+            moleculeBoxes.individualProgress
         )
 
         moleculeBoxes.loadNewGeneration(tuple(self.application.sliderValues))
