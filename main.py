@@ -32,12 +32,6 @@ class Application(QWidget):
         self.hyperParamLayout = HyperParameters(self)
         self.gaParameters = GAParameters(self)
 
-        # Necessary parameters for genetic algorithm
-        # self.rouletteSelection = self.rouletteCheckBox.isChecked()
-        # self.numberOfGenerations = self.generationSpin.value()
-        # self.tournamentSize = self.tournamentSpin.value()
-        # self.elitismSize = self.elitismSpin.value()
-        # self.mutationProbability = float(self.mutationLineEdit.text())
         self.mi = MutationInfo()
         self.rouletteSelection = False
         self.numberOfGenerations = 100

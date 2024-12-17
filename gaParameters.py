@@ -32,7 +32,7 @@ class GAParameters:
                 background-color: white;
             }
             QCheckBox::indicator:checked {
-                background-color: #45a049; 
+                background-color: lightgray; 
                 border: 2px solid green;
             }
             QCheckBox::indicator:unchecked {
@@ -142,6 +142,10 @@ class GAParameters:
     def onLaunchButtonClicked(self):
         # moleculeBoxes is a reference to the right half of the scene
         moleculeBoxes = self.application.moleculeBoxes
+
+        moleculeBoxes.generateButton = QPushButton("Generate next", moleculeBoxes.application)
+        moleculeBoxes.generateButton.setFixedWidth(150)
+        moleculeBoxes.generateButton.clicked.connect(moleculeBoxes.onGenerateButtonClicked)
         moleculeBoxes.generateButton.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
@@ -155,7 +159,10 @@ class GAParameters:
                 background-color: #45a049;
             }
         """)
-        moleculeBoxes.generateButton.setDisabled(False)
+
+        moleculeBoxes.finalButton = QPushButton("Jump to final")
+        moleculeBoxes.finalButton.setFixedWidth(150)
+        moleculeBoxes.finalButton.clicked.connect(moleculeBoxes.onFinalButtonClicked)
         moleculeBoxes.finalButton.setStyleSheet("""
             QPushButton {
                 background-color: #6495ED;
@@ -169,7 +176,10 @@ class GAParameters:
                 background-color: #0047AB;
             }
         """)
-        moleculeBoxes.finalButton.setDisabled(False)
+
+        moleculeBoxes.saveButton = QPushButton("Save the best")
+        moleculeBoxes.saveButton.setFixedWidth(150)
+        moleculeBoxes.saveButton.clicked.connect(moleculeBoxes.onSaveButtonClicked)
         moleculeBoxes.saveButton.setStyleSheet("""
             QPushButton {
                 background-color: #606060;
@@ -183,8 +193,23 @@ class GAParameters:
                 background-color: black;
             }
         """)
-        moleculeBoxes.saveButton.setDisabled(False)
 
+        moleculeBoxes.saveLabel = QLabel("Saved!")
+        moleculeBoxes.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
+
+        moleculeBoxes.saveBox = QHBoxLayout()
+        moleculeBoxes.saveBox.addSpacing(-7)
+        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveButton)
+        moleculeBoxes.saveBox.addSpacing(10)
+        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveLabel)
+
+        moleculeBoxes.saveCnt = QWidget()
+        moleculeBoxes.saveCnt.setLayout(moleculeBoxes.saveBox)
+        moleculeBoxes.saveCnt.setFixedWidth(350)
+
+        moleculeBoxes.restartButton = QPushButton("Restart analysis")
+        moleculeBoxes.restartButton.setFixedWidth(150)
+        moleculeBoxes.restartButton.clicked.connect(moleculeBoxes.onRestartButtonClicked)
         moleculeBoxes.restartButton.setStyleSheet("""
             QPushButton {
                 background-color: #ff4040;
@@ -198,7 +223,21 @@ class GAParameters:
                 background-color: red;
             }
         """)
-        moleculeBoxes.restartButton.setDisabled(False)
+
+        moleculeBoxes.rightVBox3 = QVBoxLayout()
+        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.generateButton)
+        moleculeBoxes.rightVBox3.addSpacing(13)
+        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.finalButton)
+        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.saveCnt)
+        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.restartButton)
+
+        moleculeBoxes.rightBtnCnt = QWidget()
+        moleculeBoxes.rightBtnCnt.setLayout(moleculeBoxes.rightVBox3)
+        moleculeBoxes.rightBtnCnt.setFixedSize(350, 215)
+
+        moleculeBoxes.bestBox = moleculeBoxes.createMoleculeBox("", "To be determined", 0.0, 0, -1)
+        moleculeBoxes.bestBox.setAlignment(Qt.AlignCenter)
+
 
         self.launchButton.setDisabled(True)
         self.launchButton.setStyleSheet("""
@@ -229,7 +268,7 @@ class GAParameters:
         moleculeBoxes.generationProgress.setRange(0, self.application.numberOfGenerations)
         moleculeBoxes.generationProgress.setValue(2)
 
-        moleculeBoxes.individualLabel = QLabel(f"Individual: 1/{len(moleculeBoxes.selectedMolecules)}")
+        moleculeBoxes.individualLabel = QLabel(f"Individual: 0/{len(moleculeBoxes.selectedMolecules)}")
         moleculeBoxes.individualLabel.setStyleSheet("color: blue; font-style: bold;")
 
         moleculeBoxes.individualProgress = QProgressBar()
@@ -281,7 +320,6 @@ class GAParameters:
         self.elitismSpin.setDisabled(True)
         self.mutationLineEdit.setDisabled(True)
 
-        # Prettify the style of a disabled button
         self.application.sbmtBtn.setDisabled(True)
         self.application.resBtn.setDisabled(True)
 

@@ -28,35 +28,7 @@
         "Description": "Paracetamol"
     },
     {
-        "SMILES": "C1CCCCC1",
-        "Description": "Cyclohexane"
-    },
-    {
-        "SMILES": "CSC",
-        "Description": "Dimethyle-sulfide"
-    },
-    {
         "SMILES": "CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl",
         "Description": "Chlorpromazine"
-    },
-    {
-        "SMILES": "CCCCC",
-        "Description": "Pentane"
-    },
-    {
-        "SMILES": "CC",
-        "Description": "Ethane"
-    },
-    {
-        "SMILES": "CCC",
-        "Description": "Propane"
-    },
-    {
-        "SMILES": "C1CCC2CCCC2C1",
-        "Description": "New"
-    },
-    {
-        "SMILES": "C1CCC2CCCC2C1",
-        "Description": "New"
     }
 ]

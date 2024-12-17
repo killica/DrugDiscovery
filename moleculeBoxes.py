@@ -92,6 +92,7 @@ class MoleculeBoxes(QWidget):
         self.precedentScrollArea.setWidget(self.precedentScrollWidget)
 
         self.precedentLabel = QLabel("1. generation")
+        self.precedentLabel.setFixedWidth(140)
         self.precedentLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
 
         self.rightHBox1.addWidget(self.precedentScrollArea)
@@ -117,6 +118,7 @@ class MoleculeBoxes(QWidget):
         self.secondScrollArea.setWidget(self.secondScrollWidget)
 
         self.secondLabel = QLabel("2. generation")
+        self.secondLabel.setFixedWidth(140)
         self.secondLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
 
         self.rightHB.addWidget(self.secondScrollArea)
@@ -130,92 +132,7 @@ class MoleculeBoxes(QWidget):
         self.rightCont2.setFixedSize(920, 325)
 
         self.rightHBox2 = QHBoxLayout()
-
-        self.rightVBox3 = QVBoxLayout()
-
-        self.generateButton = QPushButton("Generate next", application)
-        self.generateButton.setDisabled(True)
-        self.generateButton.setFixedWidth(150)
-        self.generateButton.clicked.connect(self.onGenerateButtonClicked)
-
-        self.finalButton = QPushButton("Jump to final")
-        self.finalButton.setDisabled(True)
-        self.finalButton.setFixedWidth(150)
-        self.finalButton.clicked.connect(self.onFinalButtonClicked)
-
-        self.saveButton = QPushButton("Save the best")
-        self.saveButton.setDisabled(True)
-        self.saveButton.setFixedWidth(150)
-        self.saveButton.clicked.connect(self.onSaveButtonClicked)
-
-        self.saveLabel = QLabel("Saved!")
-        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
-
-        self.saveBox = QHBoxLayout()
-        self.saveBox.addSpacing(-7)
-        self.saveBox.addWidget(self.saveButton)
-        self.saveBox.addSpacing(10)
-        self.saveBox.addWidget(self.saveLabel)
-        # self.saveBox.setAlignment(Qt.AlignLeft)
-
-        self.saveCnt = QWidget()
-        self.saveCnt.setLayout(self.saveBox)
-        self.saveCnt.setFixedWidth(350)
-
-        self.restartButton = QPushButton("Restart analysis")
-        self.restartButton.setDisabled(True)
-        self.restartButton.setFixedWidth(150)
-        self.restartButton.clicked.connect(self.onRestartButtonClicked)
-
-        self.rightVBox3.addWidget(self.generateButton)
-        self.rightVBox3.addSpacing(13)
-        self.rightVBox3.addWidget(self.finalButton)
-        self.rightVBox3.addWidget(self.saveCnt)
-        self.rightVBox3.addWidget(self.restartButton)
-
-        self.rightBtnCnt = QWidget()
-        self.rightBtnCnt.setLayout(self.rightVBox3)
-        self.rightBtnCnt.setFixedSize(350, 215)
-
-        # self.bestBox = self.createMoleculeBox("CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl", "Chlorpromazine", 0.55, 0, -1)
-        self.bestBox = self.createMoleculeBox("", "To be determined", 0.0, 0, -1)
-        self.bestBox.setAlignment(Qt.AlignCenter)
-
-        # self.progressVBox = QVBoxLayout()
-
-        # self.generationLabel = QLabel("")
-        # self.generationLabel.setStyleSheet("color: transparent; font-weight: bold;")
-        # self.generationProgress = QProgressBar()
-        # self.generationProgress.setRange(0, 100)
-        # self.generationProgress.setValue(30)
-        # self.generationProgress.hide()
-
-        # self.individualLabel = QLabel("ind")
-        # self.individualLabel.hide()
-        # self.individualProgress = QProgressBar()
-        # self.individualProgress.setRange(0, 12)
-        # self.individualProgress.setValue(5)
-        # self.individualProgress.hide()
-
-        # self.progressVBox.addWidget(self.generationLabel)
-        # self.progressVBox.addWidget(self.generationProgress)
-        # self.progressVBox.addSpacing(30)
-        # self.progressVBox.addWidget(self.individualLabel)
-        # self.progressVBox.addWidget(self.individualProgress)
-
-        # self.progressCnt = QWidget()
-        # self.progressCnt.setLayout(self.progressVBox)
-        # self.progressCnt.setFixedSize(350, 120)
-
-        # self.rightHBox2.addWidget(self.rightBtnCnt)
-        # self.rightHBox2.addWidget(self.bestBox)
-        # self.rightHBox2.addSpacing(50)
-        # self.rightHBox2.addWidget(self.progressCnt)
-        # self.rightHBox2.setAlignment(Qt.AlignHCenter)
-
         self.rightCont3 = QWidget()
-        # self.rightCont3.setLayout(self.rightHBox2)
-        # self.rightCont3.setFixedSize(850, 270)
 
         self.loadBoxes()
         self.loadSelectedBoxes()
@@ -248,29 +165,31 @@ class MoleculeBoxes(QWidget):
             self.selectedBoxes.append(self.selectedMoleculeBox)
             self.precedentLayout.addWidget(self.selectedMoleculeBox, row, col)
 
-        # Move to bottom when a new moleecule box is added
-        # self.scrollArea.verticalScrollBar().setValue(self.scrollArea.verticalScrollBar().maximum())
-        # self.precedentScrollArea.verticalScrollBar().setValue(self.precedentScrollArea.verticalScrollBar().maximum())
-
     def loadNewGeneration(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.newGenerationBoxes = []
-        self.newGenerationMolecules.sort(reverse=True)
-        for index, individual in enumerate(self.newGenerationMolecules):
-            row = index // self.columnsPerRow 
-            col = index % self.columnsPerRow
-            smiles = individual.getSmiles()
-            description = individual.getDescription()
-            individual.setWeights(weights)
-            qed = individual.getQED()
-            self.newGenerationMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, -1)
-            self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
-            self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
-        
         if len(self.newGenerationMolecules) > 0:
-            self.bestBox.deleteLater()
-            self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
-            self.bestBox.setAlignment(Qt.AlignCenter)
-            self.rightHBox2.insertWidget(1, self.bestBox)
+            self.newGenerationMolecules.sort(reverse=True)
+            for index, individual in enumerate(self.newGenerationMolecules):
+                row = index // self.columnsPerRow 
+                col = index % self.columnsPerRow
+                smiles = individual.getSmiles()
+                description = individual.getDescription()
+                individual.setWeights(weights)
+                qed = individual.getQED()
+                self.newGenerationMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, -1)
+                self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
+                self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
+            
+                self.bestBox.deleteLater()
+                self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
+                self.bestBox.setAlignment(Qt.AlignCenter)
+                self.rightHBox2.insertWidget(1, self.bestBox)
+        # else:
+        #     self.bestBox.deleteLater()
+        #     self.bestBox = self.createMoleculeBox("", "To be determined", 0.0, 0, -1)
+        #     self.bestBox.setAlignment(Qt.AlignCenter)
+        #     self.rightHBox2.insertWidget(1, self.bestBox)
+        
 
     def removeBoxes(self):
         for box in self.boxes:
@@ -413,4 +332,75 @@ class MoleculeBoxes(QWidget):
 
     def onRestartButtonClicked(self):
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
-
+        self.generationLabel.setText(f"Generation: 1/{self.application.numberOfGenerations}")
+        self.generationProgress.setValue(1)
+        self.individualLabel.setText(f"Individual: 0/{len(self.selectedMolecules)}")
+        self.individualProgress.setValue(0)
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+        self.removeNewGenerationBoxes()
+        self.molecules = self.application.readMolecules()
+        self.loadBoxes(self.application.sliderValues)
+        self.application.molecules = []
+        self.selectedMolecules = []
+        self.newGenerationMolecules = []
+        self.bestBox.deleteLater()
+        self.generateButton.setDisabled(True)
+        self.generateButton.setStyleSheet("Color: #757575;")
+        self.finalButton.setDisabled(True)
+        self.finalButton.setStyleSheet("Color: #757575;")
+        self.saveButton.setDisabled(True)
+        self.saveButton.setStyleSheet("Color: #757575;")
+        self.restartButton.setDisabled(True)
+        self.restartButton.setStyleSheet("Color: #757575;")
+        self.loadNewGeneration()
+        self.precedentLabel.setText("1. generation")
+        self.secondLabel.setText("2. generation")
+        self.application.gaParameters.launchButton.setDisabled(False)
+        self.application.gaParameters.launchButton.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        self.application.gaParameters.rouletteCheckBox.setDisabled(False)
+        self.application.gaParameters.rouletteCheckBox.setStyleSheet("""
+            QCheckBox {
+                text-decoration: none;
+            }
+            QCheckBox::indicator {
+                width: 20px;
+                height: 20px;
+                border: 2px solid #777;
+                border-radius: 5px;
+                background-color: white;
+            }
+            QCheckBox::indicator:checked {
+                background-color: lightgray;
+                border: 2px solid gray;
+            }
+            QCheckBox::indicator:unchecked {
+                background-color: white;
+                border: 2px solid gray;
+            }
+        """)
+        self.application.gaParameters.generationSpin.setDisabled(False)
+        self.application.gaParameters.tournamentSpin.setDisabled(False)
+        self.application.gaParameters.elitismSpin.setDisabled(False)
+        self.application.gaParameters.mutationLineEdit.setDisabled(False)
+        self.application.sbmtBtn.setDisabled(False)
+        self.application.resBtn.setDisabled(False)
+        self.application.blockTransfer = False
+        while self.rightHBox2.count():
+            item = self.rightHBox2.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
