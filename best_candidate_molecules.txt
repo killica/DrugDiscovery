@@ -90,3 +90,27 @@ SMILES: CN(C)CCN1C2=CC(=O)C=CC=C2SC3=C1C=C(C=C3)O
 QED: 0.9435
 Date created: 2024-12-17 01:30:31
 -------------------------------------------
+SMILES: N(C)CC(=O)CN1C2=CC=CC=C2SC3=C1C=C(C=C3)
+QED: 0.9349
+Date created: 2024-12-18 00:19:14
+-------------------------------------------
+SMILES: CN1C(C2=CC(=O)C=CC=C12)C3=CC(=C(C=C3)Cl)CN(C)
+QED: 0.9457
+Date created: 2024-12-18 00:40:07
+-------------------------------------------
+SMILES: CCNN1CC(C2=COC=CC=C12)C3=CC(=O)C(=C(C=C3)Cl) C(C2=COC=CC=C12)CC(C2=COC=CC=C12)C=C12) C(C2=COC=CC=C12)
+QED: 0.9307
+Date created: 2024-12-18 22:10:18
+-------------------------------------------
+SMILES: CN[C@H]1CC[C@H](C2=CC=CC=C12)C3=CC(=C(C=C3)Cl)Cl 
+QED: 0.8059
+Date created: 2024-12-19 20:16:30
+-------------------------------------------
+SMILES: CN[C@@H]1C(OC2=COC=C12)CC3C(=C(OC=3)Cl)Cl 
+QED: 0.9394
+Date created: 2024-12-21 00:05:31
+-------------------------------------------
+SMILES: CN[C@H][C@H]1CC[C@H](C2C(=O)[C@H](C2C(=O)1))C3=CC(=C(C=C3))Cl 
+QED: 0.9338
+Date created: 2024-12-21 00:14:32
+-------------------------------------------

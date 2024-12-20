@@ -30,5 +30,25 @@
     {
         "SMILES": "CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl",
         "Description": "Chlorpromazine"
+    },
+    {
+        "SMILES": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C ",
+        "Description": "Caffeine"
+    },
+    {
+        "SMILES": "CN(CCOC(c1ccccc1)c1ccccc1)C",
+        "Description": "Diphenhydramine"
+    },
+    {
+        "SMILES": "CN(C)C(=N)N=C(N)N ",
+        "Description": "Metformin"
+    },
+    {
+        "SMILES": "CCC(=C(c1ccccc1)c1ccc(cc1)OCCN(C)C)c1ccccc1",
+        "Description": "Tamoxifen"
+    },
+    {
+        "SMILES": "CN[C@H]1CC[C@H](C2=CC=CC=C12)C3=CC(=C(C=C3)Cl)Cl ",
+        "Description": "Sertraline"
     }
 ]

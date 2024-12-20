@@ -15,6 +15,7 @@ def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, roulett
     for _ in range(numberOfGenerations):
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
+        tmp = 0
         for j in range(elitismSize, populationSize - 1):
             parent1 = selection(population, rouletteSelection, tournamentSize)
             parent2 = selection(population, rouletteSelection, tournamentSize) # TODO: Parents be different
@@ -33,9 +34,11 @@ def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, roulett
             individualLabel.setText(f"Individual: {j+1}/{len(population)}")
             individualProgress.setValue(j+1)
 
+            tmp = j
+
         population = newPopulation.copy()
-        individualLabel.setText(f"Individual: {j+2}/{len(population)}")
-        individualProgress.setValue(j+2)
+        individualLabel.setText(f"Individual: {tmp+2}/{len(population)}")
+        individualProgress.setValue(tmp+2)
     
     return population
 
@@ -96,12 +99,14 @@ def crossover(parent1, parent2, child1, child2):
     # Assuming smiles strings have more than 1 character (in order to be eligible for crossover)
     smiles1 = parent1.getSmiles()
     smiles2 = parent2.getSmiles()
+    n1 = len(smiles1)
+    n2 = len(smiles2)
     MAXITERS = 2000
     i = 0
     while i < MAXITERS:
         i += 1
-        cp1 = random.randrange(1, len(smiles1))
-        cp2 = random.randrange(1, len(smiles2))
+        cp1 = random.randrange(1, n1)
+        cp2 = random.randrange(1, n2)
 
         childSmiles1 = smiles1[:cp1] + smiles2[cp2:]
         childSmiles2 = smiles1[cp1:] + smiles2[:cp2]
@@ -113,6 +118,38 @@ def crossover(parent1, parent2, child1, child2):
     
     if i == MAXITERS:
         print('Maximum number of iterations for crossover of following molecules exceeded:\n')
+        print(f'{smiles1}\n{smiles2}\n')
+        print('Attempting two point crossover...')
+
+    i = 0
+    while i < MAXITERS:
+        i += 1
+        first1 = random.randrange(1, n1)
+        if first1 < n1 - 1:
+            first2 = random.randrange(first1 + 1, n1)
+        else:
+            first2 = random.randrange(1, first1)
+            # first2 < first1, so swap them
+            first1, first2 = first2, first1
+
+        second1 = random.randrange(1, n2)
+        if second1 < n2 - 1:
+            second2 = random.randrange(second1 + 1, n2)
+        else:
+            second2 = random.randrange(1, second1)
+            # second2 < second1, so swap them
+            second1, second2 = second2, second1
+
+        childSmiles1 = smiles1[:first1] + smiles2[second1:second2] + smiles1[first2:]
+        childSmiles2 = smiles2[:second1] + smiles1[first1:first2] + smiles2[second2:]
+
+        if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
+            child1.setSmiles(childSmiles1)
+            child2.setSmiles(childSmiles2)
+            break
+
+    if i == MAXITERS:
+        print('Maximum number of iterations for two point crossover of following molecules exceeded:\n')
         print(f'{smiles1}\n{smiles2}\n')
         print('Passing them to the new generation.\n')
         child1.setSmiles(smiles1)
