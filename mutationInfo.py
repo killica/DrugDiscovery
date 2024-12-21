@@ -17,3 +17,9 @@ class MutationInfo:
                 if parts[0] not in self.groupSwitchMap:
                     self.groupSwitchMap[parts[0]] = []
                 self.groupSwitchMap[parts[0]].append(parts[1])
+
+        self.insertions = []
+        with open('./mutations/insertion.txt', 'r') as insertionFile:
+            for line in insertionFile:
+                line = line.strip()
+                self.insertions.append(line)

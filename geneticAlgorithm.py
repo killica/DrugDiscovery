@@ -163,17 +163,17 @@ def mutation(individual, mutationProbability, mi):
     mutationType = random.randrange(0, 2)
     # 0 - atom switch
     # 1 - group switch
-    # 2 - insertion of an atom or a group - future idea
-    # 3 - deletion of an atom or a group - future idea
+    # 2 - insertion of an atom or a group
+    # 3 - deletion of an atom or a group
 
-    # if mutationType == 0:
-    #     atomSwitchMutation(individual, mi)
-    # elif mutationType == 1:
-    #     groupSwitchMutation(individual, mi)
-    # elif mutationType == 2:
-    #     insertionMutation(individual, mi)
-    # else:
-    deletionMutation(individual, mi)
+    if mutationType == 0:
+        atomSwitchMutation(individual, mi)
+    elif mutationType == 1:
+        groupSwitchMutation(individual, mi)
+    elif mutationType == 2:
+        insertionMutation(individual, mi)
+    else:
+        deletionMutation(individual, mi)
 
     
 def atomSwitchMutation(individual, mi):
@@ -232,7 +232,23 @@ def groupSwitchMutation(individual, mi):
     #     file.write(f"Changing:{smiles} with {newSmiles}\n")
     
 def insertionMutation(individual, mi):
-    pass
+    smiles = individual.getSmiles()
+    n = len(smiles)
+    MAX_INSERTION_ATTEMPTS = 200
+    randomInsertion = random.choice(mi.insertions)
+    i = 0
+    while i < MAX_INSERTION_ATTEMPTS:
+        i += 1
+        randomInsertionPosition = random.randrange(n)
+        newSmiles = smiles[:randomInsertionPosition] + randomInsertion + smiles[randomInsertionPosition:]
+        if isValidSmiles(newSmiles):
+            individual.setSmiles(newSmiles)
+            # with open('log_insertion.txt', 'a') as file:
+            #     file.write(f"Changing:{smiles} with {newSmiles}\n")
+            return
+
+    # Insertion failed, in order to perform any other mutation, call deletionMutation (for example)
+    deletionMutation(individual, mi)
 
 def deletionMutation(individual, mi):
     smiles = individual.getSmiles()
