@@ -166,14 +166,14 @@ def mutation(individual, mutationProbability, mi):
     # 2 - insertion of an atom or a group - future idea
     # 3 - deletion of an atom or a group - future idea
 
-    if mutationType == 0:
-        atomSwitchMutation(individual, mi)
-    elif mutationType == 1:
-        groupSwitchMutation(individual, mi)
+    # if mutationType == 0:
+    #     atomSwitchMutation(individual, mi)
+    # elif mutationType == 1:
+    #     groupSwitchMutation(individual, mi)
     # elif mutationType == 2:
     #     insertionMutation(individual, mi)
     # else:
-    #     deletionMutation(individual, mi)
+    deletionMutation(individual, mi)
 
     
 def atomSwitchMutation(individual, mi):
@@ -202,8 +202,8 @@ def atomSwitchMutation(individual, mi):
     smiles = smiles[:indicesOfHeteroAtoms[randomHeteroIndex]] + changeWith + smiles[indicesOfHeteroAtoms[randomHeteroIndex] + 1:]
     individual.setSmiles(smiles)
 
-    with open('log.txt', 'a') as file:
-        file.write(f"Changing:{heteroAtom} with {changeWith}, new smiles: {smiles}")
+    # with open('log.txt', 'a') as file:
+    #     file.write(f"Changing:{heteroAtom} with {changeWith}, new smiles: {smiles}")
 
 def groupSwitchMutation(individual, mi):
     smiles = individual.getSmiles()
@@ -228,13 +228,62 @@ def groupSwitchMutation(individual, mi):
         newSmiles = random.choice(modifiedSmiles)
     individual.setSmiles(newSmiles)
 
-    with open('log.txt', 'a') as file:
-        file.write(f"Changing:{smiles} with {newSmiles}\n")
+    # with open('log.txt', 'a') as file:
+    #     file.write(f"Changing:{smiles} with {newSmiles}\n")
     
 def insertionMutation(individual, mi):
     pass
 
 def deletionMutation(individual, mi):
-    pass
+    smiles = individual.getSmiles()
+    n = len(smiles)
+    MAX_BRANCH_DELETION_ATTEMPTS = 20
+    MAX_ITERS = 500
+    openBracketsPositions = []
+    for i, ch in enumerate(smiles):
+        if ch == '(':
+            openBracketsPositions.append(i)
+
+    # Branches in the molecule exist
+    if len(openBracketsPositions) > 0:
+        # Attempt deleting random branches of a molecule
+        for _ in range(MAX_BRANCH_DELETION_ATTEMPTS):
+            startIndex = random.choice(openBracketsPositions)
+            openBrackets = 1
+            endIndex = None
+            # Finding the corresponding closed bracket
+            for i in range(startIndex + 1, n):
+                if smiles[i] == '(':
+                    openBrackets += 1
+                if smiles[i] == ')':
+                    openBrackets -= 1
+                    if openBrackets == 0:
+                        endIndex = i
+                        break
+
+            newSmiles = smiles[:startIndex] + smiles[endIndex + 1:]
+            if isValidSmiles(newSmiles):
+                individual.setSmiles(newSmiles)
+                return
+
+    # Else: zero branches in the molecule, or branches can not be deleted
+    i = 0
+    while i < MAX_ITERS:
+        i += 1
+        randomIndex = random.randrange(n)
+        # We only want to delete atoms
+        if smiles[randomIndex].isalpha():
+            newSmiles = smiles[:randomIndex] + smiles[randomIndex + 1:]
+            if isValidSmiles(newSmiles):
+                individual.setSmiles(newSmiles)
+                break
+    # Single atom deletion didn't succeed neither, hence, in order not to leave the molecule unchanged, we call
+    # atom switch mutation. In case it also fails, that method will call group mutation, which will not fail,
+    # since there are certain mutations that will always succeed.
+    if i == MAX_ITERS:
+        atomSwitchMutation(individual, mi)
+
+    # with open('log_deletion.txt', 'a') as file:
+    #     file.write(f"Changing:{smiles} with {newSmiles}\n")
 
 
