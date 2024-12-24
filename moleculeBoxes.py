@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QGraphi
 from PyQt5.QtGui import QImage, QPixmap, QColor, QFont
 from PyQt5.QtCore import QEvent, Qt
 from rdkit import Chem
-from rdkit.Chem import Draw
+from rdkit.Chem import Draw, rdMolDescriptors
+from rdkit.DataStructs import FingerprintSimilarity
 from fitness import Fitness
 from individual import Individual
 import geneticAlgorithm
@@ -236,9 +237,6 @@ class MoleculeBoxes(QWidget):
         boxLayout.addWidget(descriptionLabel)
         box.setLayout(boxLayout)
 
-        # Formula to determine the shade of green - darker the shade, greater the QED
-        # box.setStyleSheet(f"QGroupBox {{ background-color: rgb({0}, {int(255-(qed*155))}, {0}); border: 2px solid green; padding: 10px; }}")
-        
         box.setStyleSheet(f"""
             QGroupBox {{
                 background-color: rgb(255, 255, 255);   
@@ -326,9 +324,29 @@ class MoleculeBoxes(QWidget):
 
     def onSaveButtonClicked(self):
         formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open('best_candidate_molecules.txt', 'a') as candidatesFile:
+        with open('best_candidate_molecules_50.txt', 'a') as candidatesFile:
             candidatesFile.write(f"SMILES: {self.newGenerationMolecules[0].getSmiles()}\nQED: {round(self.newGenerationMolecules[0].getQED(), 4)}\nDate created: {formattedDatetime}\n-------------------------------------------\n")
+        # with open('best_molecules_100.txt_4', 'a') as candidatesFile:
+        #     for ind in self.newGenerationMolecules:
+        #         candidatesFile.write(f"SMILES: {ind.getSmiles()}\nQED: {round(ind.getQED(), 4)}\nDate created: {formattedDatetime}\n-------------------------------------------\n")
         self.saveLabel.setStyleSheet("color: green; font-style: italic;")
+        self.tanimoto()
+
+    def tanimoto(self):
+        smilesList = [s.getSmiles() for s in self.newGenerationMolecules]
+        mols = [Chem.MolFromSmiles(s) for s in smilesList]
+        fingerprints = [rdMolDescriptors.GetMorganFingerprintAsBitVect(mol, 2, nBits = 2048) for mol in mols]
+        # Calculate pairwise Tanimoto similarity
+        similarities = []
+        for i in range(len(fingerprints)):
+            for j in range(i+1, len(fingerprints)):
+                similarity = FingerprintSimilarity(fingerprints[i], fingerprints[j])
+                similarities.append(similarity)
+        with open('tanimoto.txt', 'a') as tanimotoFile:
+            tanimotoFile.write("[")
+            for sim in similarities:
+                tanimotoFile.write(f"{sim}, ")
+            tanimotoFile.write("]\n------------------------------------\n")
 
     def onRestartButtonClicked(self):
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
