@@ -330,17 +330,17 @@ class MoleculeBoxes(QWidget):
         self.saveLabel.setStyleSheet("color: green; font-style: italic;")
 
         # Create a QMessageBox
-        msg_box = QMessageBox(self)
+        msgBox = QMessageBox(self)
         # Set the icon for the dialog
-        msg_box.setIcon(QMessageBox.Question)
+        msgBox.setIcon(QMessageBox.Question)
         # Set the window title
-        msg_box.setWindowTitle("Population diversity")
+        msgBox.setWindowTitle("Population diversity")
         # Set the message in the dialog
-        msg_box.setText("Do you want to calculate Tanimoto similarity coefficient for current generation?")
+        msgBox.setText("Do you want to calculate Tanimoto similarity coefficient for current generation?")
         # Add Yes and No buttons
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         # Show the message box and capture the response
-        response = msg_box.exec_()
+        response = msgBox.exec_()
         if response == QMessageBox.Yes:
             self.tanimoto()
        
