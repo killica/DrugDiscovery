@@ -12,11 +12,14 @@ def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, roulett
     if onlyOneGeneration:
         numberOfGenerations = 1
     
+    if elitismSize % 2 != populationSize % 2:
+        elitismSize += 1
+
     for _ in range(numberOfGenerations):
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
         tmp = 0
-        for j in range(elitismSize, populationSize - 1):
+        for j in range(elitismSize, populationSize, 2):
             parent1 = selection(population, rouletteSelection, tournamentSize)
             parent2 = selection(population, rouletteSelection, tournamentSize) # TODO: Parents be different
 

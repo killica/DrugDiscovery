@@ -1,0 +1,8 @@
+SMILES: CN(C)CCCc1c(/C2(C#N)cCc3ccc32)[nH]c2c1C(=O)2
+QED: 0.92
+Date created: 2024-12-31 14:34:30
+-------------------------------------------
+SMILES: CN(C)CCc1c(/C=C2\cOcOCc(C)2)[nH]c2c1Occ2
+QED: 0.9434
+Date created: 2024-12-31 14:39:52
+-------------------------------------------
