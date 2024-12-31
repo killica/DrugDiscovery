@@ -185,13 +185,7 @@ class MoleculeBoxes(QWidget):
                 self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
                 self.bestBox.setAlignment(Qt.AlignCenter)
                 self.rightHBox2.insertWidget(1, self.bestBox)
-        # else:
-        #     self.bestBox.deleteLater()
-        #     self.bestBox = self.createMoleculeBox("", "To be determined", 0.0, 0, -1)
-        #     self.bestBox.setAlignment(Qt.AlignCenter)
-        #     self.rightHBox2.insertWidget(1, self.bestBox)
        
-
     def removeBoxes(self):
         for box in self.boxes:
             self.layout.removeWidget(box)
@@ -321,7 +315,6 @@ class MoleculeBoxes(QWidget):
         for _ in range(self.application.numberOfGenerations - labelNumber):
             self.onGenerateButtonClicked()
 
-
     def onSaveButtonClicked(self):
         formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open('results/best_candidate_molecules.txt', 'a') as candidatesFile:
@@ -342,8 +335,7 @@ class MoleculeBoxes(QWidget):
         # Show the message box and capture the response
         response = msgBox.exec_()
         if response == QMessageBox.Yes:
-            self.tanimoto()
-       
+            self.tanimoto() 
 
     def tanimoto(self):
         smilesList = [s.getSmiles() for s in self.newGenerationMolecules]

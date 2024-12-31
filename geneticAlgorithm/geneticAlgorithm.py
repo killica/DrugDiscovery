@@ -160,7 +160,7 @@ def mutation(individual, mutationProbability, mi):
         return
 
     # Mutation will take place
-    mutationType = random.randrange(0, 2)
+    mutationType = random.randrange(0, 4)
     # 0 - atom switch
     # 1 - group switch
     # 2 - insertion of an atom or a group
@@ -175,7 +175,6 @@ def mutation(individual, mutationProbability, mi):
     else:
         deletionMutation(individual, mi)
 
-    
 def atomSwitchMutation(individual, mi):
     smiles = individual.getSmiles()
     heteroAtoms = ['O', 'S', 'N', 'P']
@@ -202,9 +201,6 @@ def atomSwitchMutation(individual, mi):
     smiles = smiles[:indicesOfHeteroAtoms[randomHeteroIndex]] + changeWith + smiles[indicesOfHeteroAtoms[randomHeteroIndex] + 1:]
     individual.setSmiles(smiles)
 
-    # with open('log.txt', 'a') as file:
-    #     file.write(f"Changing:{heteroAtom} with {changeWith}, new smiles: {smiles}")
-
 def groupSwitchMutation(individual, mi):
     smiles = individual.getSmiles()
     modifiedSmiles = []
@@ -227,9 +223,6 @@ def groupSwitchMutation(individual, mi):
     if len(modifiedSmiles) > 0:
         newSmiles = random.choice(modifiedSmiles)
     individual.setSmiles(newSmiles)
-
-    # with open('log.txt', 'a') as file:
-    #     file.write(f"Changing:{smiles} with {newSmiles}\n")
     
 def insertionMutation(individual, mi):
     smiles = individual.getSmiles()
@@ -243,8 +236,6 @@ def insertionMutation(individual, mi):
         newSmiles = smiles[:randomInsertionPosition] + randomInsertion + smiles[randomInsertionPosition:]
         if isValidSmiles(newSmiles):
             individual.setSmiles(newSmiles)
-            # with open('log_insertion.txt', 'a') as file:
-            #     file.write(f"Changing:{smiles} with {newSmiles}\n")
             return
 
     # Insertion failed, in order to perform any other mutation, call deletionMutation (for example)
@@ -298,8 +289,3 @@ def deletionMutation(individual, mi):
     # since there are certain mutations that will always succeed.
     if i == MAX_ITERS:
         atomSwitchMutation(individual, mi)
-
-    # with open('log_deletion.txt', 'a') as file:
-    #     file.write(f"Changing:{smiles} with {newSmiles}\n")
-
-
