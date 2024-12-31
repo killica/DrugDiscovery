@@ -19,7 +19,7 @@ class ClickableGroupBox(QGroupBox):
         self.moleculeBoxes = moleculeBoxes
         self.index = index
         self.ind = ind
-        
+       
     def mousePressEvent(self, event):
         if self.moleculeBoxes.application.blockTransfer:
             return
@@ -105,7 +105,7 @@ class MoleculeBoxes(QWidget):
         self.rightCont1 = QWidget()
         self.rightCont1.setLayout(self.rightHBox1)
         self.rightCont1.setFixedSize(920, 325)
-        
+       
         self.secondLayout = QGridLayout()
 
         self.rightHB = QHBoxLayout()
@@ -137,7 +137,7 @@ class MoleculeBoxes(QWidget):
 
         self.loadBoxes()
         self.loadSelectedBoxes()
-        
+       
     def loadBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.boxes = []
         self.molecules.sort(reverse=True)
@@ -171,7 +171,7 @@ class MoleculeBoxes(QWidget):
         if len(self.newGenerationMolecules) > 0:
             self.newGenerationMolecules.sort(reverse=True)
             for index, individual in enumerate(self.newGenerationMolecules):
-                row = index // self.columnsPerRow 
+                row = index // self.columnsPerRow
                 col = index % self.columnsPerRow
                 smiles = individual.getSmiles()
                 description = individual.getDescription()
@@ -180,7 +180,7 @@ class MoleculeBoxes(QWidget):
                 self.newGenerationMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, -1)
                 self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
                 self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
-            
+           
                 self.bestBox.deleteLater()
                 self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
                 self.bestBox.setAlignment(Qt.AlignCenter)
@@ -190,7 +190,7 @@ class MoleculeBoxes(QWidget):
         #     self.bestBox = self.createMoleculeBox("", "To be determined", 0.0, 0, -1)
         #     self.bestBox.setAlignment(Qt.AlignCenter)
         #     self.rightHBox2.insertWidget(1, self.bestBox)
-        
+       
 
     def removeBoxes(self):
         for box in self.boxes:
@@ -239,7 +239,7 @@ class MoleculeBoxes(QWidget):
 
         box.setStyleSheet(f"""
             QGroupBox {{
-                background-color: rgb(255, 255, 255);   
+                background-color: rgb(255, 255, 255);  
                 border: 2px solid green;                
                 border-radius: 15px;                    
                 padding: 10px;                          
@@ -252,7 +252,7 @@ class MoleculeBoxes(QWidget):
         shadowEffect.setColor(QColor(0, 0, 0, 160))
         box.setGraphicsEffect(shadowEffect)
         return box
-    
+   
     def addToCatalogue(self, smiles, description):
         molecule = None
         try:
@@ -263,7 +263,7 @@ class MoleculeBoxes(QWidget):
             return
         if not description:
             description = "Unknown"
-        
+       
         self.removeBoxes()
         self.removeSelectedBoxes()
         self.molecules.append(Individual(smiles, description, self.application.sliderValues))
@@ -326,24 +326,24 @@ class MoleculeBoxes(QWidget):
         formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open('results/best_candidate_molecules.txt', 'a') as candidatesFile:
             candidatesFile.write(f"SMILES: {self.newGenerationMolecules[0].getSmiles()}\nQED: {round(self.newGenerationMolecules[0].getQED(), 4)}\nDate created: {formattedDatetime}\n-------------------------------------------\n")
-        
+       
         self.saveLabel.setStyleSheet("color: green; font-style: italic;")
 
-        # Create a QMessageBox 
-        msg_box = QMessageBox(self) 
+        # Create a QMessageBox
+        msg_box = QMessageBox(self)
         # Set the icon for the dialog
-        msg_box.setIcon(QMessageBox.Question) 
-        # Set the window title 
-        msg_box.setWindowTitle("Population diversity") 
-        # Set the message in the dialog 
-        msg_box.setText("Do you want to calculate Tanimoto similarity coefficient for current generation?") 
-        # Add Yes and No buttons 
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No) 
-        # Show the message box and capture the response 
-        response = msg_box.exec_() 
-        if response == QMessageBox.Yes: 
+        msg_box.setIcon(QMessageBox.Question)
+        # Set the window title
+        msg_box.setWindowTitle("Population diversity")
+        # Set the message in the dialog
+        msg_box.setText("Do you want to calculate Tanimoto similarity coefficient for current generation?")
+        # Add Yes and No buttons
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        # Show the message box and capture the response
+        response = msg_box.exec_()
+        if response == QMessageBox.Yes:
             self.tanimoto()
-        
+       
 
     def tanimoto(self):
         smilesList = [s.getSmiles() for s in self.newGenerationMolecules]

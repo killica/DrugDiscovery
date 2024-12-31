@@ -160,7 +160,7 @@ def mutation(individual, mutationProbability, mi):
         return
 
     # Mutation will take place
-    mutationType = random.randrange(0, 4)
+    mutationType = random.randrange(0, 2)
     # 0 - atom switch
     # 1 - group switch
     # 2 - insertion of an atom or a group
