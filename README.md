@@ -23,8 +23,9 @@ conda install pyqt5
 conda install -c conda-forge rdkit
 ```
 
-To run the application, clone this repository, and after positioning in the project directory, execute the following command:
+To run the application, clone this repository, and after positioning in the project directory, execute the following commands:
 ```bash
+cd geneticAlgorithm
 python3 main.py
 ```
 
