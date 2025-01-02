@@ -97,8 +97,6 @@ class GAParameters:
 
         self.launchButton = QPushButton("Launch search!", application)
         self.launchButton.setFixedWidth(200)
-        # self.launchButton.setIcon(QIcon('icon.png'))
-        # self.launchButton.setIconSize(QSize(32, 32))
         self.launchButton.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;

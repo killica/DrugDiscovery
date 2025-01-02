@@ -277,7 +277,7 @@ class MoleculeBoxes(QWidget):
         self.removeSelectedBoxes()
         self.selectedMolecules = []
         for ind in self.newGenerationMolecules:
-            self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription()))
+            self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription(), tuple(self.application.sliderValues)))
         self.loadSelectedBoxes(tuple(self.application.sliderValues))
         self.removeNewGenerationBoxes()
 
@@ -318,8 +318,10 @@ class MoleculeBoxes(QWidget):
     def onSaveButtonClicked(self):
         formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open('results/best_candidate_molecules.txt', 'a') as candidatesFile:
-            candidatesFile.write(f"SMILES: {self.newGenerationMolecules[0].getSmiles()}\nQED: {round(self.newGenerationMolecules[0].getQED(), 4)}\nDate created: {formattedDatetime}\n-------------------------------------------\n")
-       
+            candidatesFile.write(f"SMILES: {self.newGenerationMolecules[0].getSmiles()}\nQED: {round(self.newGenerationMolecules[0].getQED(), 4)}\nDate created: {formattedDatetime}\nParameter weights:")
+            for value in list(self.newGenerationMolecules[0].getWeights()):
+                candidatesFile.write(f"{value} ")
+            candidatesFile.write("\n-------------------------------------------\n")
         self.saveLabel.setStyleSheet("color: green; font-style: italic;")
 
         # Create a QMessageBox

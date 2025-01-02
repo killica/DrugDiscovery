@@ -6,3 +6,42 @@ SMILES: CN(C)CCc1c(/C=C2\cOcOCc(C)2)[nH]c2c1Occ2
 QED: 0.9434
 Date created: 2024-12-31 14:39:52
 -------------------------------------------
+SMILES: CN(C)Cc1c(C2\C(=O)Nc3c(F)cc32)c2c1cccccc2
+QED: 0.9455
+Date created: 2025-01-02 13:26:20
+-------------------------------------------
+SMILES: CN(C)CCCc1c(/C=C2\CNc3ccc(F)cc32)[nH]c2c1CC2
+QED: 0.8778
+Date created: 2025-01-02 13:51:58
+Parameter weights:0.66 0.46 0.05 0.61 0.06 0.65 0.48 0.95 
+-------------------------------------------
+SMILES: CN(C)CCCc1c(/C=C2\C(=O)Nc3ccc(F)cc32)[nH]c2c1CC2
+QED: 0.8733
+Date created: 2025-01-02 13:52:30
+Parameter weights:1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 
+-------------------------------------------
+SMILES: CN(C)CCCc1c(/C=C2\[nH]c3ccc(F)cc32)[nH]c2c1CC2
+QED: 0.8877
+Date created: 2025-01-02 13:52:40
+Parameter weights:1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 
+-------------------------------------------
+SMILES: CN(C)CCC1CC(/C=C2\[nH]c3ccc(F)cc32)[nH]c2c1CC2
+QED: 0.8873
+Date created: 2025-01-02 13:52:52
+Parameter weights:1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 
+-------------------------------------------
+SMILES: CN(C)CCCc1c(/C=C2Nc3ccc(F)cc32)[nH]c2c1CCCC2
+QED: 0.8431
+Date created: 2025-01-02 15:28:10
+Parameter weights:0.66 0.46 0.05 0.61 0.06 0.65 0.48 0.95 
+-------------------------------------------
+SMILES: Nc1C(c2cc(-c4ccc(OC)cn4)ccc2)cnCcC1
+QED: 0.9636
+Date created: 2025-01-02 15:53:53
+Parameter weights:1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 
+-------------------------------------------
+SMILES: N#Cc1cncc(-c2cc([C@@H]c3cccn3C)ccc[C@@H]2)c(N)1
+QED: 0.9601
+Date created: 2025-01-02 16:07:10
+Parameter weights:0.66 0.9 0.38 0.38 0.9 0.62 1.0 0.5 
+-------------------------------------------
