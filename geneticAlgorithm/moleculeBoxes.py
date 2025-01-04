@@ -59,8 +59,32 @@ class MoleculeBoxes(QWidget):
 
         self.vbox = QVBoxLayout()
 
+        self.selectionHBox = QHBoxLayout()
+
         self.selectionLabel = QLabel("Select molecules for the first generation:")
         self.selectionLabel.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
+
+        self.selectAllButton = QPushButton("Select all")
+        self.selectAllButton.setFixedWidth(100)
+        self.selectAllButton.setStyleSheet("""
+            QPushButton {
+                background-color: #696969;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #404040;
+            }
+        """)
+        self.selectAllButton.clicked.connect(self.onSelectAllButtonClicked)
+
+        self.selectionHBox.addWidget(self.selectionLabel)
+        self.selectionHBox.addWidget(self.selectAllButton)
+
+        self.selectionContainer = QWidget()
+        self.selectionContainer.setLayout(self.selectionHBox)
 
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidgetResizable(True)
@@ -70,7 +94,7 @@ class MoleculeBoxes(QWidget):
         self.scrollWidget.setLayout(self.layout)
         self.scrollArea.setWidget(self.scrollWidget)
 
-        self.vbox.addWidget(self.selectionLabel)
+        self.vbox.addWidget(self.selectionContainer)
         self.vbox.addWidget(self.scrollArea)
 
         self.container = QWidget()
@@ -247,6 +271,18 @@ class MoleculeBoxes(QWidget):
         box.setGraphicsEffect(shadowEffect)
         return box
    
+    def onSelectAllButtonClicked(self):
+        if self.application.blockTransfer:
+            return
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+        for i in range(len(self.molecules)):
+            self.selectedMolecules.append(self.molecules[i])
+            # self.molecules.pop(i)
+        self.molecules = []
+        self.loadBoxes(tuple(self.application.sliderValues))
+        self.loadSelectedBoxes(tuple(self.application.sliderValues))
+
     def addToCatalogue(self, smiles, description):
         molecule = None
         try:
