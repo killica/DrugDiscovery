@@ -374,6 +374,21 @@ class MoleculeBoxes(QWidget):
         response = msgBox.exec_()
         if response == QMessageBox.Yes:
             self.tanimoto() 
+        
+        # Create a QMessageBox
+        msgBoxAvg = QMessageBox(self)
+        # Set the icon for the dialog
+        msgBoxAvg.setIcon(QMessageBox.Question)
+        # Set the window title
+        msgBoxAvg.setWindowTitle("Average QED coefficient")
+        # Set the message in the dialog
+        msgBoxAvg.setText("Do you want to average QED coefficient for current generation?")
+        # Add Yes and No buttons
+        msgBoxAvg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        # Show the message box and capture the response
+        responseAvg = msgBoxAvg.exec_()
+        if responseAvg == QMessageBox.Yes:
+            self.calculateAverageQED()
 
     def tanimoto(self):
         smilesList = [s.getSmiles() for s in self.newGenerationMolecules]
@@ -390,6 +405,13 @@ class MoleculeBoxes(QWidget):
             for sim in similarities:
                 tanimotoFile.write(f"{sim}, ")
             tanimotoFile.write("]\n------------------------------------\n")
+
+    def calculateAverageQED(self):
+        formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        coeffList = [s.getQED() for s in self.newGenerationMolecules]
+        avgQED = sum(coeffList) / len(coeffList)
+        with open('results/averageQED.txt', 'a') as tanimotoFile:
+            tanimotoFile.write(f"{avgQED}\n{formattedDatetime}\n------------------------------------\n")
 
     def onRestartButtonClicked(self):
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
