@@ -50,7 +50,7 @@ class GAParameters:
         self.elitismSpin = QSpinBox(application)
         self.elitismSpin.setMaximum(100)
         self.elitismSpin.setFixedWidth(70)
-        self.elitismSpin.setValue(10)
+        self.elitismSpin.setValue(2)
         self.mutationLineEdit = QLineEdit(application)
         self.mutationLineEdit.setFixedWidth(70)
         self.mutationLineEdit.setText("0.05")
