@@ -37,7 +37,8 @@ python3 main.py
 
 ## 📸 Demo video
 
-https://github.com/user-attachments/assets/6fc39220-ec1e-4f9e-9b5f-44e3a712c72f
+https://github.com/user-attachments/assets/2181ebf9-822a-4bc1-841e-367bea711e4f
+
 
 
 
