@@ -31,9 +31,9 @@ python3 main.py
 
 ## 🖼️ Gallery
 
-![1](https://github.com/user-attachments/assets/d4300f81-16a3-48ab-8a86-243ee4c91501)
+![intro](https://github.com/user-attachments/assets/de6f0c05-c195-4d82-bd5f-6c54013c404d)
 
-![2](https://github.com/user-attachments/assets/edf5425c-31ab-4645-a9e8-182319147059)
+![afterLaunch](https://github.com/user-attachments/assets/ed8b75e8-88ef-4237-abde-25552eb56db0)
 
 ## 📸 Demo video
 
