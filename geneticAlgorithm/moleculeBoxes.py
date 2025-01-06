@@ -297,13 +297,13 @@ class MoleculeBoxes(QWidget):
         self.removeBoxes()
         self.removeSelectedBoxes()
         self.molecules.append(Individual(smiles, description, self.application.sliderValues))
-        with open('molecules.json', 'r') as file:
+        with open('../data/molecules.json', 'r') as file:
             data = json.load(file)
         data.append({
             "SMILES": smiles,
             "Description": description
         })
-        with open('molecules.json', 'w') as file:
+        with open('../data/molecules.json', 'w') as file:
             json.dump(data, file, indent = 4)
         self.loadBoxes()
         self.loadSelectedBoxes()
