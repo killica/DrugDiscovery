@@ -84,7 +84,7 @@ class Application(QWidget):
         painter = QPainter(self)
         painter.setPen(QPen(QColor(128, 128, 128), 2))
         painter.drawLine(10, 685, 800, 685)
-        painter.drawLine(800, 20, 800, 880)
+        painter.drawLine(800, 20, 800, 880).
         painter.end()
 
     def onSubmitButtonClicked(self):
@@ -96,6 +96,29 @@ class Application(QWidget):
         with open('../data/molecules.json', 'r') as file:
             data = json.load(file)
         return [Individual(item['SMILES'], item['Description']) for item in data]
+
+    def get_molecules(self):
+        return self.molecules
+
+    def get_slider_values(self):
+        return self.sliderValues
+
+    def get_mutation_info(self):
+        return self.mi
+
+    def is_roulette_selection(self):
+        return self.rouletteSelection
+
+    def get_mutation_probability(self):
+        return self.mutationProbability
+
+    def get_ga_parameters(self):
+        return {
+            "generations": self.numberOfGenerations,
+            "tournament_size": self.tournamentSize,
+            "elitism_size": self.elitismSize,
+            "mutation_probability": self.mutationProbability
+        }
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
