@@ -5,6 +5,7 @@ from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
 from PyQt5.QtCore import Qt
 from rdkit import Chem
 from rdkit.Chem import Draw
+from GAConfig import GAConfig
 from moleculeBoxes import MoleculeBoxes
 from insertMolecule import NewMoleculeForm
 from hyperParameters import HyperParameters
@@ -33,11 +34,14 @@ class Application(QWidget):
         self.gaParameters = GAParameters(self)
 
         self.mi = MutationInfo()
-        self.rouletteSelection = False
-        self.numberOfGenerations = 100
-        self.tournamentSize = 4
-        self.elitismSize = 1
-        self.mutationProbability = 0.05
+
+        self.gaConfig = GAConfig(
+            generations = 100,
+            tournamentSize = 4,
+            elitismSize = 1,
+            mutationProbability = 0.05,
+            rouletteSelection = False
+        )
 
         self.sbmtBtn = self.newMoleculeForm.submitButton
         self.resBtn = self.hyperParamLayout.resetButton
@@ -84,7 +88,7 @@ class Application(QWidget):
         painter = QPainter(self)
         painter.setPen(QPen(QColor(128, 128, 128), 2))
         painter.drawLine(10, 685, 800, 685)
-        painter.drawLine(800, 20, 800, 880).
+        painter.drawLine(800, 20, 800, 880)
         painter.end()
 
     def onSubmitButtonClicked(self):
@@ -97,28 +101,14 @@ class Application(QWidget):
             data = json.load(file)
         return [Individual(item['SMILES'], item['Description']) for item in data]
 
-    def get_molecules(self):
+    def getMolecules(self):
         return self.molecules
 
-    def get_slider_values(self):
+    def getSliderValues(self):
         return self.sliderValues
 
-    def get_mutation_info(self):
+    def getMutationInfo(self):
         return self.mi
-
-    def is_roulette_selection(self):
-        return self.rouletteSelection
-
-    def get_mutation_probability(self):
-        return self.mutationProbability
-
-    def get_ga_parameters(self):
-        return {
-            "generations": self.numberOfGenerations,
-            "tournament_size": self.tournamentSize,
-            "elitism_size": self.elitismSize,
-            "mutation_probability": self.mutationProbability
-        }
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

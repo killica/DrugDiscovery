@@ -6,16 +6,16 @@ import contextlib
 from rdkit import Chem
 import mutationInfo
 
-def geneticAlgorithm(population, onlyOneGeneration, numberOfGenerations, rouletteSelection, tournamentSize, elitismSize, mutationProbability, mi, individualLabel, individualProgress):
+def geneticAlgorithm(population, onlyOneGeneration, generations, rouletteSelection, tournamentSize, elitismSize, mutationProbability, mi, individualLabel, individualProgress):
     populationSize = len(population)
     newPopulation = population.copy()
     if onlyOneGeneration:
-        numberOfGenerations = 1
+        generations = 1
     
     if elitismSize % 2 != populationSize % 2:
         elitismSize += 1
 
-    for _ in range(numberOfGenerations):
+    for _ in range(generations):
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
         tmp = 0

@@ -398,5 +398,9 @@
     {
         "SMILES": "Br.C[C@@H](Nc1ncnc2[nH]c(-c3ccc(O)cc3)cc12)c1ccccc1F",
         "Description": "CHEMBL1914658"
+    },
+    {
+        "SMILES": "CC=O",
+        "Description": "Ethanal"
     }
 ]

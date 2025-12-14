@@ -251,19 +251,19 @@ class GAParameters:
         """)
 
         # Necessary parameters for genetic algorithm
-        self.application.rouletteSelection = self.rouletteCheckBox.isChecked()
-        self.application.numberOfGenerations = self.generationSpin.value()
-        self.application.tournamentSize = self.tournamentSpin.value()
-        self.application.elitismSize = self.elitismSpin.value()
-        self.application.mutationProbability = float(self.mutationLineEdit.text())
+        self.application.gaConfig.rouletteSelection = self.rouletteCheckBox.isChecked()
+        self.application.gaConfig.generations = self.generationSpin.value()
+        self.application.gaConfig.tournamentSize = self.tournamentSpin.value()
+        self.application.gaConfig.elitismSize = self.elitismSpin.value()
+        self.application.gaConfig.mutationProbability = float(self.mutationLineEdit.text())
 
         moleculeBoxes.progressVBox = QVBoxLayout()
 
-        moleculeBoxes.generationLabel = QLabel(f"Generation: 2/{self.application.numberOfGenerations}")
+        moleculeBoxes.generationLabel = QLabel(f"Generation: 2/{self.application.gaConfig.generations}")
         moleculeBoxes.generationLabel.setStyleSheet("color: blue; font-style: bold;")
 
         moleculeBoxes.generationProgress = QProgressBar()
-        moleculeBoxes.generationProgress.setRange(0, self.application.numberOfGenerations)
+        moleculeBoxes.generationProgress.setRange(0, self.application.gaConfig.generations)
         moleculeBoxes.generationProgress.setValue(2)
 
         moleculeBoxes.individualLabel = QLabel(f"Individual: 0/{len(moleculeBoxes.selectedMolecules)}")
@@ -326,12 +326,12 @@ class GAParameters:
         moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             moleculeBoxes.selectedMolecules,
             True,
-            self.application.numberOfGenerations,
-            self.application.rouletteSelection,
-            self.application.tournamentSize,
-            self.application.elitismSize,
-            self.application.mutationProbability,
-            self.application.mi,
+            self.application.gaConfig.generations,
+            self.application.gaConfig.rouletteSelection,
+            self.application.gaConfig.tournamentSize,
+            self.application.gaConfig.elitismSize,
+            self.application.gaConfig.mutationProbability,
+            self.application.getMutationInfo(),
             moleculeBoxes.individualLabel,
             moleculeBoxes.individualProgress
         )

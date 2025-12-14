@@ -34,8 +34,8 @@ class ClickableGroupBox(QGroupBox):
             elif self.ind == 1:
                 self.moleculeBoxes.molecules.append(self.moleculeBoxes.selectedMolecules[self.index])
                 self.moleculeBoxes.selectedMolecules.pop(self.index)
-            self.moleculeBoxes.loadBoxes(tuple(self.moleculeBoxes.application.sliderValues))
-            self.moleculeBoxes.loadSelectedBoxes(tuple(self.moleculeBoxes.application.sliderValues))
+            self.moleculeBoxes.loadBoxes(tuple(self.moleculeBoxes.application.getSliderValues()))
+            self.moleculeBoxes.loadSelectedBoxes(tuple(self.moleculeBoxes.application.getSliderValues()))
 
         super().mousePressEvent(event)
 
@@ -280,8 +280,8 @@ class MoleculeBoxes(QWidget):
             self.selectedMolecules.append(self.molecules[i])
             # self.molecules.pop(i)
         self.molecules = []
-        self.loadBoxes(tuple(self.application.sliderValues))
-        self.loadSelectedBoxes(tuple(self.application.sliderValues))
+        self.loadBoxes(tuple(self.application.getSliderValues()))
+        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
 
     def addToCatalogue(self, smiles, description):
         molecule = None
@@ -296,7 +296,7 @@ class MoleculeBoxes(QWidget):
        
         self.removeBoxes()
         self.removeSelectedBoxes()
-        self.molecules.append(Individual(smiles, description, self.application.sliderValues))
+        self.molecules.append(Individual(smiles, description, self.application.getSliderValues()))
         with open('../data/molecules.json', 'r') as file:
             data = json.load(file)
         data.append({
@@ -313,24 +313,24 @@ class MoleculeBoxes(QWidget):
         self.removeSelectedBoxes()
         self.selectedMolecules = []
         for ind in self.newGenerationMolecules:
-            self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription(), tuple(self.application.sliderValues)))
-        self.loadSelectedBoxes(tuple(self.application.sliderValues))
+            self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription(), tuple(self.application.getSliderValues())))
+        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
         self.removeNewGenerationBoxes()
 
         self.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             self.selectedMolecules,
             True,
-            self.application.numberOfGenerations,
-            self.application.rouletteSelection,
-            self.application.tournamentSize,
-            self.application.elitismSize,
-            self.application.mutationProbability,
-            self.application.mi,
+            self.application.gaConfig.generations,
+            self.application.gaConfig.rouletteSelection,
+            self.application.gaConfig.tournamentSize,
+            self.application.gaConfig.elitismSize,
+            self.application.gaConfig.mutationProbability,
+            self.application.getMutationInfo(),
             self.individualLabel,
             self.individualProgress
         )
 
-        self.loadNewGeneration(tuple(self.application.sliderValues))
+        self.loadNewGeneration(tuple(self.application.getSliderValues()))
         labelText = self.secondLabel.text()
         self.precedentLabel.setText(labelText)
         # Regular expression to match a number at the start of the string
@@ -338,7 +338,7 @@ class MoleculeBoxes(QWidget):
         # Check if a match was found and extract the number
         labelNumber = int(match.group(0)) + 1
         self.secondLabel.setText(str(labelNumber) + ". generation")
-        self.generationLabel.setText(f"Generation: {labelNumber}/{self.application.numberOfGenerations}")
+        self.generationLabel.setText(f"Generation: {labelNumber}/{self.application.gaConfig.generations}")
         self.generationProgress.setValue(labelNumber)
 
     def onFinalButtonClicked(self):
@@ -348,7 +348,7 @@ class MoleculeBoxes(QWidget):
         match = re.match(r'^\d+', labelText)
         # Check if a match was found and extract the number
         labelNumber = int(match.group(0))
-        for _ in range(self.application.numberOfGenerations - labelNumber):
+        for _ in range(self.application.gaConfig.generations - labelNumber):
             self.onGenerateButtonClicked()
 
     def onSaveButtonClicked(self):
@@ -415,7 +415,7 @@ class MoleculeBoxes(QWidget):
 
     def onRestartButtonClicked(self):
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
-        self.generationLabel.setText(f"Generation: 1/{self.application.numberOfGenerations}")
+        self.generationLabel.setText(f"Generation: 1/{self.application.gaConfig.generations}")
         self.generationProgress.setValue(1)
         self.individualLabel.setText(f"Individual: 0/{len(self.selectedMolecules)}")
         self.individualProgress.setValue(0)
@@ -423,7 +423,7 @@ class MoleculeBoxes(QWidget):
         self.removeSelectedBoxes()
         self.removeNewGenerationBoxes()
         self.molecules = self.application.readMolecules()
-        self.loadBoxes(self.application.sliderValues)
+        self.loadBoxes(self.application.getSliderValues())
         self.application.molecules = []
         self.selectedMolecules = []
         self.newGenerationMolecules = []
