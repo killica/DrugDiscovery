@@ -152,6 +152,8 @@ class MoleculeBoxes(QWidget):
 
         self.selectedMolecules = []
         self.newGenerationMolecules = []
+        # Filled by loadNewGeneration(); must exist before removeNewGenerationBoxes() on any code path.
+        self.newGenerationBoxes = []
 
         self.precedentLayout = QGridLayout()
 
@@ -277,7 +279,7 @@ class MoleculeBoxes(QWidget):
         self.selectedBoxes = []
 
     def removeNewGenerationBoxes(self):
-        for newGenerationBox in self.newGenerationBoxes:
+        for newGenerationBox in list(self.newGenerationBoxes):
             self.secondLayout.removeWidget(newGenerationBox)
             newGenerationBox.deleteLater()
         self.newGenerationBoxes = []
