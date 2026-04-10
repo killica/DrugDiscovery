@@ -3,7 +3,7 @@ import copy
 import re
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar, QApplication
 from PyQt5.QtGui import QImage, QPixmap, QColor, QFont, QPainter, QPainterPath, QPen
-from PyQt5.QtCore import QEvent, Qt, QRectF
+from PyQt5.QtCore import Qt, QRectF
 
 # Structure thumbnails: fixed size, rounded clip (shadow sits on the frame below).
 MOLECULE_IMAGE_SIZE = 200
@@ -181,9 +181,12 @@ class MoleculeBoxes(QWidget):
         self.rightCont1.setLayout(self.rightHBox1)
         self.rightCont1.setFixedSize(920, 325)
        
-        self.secondLayout = QVBoxLayout()
+        self.secondLayout = QGridLayout()
         self.secondLayout.setContentsMargins(0, 0, 0, 0)
-        self.secondLayout.setSpacing(12)
+        self.secondLayout.setHorizontalSpacing(12)
+        self.secondLayout.setVerticalSpacing(12)
+        for c in range(self.columnsPerRow):
+            self.secondLayout.setColumnMinimumWidth(c, 230)
 
         self.rightHB = QHBoxLayout()
 
@@ -256,30 +259,23 @@ class MoleculeBoxes(QWidget):
 
     def loadNewGeneration(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self._clear_second_generation_grid()
+        QApplication.processEvents()
         if len(self.newGenerationMolecules) > 0:
             self.newGenerationMolecules.sort(reverse=True)
             mols = self.newGenerationMolecules
             n = len(mols)
             cpr = self.columnsPerRow
-            for row_start in range(0, n, cpr):
-                row_widget = QWidget()
-                row_h = QHBoxLayout(row_widget)
-                row_h.setContentsMargins(0, 0, 0, 0)
-                row_h.setSpacing(12)
-                for col in range(cpr):
-                    index = row_start + col
-                    if index >= n:
-                        break
-                    individual = mols[index]
-                    smiles = individual.getSmiles()
-                    description = individual.getDescription()
-                    individual.setWeights(weights)
-                    qed = individual.getQED()
-                    box = self.createMoleculeBox(smiles, description, qed, index, -1)
-                    self.newGenerationBoxes.append(box)
-                    row_h.addWidget(box)
-                row_h.addStretch(1)
-                self.secondLayout.addWidget(row_widget)
+            for index in range(n):
+                row = index // cpr
+                col = index % cpr
+                individual = mols[index]
+                smiles = individual.getSmiles()
+                description = individual.getDescription()
+                individual.setWeights(weights)
+                qed = individual.getQED()
+                box = self.createMoleculeBox(smiles, description, qed, index, -1)
+                self.newGenerationBoxes.append(box)
+                self.secondLayout.addWidget(box, row, col)
 
             if getattr(self, "bestBox", None) is not None:
                 self.rightHBox2.removeWidget(self.bestBox)
@@ -292,6 +288,8 @@ class MoleculeBoxes(QWidget):
                 -1,
             )
             self.rightHBox2.insertWidget(1, self.bestBox)
+            self.secondScrollWidget.updateGeometry()
+            QApplication.processEvents()
        
     def removeBoxes(self):
         for box in self.boxes:
@@ -412,7 +410,6 @@ class MoleculeBoxes(QWidget):
         for ind in self.newGenerationMolecules:
             self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription(), tuple(self.application.getSliderValues())))
         self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
-        self.removeNewGenerationBoxes()
 
         n = len(self.selectedMolecules)
         self.individualProgress.setMaximum(max(n, 1))
