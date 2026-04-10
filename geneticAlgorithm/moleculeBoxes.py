@@ -104,6 +104,8 @@ class MoleculeBoxes(QWidget):
         self.windowWidth = application.width()
         self.boxWidth = 220
         self.columnsPerRow = 3
+        # Avoid re-running RDKit MolToImage for the same SMILES on every layout rebuild (slider / transfer).
+        self._structure_pixmap_cache = {}
         self.layout = QGridLayout()
 
         self.vbox = QVBoxLayout()
@@ -221,13 +223,14 @@ class MoleculeBoxes(QWidget):
        
     def loadBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.boxes = []
+        for individual in self.molecules:
+            individual.setWeights(weights)
         self.molecules.sort(reverse=True)
         for index, individual in enumerate(self.molecules):
             row = index // 3
             col = index % 3
             smiles = individual.getSmiles()
             description = individual.getDescription()
-            individual.setWeights(weights)
             qed = individual.getQED()
             self.moleculeBox = self.createMoleculeBox(smiles, description, qed, index, 0)
             self.boxes.append(self.moleculeBox)
@@ -235,13 +238,14 @@ class MoleculeBoxes(QWidget):
 
     def loadSelectedBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.selectedBoxes = []
+        for individual in self.selectedMolecules:
+            individual.setWeights(weights)
         self.selectedMolecules.sort(reverse=True)
         for index, individual in enumerate(self.selectedMolecules):
             row = index // 3
             col = index % 3
             smiles = individual.getSmiles()
             description = individual.getDescription()
-            individual.setWeights(weights)
             qed = individual.getQED()
             self.selectedMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, 1)
             self.selectedBoxes.append(self.selectedMoleculeBox)
@@ -318,17 +322,36 @@ class MoleculeBoxes(QWidget):
     def getBest(self):
         return self.rightCont3
 
+    def _structure_pixmap_for_smiles(self, smiles):
+        if not smiles:
+            return None
+        if smiles in self._structure_pixmap_cache:
+            return self._structure_pixmap_cache[smiles]
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return None
+        molImage = Draw.MolToImage(mol, size=(MOLECULE_IMAGE_SIZE, MOLECULE_IMAGE_SIZE))
+        qimage = QImage(molImage.tobytes(), molImage.width, molImage.height, molImage.width * 3, QImage.Format_RGB888)
+        pm = QPixmap.fromImage(qimage)
+        self._structure_pixmap_cache[smiles] = pm
+        return pm
+
+    def refreshQEDForAll(self, weights):
+
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+        self.loadBoxes(weights)
+        self.loadSelectedBoxes(weights)
+
     def createMoleculeBox(self, smiles, description, qed, index, ind):
         box = ClickableGroupBox(self, index, ind)
         box.setFixedWidth(230)
         boxLayout = QVBoxLayout()
         boxLayout.setSpacing(6)
 
-        mol = Chem.MolFromSmiles(smiles) if smiles else None
-        if mol is not None:
-            molImage = Draw.MolToImage(mol, size=(MOLECULE_IMAGE_SIZE, MOLECULE_IMAGE_SIZE))
-            qimage = QImage(molImage.tobytes(), molImage.width, molImage.height, molImage.width * 3, QImage.Format_RGB888)
-            imageLabel = RoundedMoleculeImage(QPixmap(qimage))
+        pm = self._structure_pixmap_for_smiles(smiles)
+        if pm is not None:
+            imageLabel = RoundedMoleculeImage(pm)
         else:
             imageLabel = RoundedMoleculeImage(None)
 

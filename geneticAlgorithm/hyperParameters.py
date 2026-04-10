@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSlider, QWidget, QPushButton
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 class HyperParameters:
     def __init__(self, application):
@@ -44,7 +44,7 @@ class HyperParameters:
             self.paramSlider.setTickInterval(1) 
             self.paramSlider.setFixedWidth(350)
             self.paramSlider.setValue(int(default * 100))
-            self.paramSlider.valueChanged.connect(lambda value, idx = i: self.updateParamLabel(idx))
+            self.paramSlider.valueChanged.connect(lambda _v, idx=i: self._onSliderValueChanged(idx))
             self.paramSlider.setStyleSheet("""
                 border: none;               
             """)
@@ -59,24 +59,38 @@ class HyperParameters:
         self.container.setStyleSheet("""  
             padding-top: 0px;            
         """)
-            
-    def updateParamLabel(self, idx):
+
+        self._slider_debounce = QTimer(application)
+        self._slider_debounce.setSingleShot(True)
+        self._slider_debounce.setInterval(180)
+        self._slider_debounce.timeout.connect(self._applySlidersToMolecules)
+
+    def _syncSliderValuesFromUi(self):
+        for i, hbox in enumerate(self.hBoxes):
+            self.application.sliderValues[i] = hbox.itemAt(1).widget().value() / 100.0
+
+    def _onSliderValueChanged(self, idx):
         value = self.hBoxes[idx].itemAt(1).widget().value()
-        name = self.names[idx]
         label = self.hBoxes[idx].itemAt(0).widget()
-        label.setText(f"{name}: {value/100}")
-        self.application.sliderValues[idx] = value/100
-        self.moleculeBoxes.removeBoxes()
-        self.moleculeBoxes.removeSelectedBoxes()
-        sliderValues = []
-        for box in self.hBoxes:
-            sliderValues.append(box.itemAt(1).widget().value())
-        self.moleculeBoxes.loadBoxes(tuple([value/100 for value in sliderValues]))
-        self.moleculeBoxes.loadSelectedBoxes(tuple([value/100 for value in sliderValues]))
+        label.setText(f"{self.names[idx]}: {value/100}")
+        self._syncSliderValuesFromUi()
+        self._slider_debounce.start()
+
+    def _applySlidersToMolecules(self):
+        self._syncSliderValuesFromUi()
+        self.moleculeBoxes.refreshQEDForAll(tuple(self.application.sliderValues))
 
     def onResetButtonClicked(self):
+        self._slider_debounce.stop()
         for i in range(len(self.names)):
-            self.hBoxes[i].itemAt(1).widget().setValue(self.defaultValues[i] * 100)
+            w = self.hBoxes[i].itemAt(1).widget()
+            w.blockSignals(True)
+            w.setValue(int(self.defaultValues[i] * 100))
+            w.blockSignals(False)
+            lbl = self.hBoxes[i].itemAt(0).widget()
+            lbl.setText(f"{self.names[i]}: {self.defaultValues[i]}")
+        self._syncSliderValuesFromUi()
+        self.moleculeBoxes.refreshQEDForAll(tuple(self.application.sliderValues))
 
     def getSlidersWidget(self):
         return self.container
