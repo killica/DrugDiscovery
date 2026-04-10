@@ -15,8 +15,22 @@ def _process_gui_events():
         app.processEvents()
 
 
-def geneticAlgorithm(population, onlyOneGeneration, generations, rouletteSelection, tournamentSize, elitismSize, mutationProbability, mi, individualLabel, individualProgress):
+def geneticAlgorithm(
+    population,
+    onlyOneGeneration,
+    generations,
+    rouletteSelection,
+    tournamentSize,
+    elitismSize,
+    mutationProbability,
+    mi,
+    individualLabel,
+    individualProgress,
+    cancel_check=None,
+):
     populationSize = len(population)
+    if cancel_check and cancel_check():
+        return population
     individualProgress.setMaximum(max(populationSize, 1))
     individualProgress.setValue(0)
     individualLabel.setText(f"Individual: 0/{populationSize}")
@@ -29,11 +43,15 @@ def geneticAlgorithm(population, onlyOneGeneration, generations, rouletteSelecti
         elitismSize += 1
 
     for _ in range(generations):
+        if cancel_check and cancel_check():
+            return population
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
         tmp = 0
         _process_gui_events()
         for j in range(elitismSize, populationSize, 2):
+            if cancel_check and cancel_check():
+                return population
             parent1 = selection(population, rouletteSelection, tournamentSize)
             parent2 = selection(population, rouletteSelection, tournamentSize) # TODO: Parents be different
 

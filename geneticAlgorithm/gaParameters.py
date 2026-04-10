@@ -358,6 +358,7 @@ class GAParameters:
         self.application.resBtn.setDisabled(True)
 
         self.application.blockTransfer = True
+        self.application._cancel_evolution = False
 
         # Paint progress widgets once before the long-running GA blocks the event loop.
         QApplication.processEvents()
@@ -372,8 +373,12 @@ class GAParameters:
             self.application.gaConfig.mutationProbability,
             self.application.getMutationInfo(),
             moleculeBoxes.individualLabel,
-            moleculeBoxes.individualProgress
+            moleculeBoxes.individualProgress,
+            cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
         )
+
+        if getattr(self.application, "_cancel_evolution", False):
+            return
 
         moleculeBoxes.loadNewGeneration(tuple(self.application.sliderValues))
         

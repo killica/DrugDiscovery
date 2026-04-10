@@ -27,6 +27,8 @@ class Application(QWidget):
 
         # Allow transfering molecule boxes between scroll areas
         self.blockTransfer = False
+        # Set True in closeEvent so geneticAlgorithm can exit when the window is closed.
+        self._cancel_evolution = False
 
         self.moleculeBoxes = MoleculeBoxes(self)
         self.newMoleculeForm = NewMoleculeForm(self)
@@ -83,6 +85,10 @@ class Application(QWidget):
         self.setFixedSize(1750, 900)
 
         self.show()
+
+    def closeEvent(self, event):
+        self._cancel_evolution = True
+        super().closeEvent(event)
 
     def paintEvent(self, event):
         painter = QPainter(self)

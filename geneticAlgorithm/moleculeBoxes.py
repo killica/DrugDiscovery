@@ -181,7 +181,9 @@ class MoleculeBoxes(QWidget):
         self.rightCont1.setLayout(self.rightHBox1)
         self.rightCont1.setFixedSize(920, 325)
        
-        self.secondLayout = QGridLayout()
+        self.secondLayout = QVBoxLayout()
+        self.secondLayout.setContentsMargins(0, 0, 0, 0)
+        self.secondLayout.setSpacing(12)
 
         self.rightHB = QHBoxLayout()
 
@@ -191,6 +193,7 @@ class MoleculeBoxes(QWidget):
 
         self.secondScrollWidget = QWidget()
         self.secondScrollWidget.setLayout(self.secondLayout)
+        self.secondScrollWidget.setMinimumWidth(self.columnsPerRow * 230 + (self.columnsPerRow - 1) * 12 + 8)
         self.secondScrollArea.setWidget(self.secondScrollWidget)
 
         self.secondLabel = QLabel("2. generation")
@@ -241,22 +244,46 @@ class MoleculeBoxes(QWidget):
             self.selectedBoxes.append(self.selectedMoleculeBox)
             self.precedentLayout.addWidget(self.selectedMoleculeBox, row, col)
 
-    def loadNewGeneration(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+    def _clear_second_generation_grid(self):
+        """Remove every widget from the 2nd-generation layout without relying on
+        newGenerationBoxes."""
+        while self.secondLayout.count():
+            item = self.secondLayout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
         self.newGenerationBoxes = []
+
+    def loadNewGeneration(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+        self._clear_second_generation_grid()
         if len(self.newGenerationMolecules) > 0:
             self.newGenerationMolecules.sort(reverse=True)
-            for index, individual in enumerate(self.newGenerationMolecules):
-                row = index // self.columnsPerRow
-                col = index % self.columnsPerRow
-                smiles = individual.getSmiles()
-                description = individual.getDescription()
-                individual.setWeights(weights)
-                qed = individual.getQED()
-                self.newGenerationMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, -1)
-                self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
-                self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
+            mols = self.newGenerationMolecules
+            n = len(mols)
+            cpr = self.columnsPerRow
+            for row_start in range(0, n, cpr):
+                row_widget = QWidget()
+                row_h = QHBoxLayout(row_widget)
+                row_h.setContentsMargins(0, 0, 0, 0)
+                row_h.setSpacing(12)
+                for col in range(cpr):
+                    index = row_start + col
+                    if index >= n:
+                        break
+                    individual = mols[index]
+                    smiles = individual.getSmiles()
+                    description = individual.getDescription()
+                    individual.setWeights(weights)
+                    qed = individual.getQED()
+                    box = self.createMoleculeBox(smiles, description, qed, index, -1)
+                    self.newGenerationBoxes.append(box)
+                    row_h.addWidget(box)
+                row_h.addStretch(1)
+                self.secondLayout.addWidget(row_widget)
 
-            self.bestBox.deleteLater()
+            if getattr(self, "bestBox", None) is not None:
+                self.rightHBox2.removeWidget(self.bestBox)
+                self.bestBox.deleteLater()
             self.bestBox = self.createMoleculeBox(
                 self.newGenerationMolecules[0].getSmiles(),
                 "Current best",
@@ -279,10 +306,7 @@ class MoleculeBoxes(QWidget):
         self.selectedBoxes = []
 
     def removeNewGenerationBoxes(self):
-        for newGenerationBox in list(self.newGenerationBoxes):
-            self.secondLayout.removeWidget(newGenerationBox)
-            newGenerationBox.deleteLater()
-        self.newGenerationBoxes = []
+        self._clear_second_generation_grid()
 
     def getSelectionWidget(self):
         return self.container
@@ -406,8 +430,12 @@ class MoleculeBoxes(QWidget):
             self.application.gaConfig.mutationProbability,
             self.application.getMutationInfo(),
             self.individualLabel,
-            self.individualProgress
+            self.individualProgress,
+            cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
         )
+
+        if getattr(self.application, "_cancel_evolution", False):
+            return
 
         self.loadNewGeneration(tuple(self.application.getSliderValues()))
         labelText = self.secondLabel.text()
@@ -421,6 +449,7 @@ class MoleculeBoxes(QWidget):
         self.generationProgress.setValue(labelNumber)
 
     def onFinalButtonClicked(self):
+        self.application._cancel_evolution = False
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
         labelText = self.secondLabel.text()
         # Regular expression to match a number at the start of the string
@@ -428,6 +457,8 @@ class MoleculeBoxes(QWidget):
         # Check if a match was found and extract the number
         labelNumber = int(match.group(0))
         for _ in range(self.application.gaConfig.generations - labelNumber):
+            if getattr(self.application, "_cancel_evolution", False):
+                break
             self.onGenerateButtonClicked()
 
     def onSaveButtonClicked(self):
