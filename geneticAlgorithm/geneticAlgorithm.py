@@ -5,9 +5,22 @@ import os
 import contextlib
 from rdkit import Chem
 import mutationInfo
+from PyQt5.QtWidgets import QApplication
+
+
+def _process_gui_events():
+    """Allow progress labels/bars to repaint while GA runs on the main thread."""
+    app = QApplication.instance()
+    if app is not None:
+        app.processEvents()
+
 
 def geneticAlgorithm(population, onlyOneGeneration, generations, rouletteSelection, tournamentSize, elitismSize, mutationProbability, mi, individualLabel, individualProgress):
     populationSize = len(population)
+    individualProgress.setMaximum(max(populationSize, 1))
+    individualProgress.setValue(0)
+    individualLabel.setText(f"Individual: 0/{populationSize}")
+    _process_gui_events()
     newPopulation = population.copy()
     if onlyOneGeneration:
         generations = 1
@@ -19,6 +32,7 @@ def geneticAlgorithm(population, onlyOneGeneration, generations, rouletteSelecti
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
         tmp = 0
+        _process_gui_events()
         for j in range(elitismSize, populationSize, 2):
             parent1 = selection(population, rouletteSelection, tournamentSize)
             parent2 = selection(population, rouletteSelection, tournamentSize) # TODO: Parents be different
@@ -36,13 +50,15 @@ def geneticAlgorithm(population, onlyOneGeneration, generations, rouletteSelecti
 
             individualLabel.setText(f"Individual: {j+1}/{len(population)}")
             individualProgress.setValue(j+1)
+            _process_gui_events()
 
             tmp = j
 
         population = newPopulation.copy()
         individualLabel.setText(f"Individual: {tmp+2}/{len(population)}")
         individualProgress.setValue(tmp+2)
-    
+        _process_gui_events()
+
     return population
 
 def selection(population, rouletteSelection, tournamentSize):

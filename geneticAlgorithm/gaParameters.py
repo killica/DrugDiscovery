@@ -1,8 +1,38 @@
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QWidget, QPushButton, QLineEdit, QCheckBox, QProgressBar
+from PyQt5.QtWidgets import (
+    QApplication,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QSpinBox,
+    QWidget,
+    QPushButton,
+    QLineEdit,
+    QCheckBox,
+    QProgressBar,
+    QSizePolicy,
+)
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 import geneticAlgorithm
 from mutationInfo import MutationInfo
+
+# Row needs enough width: buttons (~350) + best card (~230) + gap + progress (~min 280).
+GA_PROGRESS_BAR_STYLE = """
+QProgressBar {
+    border: 1px solid #9e9e9e;
+    border-radius: 6px;
+    background-color: #e8e8e8;
+    text-align: center;
+    min-height: 24px;
+    max-height: 28px;
+    color: #1a1a1a;
+}
+QProgressBar::chunk {
+    background-color: #2e7d32;
+    border-radius: 5px;
+}
+"""
+
 
 class GAParameters:
     def __init__(self, application):
@@ -234,8 +264,6 @@ class GAParameters:
         moleculeBoxes.rightBtnCnt.setFixedSize(350, 215)
 
         moleculeBoxes.bestBox = moleculeBoxes.createMoleculeBox("", "To be determined", 0.0, 0, -1)
-        moleculeBoxes.bestBox.setAlignment(Qt.AlignCenter)
-
 
         self.launchButton.setDisabled(True)
         self.launchButton.setStyleSheet("""
@@ -265,13 +293,20 @@ class GAParameters:
         moleculeBoxes.generationProgress = QProgressBar()
         moleculeBoxes.generationProgress.setRange(0, self.application.gaConfig.generations)
         moleculeBoxes.generationProgress.setValue(2)
+        moleculeBoxes.generationProgress.setStyleSheet(GA_PROGRESS_BAR_STYLE)
+        moleculeBoxes.generationProgress.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        moleculeBoxes.generationProgress.setTextVisible(True)
 
-        moleculeBoxes.individualLabel = QLabel(f"Individual: 0/{len(moleculeBoxes.selectedMolecules)}")
+        n_selected = len(moleculeBoxes.selectedMolecules)
+        moleculeBoxes.individualLabel = QLabel(f"Individual: 0/{n_selected}")
         moleculeBoxes.individualLabel.setStyleSheet("color: blue; font-style: bold;")
 
         moleculeBoxes.individualProgress = QProgressBar()
-        moleculeBoxes.individualProgress.setRange(0, len(moleculeBoxes.selectedMolecules))
-        moleculeBoxes.individualProgress.setValue(1)
+        moleculeBoxes.individualProgress.setRange(0, max(n_selected, 1))
+        moleculeBoxes.individualProgress.setValue(0)
+        moleculeBoxes.individualProgress.setStyleSheet(GA_PROGRESS_BAR_STYLE)
+        moleculeBoxes.individualProgress.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        moleculeBoxes.individualProgress.setTextVisible(True)
 
         moleculeBoxes.progressVBox.addWidget(moleculeBoxes.generationLabel)
         moleculeBoxes.progressVBox.addWidget(moleculeBoxes.generationProgress)
@@ -281,16 +316,17 @@ class GAParameters:
 
         moleculeBoxes.progressCnt = QWidget()
         moleculeBoxes.progressCnt.setLayout(moleculeBoxes.progressVBox)
-        moleculeBoxes.progressCnt.setFixedSize(350, 120)
+        moleculeBoxes.progressCnt.setMinimumWidth(280)
+        moleculeBoxes.progressCnt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.rightBtnCnt)
-        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.bestBox)
-        moleculeBoxes.rightHBox2.addSpacing(50)
-        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.progressCnt)
-        moleculeBoxes.rightHBox2.setAlignment(Qt.AlignHCenter)
+        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.rightBtnCnt, 0)
+        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.bestBox, 0)
+        moleculeBoxes.rightHBox2.addSpacing(24)
+        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.progressCnt, 1)
+        moleculeBoxes.rightHBox2.setAlignment(Qt.AlignTop)
 
         moleculeBoxes.rightCont3.setLayout(moleculeBoxes.rightHBox2)
-        moleculeBoxes.rightCont3.setFixedSize(850, 270)
+        moleculeBoxes.rightCont3.setFixedSize(920, 270)
 
         self.rouletteCheckBox.setDisabled(True)
         self.rouletteCheckBox.setStyleSheet("""
@@ -322,6 +358,9 @@ class GAParameters:
         self.application.resBtn.setDisabled(True)
 
         self.application.blockTransfer = True
+
+        # Paint progress widgets once before the long-running GA blocks the event loop.
+        QApplication.processEvents()
 
         moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             moleculeBoxes.selectedMolecules,

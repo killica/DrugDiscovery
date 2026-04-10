@@ -43,7 +43,7 @@ class HyperParameters:
             self.paramSlider.setRange(0, 100)
             self.paramSlider.setTickInterval(1) 
             self.paramSlider.setFixedWidth(350)
-            self.paramSlider.setValue(default * 100)
+            self.paramSlider.setValue(int(default * 100))
             self.paramSlider.valueChanged.connect(lambda value, idx = i: self.updateParamLabel(idx))
             self.paramSlider.setStyleSheet("""
                 border: none;               

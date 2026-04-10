@@ -1,9 +1,53 @@
 import json
 import copy
 import re
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar
-from PyQt5.QtGui import QImage, QPixmap, QColor, QFont
-from PyQt5.QtCore import QEvent, Qt
+from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar, QApplication
+from PyQt5.QtGui import QImage, QPixmap, QColor, QFont, QPainter, QPainterPath, QPen
+from PyQt5.QtCore import QEvent, Qt, QRectF
+
+# Structure thumbnails: fixed size, rounded clip (shadow sits on the frame below).
+MOLECULE_IMAGE_SIZE = 200
+MOLECULE_IMAGE_CORNER_RADIUS = 14
+
+
+class RoundedMoleculeImage(QLabel):
+    """Renders a square pixmap clipped to rounded corners (reliable across platforms)."""
+
+    def __init__(self, pixmap, parent=None):
+        super().__init__(parent)
+        self._pixmap = pixmap
+        self.setFixedSize(MOLECULE_IMAGE_SIZE, MOLECULE_IMAGE_SIZE)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+
+    def setMoleculePixmap(self, pixmap):
+        self._pixmap = pixmap
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        w, h = float(self.width()), float(self.height())
+        r = float(MOLECULE_IMAGE_CORNER_RADIUS)
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(0, 0, w, h), r, r)
+        painter.setClipPath(path)
+
+        if self._pixmap is None or self._pixmap.isNull():
+            painter.fillPath(path, QColor(245, 245, 245))
+        else:
+            scaled = self._pixmap.scaled(
+                self.size(),
+                Qt.IgnoreAspectRatio,
+                Qt.SmoothTransformation,
+            )
+            painter.drawPixmap(0, 0, scaled)
+
+        painter.setClipping(False)
+        painter.setPen(QPen(QColor(218, 222, 226), 1))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(QRectF(0.5, 0.5, w - 1, h - 1), r, r)
+        painter.end()
 from rdkit import Chem
 from rdkit.Chem import Draw, rdMolDescriptors
 from rdkit.DataStructs import FingerprintSimilarity
@@ -19,7 +63,8 @@ class ClickableGroupBox(QGroupBox):
         self.moleculeBoxes = moleculeBoxes
         self.index = index
         self.ind = ind
-       
+        self.description_label = None
+
     def mousePressEvent(self, event):
         if self.moleculeBoxes.application.blockTransfer:
             return
@@ -40,12 +85,16 @@ class ClickableGroupBox(QGroupBox):
         super().mousePressEvent(event)
 
     def enterEvent(self, event):
-        if not self.moleculeBoxes.application.blockTransfer:
-            self.layout().itemAt(1).widget().setStyleSheet("color: darkgreen; font-weight: bold;")
+        if not self.moleculeBoxes.application.blockTransfer and self.description_label is not None:
+            self.description_label.setStyleSheet(
+                "color: darkgreen; font-weight: bold; background: transparent;"
+            )
 
     def leaveEvent(self, event):
-        if not self.moleculeBoxes.application.blockTransfer:
-            self.layout().itemAt(1).widget().setStyleSheet("color: black; font-weight: normal;")
+        if not self.moleculeBoxes.application.blockTransfer and self.description_label is not None:
+            self.description_label.setStyleSheet(
+                "color: #111111; font-weight: normal; background: transparent;"
+            )
 
 class MoleculeBoxes(QWidget):
     def __init__(self, application):
@@ -204,11 +253,16 @@ class MoleculeBoxes(QWidget):
                 self.newGenerationMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, -1)
                 self.newGenerationBoxes.append(self.newGenerationMoleculeBox)
                 self.secondLayout.addWidget(self.newGenerationMoleculeBox, row, col)
-           
-                self.bestBox.deleteLater()
-                self.bestBox = self.createMoleculeBox(self.newGenerationMolecules[0].getSmiles(), "Current best", self.newGenerationMolecules[0].getQED(), 0, -1)
-                self.bestBox.setAlignment(Qt.AlignCenter)
-                self.rightHBox2.insertWidget(1, self.bestBox)
+
+            self.bestBox.deleteLater()
+            self.bestBox = self.createMoleculeBox(
+                self.newGenerationMolecules[0].getSmiles(),
+                "Current best",
+                self.newGenerationMolecules[0].getQED(),
+                0,
+                -1,
+            )
+            self.rightHBox2.insertWidget(1, self.bestBox)
        
     def removeBoxes(self):
         for box in self.boxes:
@@ -244,14 +298,37 @@ class MoleculeBoxes(QWidget):
         box = ClickableGroupBox(self, index, ind)
         box.setFixedWidth(230)
         boxLayout = QVBoxLayout()
-        mol = Chem.MolFromSmiles(smiles)
-        molImage = Draw.MolToImage(mol, size=(200, 200))
-        qimage = QImage(molImage.tobytes(), molImage.width, molImage.height, molImage.width * 3, QImage.Format_RGB888)
-        pixmap = QPixmap(qimage)
-        imageLabel = QLabel()
-        imageLabel.setPixmap(pixmap)
+        boxLayout.setSpacing(6)
+
+        mol = Chem.MolFromSmiles(smiles) if smiles else None
+        if mol is not None:
+            molImage = Draw.MolToImage(mol, size=(MOLECULE_IMAGE_SIZE, MOLECULE_IMAGE_SIZE))
+            qimage = QImage(molImage.tobytes(), molImage.width, molImage.height, molImage.width * 3, QImage.Format_RGB888)
+            imageLabel = RoundedMoleculeImage(QPixmap(qimage))
+        else:
+            imageLabel = RoundedMoleculeImage(None)
+
+        # Shadow on the image frame only (not the whole QGroupBox — keeps text labels reliable).
+        imageFrame = QWidget()
+        imageFrame.setFixedSize(MOLECULE_IMAGE_SIZE, MOLECULE_IMAGE_SIZE)
+        imageFrameLayout = QVBoxLayout(imageFrame)
+        imageFrameLayout.setContentsMargins(0, 0, 0, 0)
+        imageFrameLayout.addWidget(imageLabel)
+        shadowEffect = QGraphicsDropShadowEffect()
+        shadowEffect.setOffset(3, 5)
+        shadowEffect.setBlurRadius(20)
+        shadowEffect.setColor(QColor(0, 0, 0, 95))
+        imageFrame.setGraphicsEffect(shadowEffect)
+
         descriptionLabel = QLabel(description + "\n" + "QED: " + str(round(qed, 4)))
-        boxLayout.addWidget(imageLabel)
+        descriptionLabel.setWordWrap(True)
+        descriptionLabel.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        descriptionLabel.setStyleSheet(
+            "color: #111111; font-weight: normal; background: transparent;"
+        )
+        box.description_label = descriptionLabel
+
+        boxLayout.addWidget(imageFrame, 0, Qt.AlignHCenter)
         boxLayout.addWidget(descriptionLabel)
         box.setLayout(boxLayout)
 
@@ -263,12 +340,6 @@ class MoleculeBoxes(QWidget):
                 padding: 10px;                          
             }}
         """)
-
-        shadowEffect = QGraphicsDropShadowEffect()
-        shadowEffect.setOffset(5, 5)              
-        shadowEffect.setBlurRadius(15)            
-        shadowEffect.setColor(QColor(0, 0, 0, 160))
-        box.setGraphicsEffect(shadowEffect)
         return box
    
     def onSelectAllButtonClicked(self):
@@ -316,6 +387,12 @@ class MoleculeBoxes(QWidget):
             self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription(), tuple(self.application.getSliderValues())))
         self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
         self.removeNewGenerationBoxes()
+
+        n = len(self.selectedMolecules)
+        self.individualProgress.setMaximum(max(n, 1))
+        self.individualProgress.setValue(0)
+        self.individualLabel.setText(f"Individual: 0/{n}")
+        QApplication.processEvents()
 
         self.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             self.selectedMolecules,
