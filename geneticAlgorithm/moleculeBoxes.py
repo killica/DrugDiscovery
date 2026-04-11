@@ -367,6 +367,12 @@ class MoleculeBoxes(QWidget):
         shadowEffect.setColor(QColor(0, 0, 0, 95))
         imageFrame.setGraphicsEffect(shadowEffect)
 
+        imageRow = QHBoxLayout()
+        imageRow.setContentsMargins(0, 0, 0, 0)
+        imageRow.addStretch(1)
+        imageRow.addWidget(imageFrame, 0, Qt.AlignHCenter)
+        imageRow.addStretch(1)
+
         descriptionLabel = QLabel(description + "\n" + "QED: " + str(round(qed, 4)))
         descriptionLabel.setWordWrap(True)
         descriptionLabel.setAlignment(Qt.AlignTop | Qt.AlignLeft)
@@ -375,7 +381,8 @@ class MoleculeBoxes(QWidget):
         )
         box.description_label = descriptionLabel
 
-        boxLayout.addWidget(imageFrame, 0, Qt.AlignHCenter)
+        boxLayout.setContentsMargins(0, 0, 0, 0)
+        boxLayout.addLayout(imageRow)
         boxLayout.addWidget(descriptionLabel)
         box.setLayout(boxLayout)
 
