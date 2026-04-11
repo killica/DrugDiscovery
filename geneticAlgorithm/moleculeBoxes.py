@@ -2,16 +2,35 @@ import json
 import copy
 import re
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar, QApplication
-from PyQt5.QtGui import QImage, QPixmap, QColor, QFont, QPainter, QPainterPath, QPen
-from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtGui import QImage, QPixmap, QColor, QFont, QPainter, QPainterPath, QPen, QCursor
+from PyQt5.QtCore import Qt, QRectF, QEvent, QTimer
 
 # Structure thumbnails: fixed size, rounded clip (shadow sits on the frame below).
 MOLECULE_IMAGE_SIZE = 200
 MOLECULE_IMAGE_CORNER_RADIUS = 14
 
+STAGE1_SCROLL_WIDTH = 760
+STAGE1_SCROLL_HEIGHT = 380
+
+MOLECULE_BOX_QSS_NORMAL = """
+    QGroupBox {
+        background-color: rgb(255, 255, 255);
+        border: 2px solid green;
+        border-radius: 15px;
+        padding: 10px;
+    }
+"""
+MOLECULE_BOX_QSS_HOVER = """
+    QGroupBox {
+        background-color: #e8f5e9;
+        border: 2px solid green;
+        border-radius: 15px;
+        padding: 10px;
+    }
+"""
 
 class RoundedMoleculeImage(QLabel):
-    """Renders a square pixmap clipped to rounded corners (reliable across platforms)."""
+    """Renders a square pixmap clipped to rounded corners."""
 
     def __init__(self, pixmap, parent=None):
         super().__init__(parent)
@@ -64,6 +83,44 @@ class ClickableGroupBox(QGroupBox):
         self.index = index
         self.ind = ind
         self.description_label = None
+        self._molecule_hover_active = False
+        self.setAttribute(Qt.WA_StyledBackground, True)
+
+    def _install_descendant_hover_tracking(self):
+        self.installEventFilter(self)
+        for w in self.findChildren(QWidget):
+            w.installEventFilter(self)
+
+    def eventFilter(self, watched, event):
+        et = event.type()
+        if et == QEvent.Enter:
+            self._set_molecule_hover(True)
+        elif et == QEvent.Leave:
+            QTimer.singleShot(0, self._sync_molecule_hover_from_cursor)
+        return False
+
+    def _sync_molecule_hover_from_cursor(self):
+        w = QApplication.widgetAt(QCursor.pos())
+        if w is not None and (w is self or self.isAncestorOf(w)):
+            self._set_molecule_hover(True)
+        else:
+            self._set_molecule_hover(False)
+
+    def _set_molecule_hover(self, active):
+        if self._molecule_hover_active == active:
+            return
+        self._molecule_hover_active = active
+        self.setStyleSheet(MOLECULE_BOX_QSS_HOVER if active else MOLECULE_BOX_QSS_NORMAL)
+        if self.description_label is None:
+            return
+        if active and not self.moleculeBoxes.application.blockTransfer:
+            self.description_label.setStyleSheet(
+                "color: darkgreen; font-weight: bold; background: transparent;"
+            )
+        else:
+            self.description_label.setStyleSheet(
+                "color: #111111; font-weight: normal; background: transparent;"
+            )
 
     def mousePressEvent(self, event):
         if self.moleculeBoxes.application.blockTransfer:
@@ -84,18 +141,6 @@ class ClickableGroupBox(QGroupBox):
 
         super().mousePressEvent(event)
 
-    def enterEvent(self, event):
-        if not self.moleculeBoxes.application.blockTransfer and self.description_label is not None:
-            self.description_label.setStyleSheet(
-                "color: darkgreen; font-weight: bold; background: transparent;"
-            )
-
-    def leaveEvent(self, event):
-        if not self.moleculeBoxes.application.blockTransfer and self.description_label is not None:
-            self.description_label.setStyleSheet(
-                "color: #111111; font-weight: normal; background: transparent;"
-            )
-
 class MoleculeBoxes(QWidget):
     def __init__(self, application):
         super().__init__(application)
@@ -107,13 +152,11 @@ class MoleculeBoxes(QWidget):
         # Avoid re-running RDKit MolToImage for the same SMILES on every layout rebuild (slider / transfer).
         self._structure_pixmap_cache = {}
         self.layout = QGridLayout()
+        self.layout.setContentsMargins(6, 6, 6, 6)
 
-        self.vbox = QVBoxLayout()
-
-        self.selectionHBox = QHBoxLayout()
-
-        self.selectionLabel = QLabel("Select molecules for the first generation:")
-        self.selectionLabel.setStyleSheet("font-size: 20px; font-weight: bold; padding-bottom: 10px;")
+        self.selectedMolecules = []
+        self.newGenerationMolecules = []
+        self.newGenerationBoxes = []
 
         self.selectAllButton = QPushButton("Select all")
         self.selectAllButton.setFixedWidth(100)
@@ -131,57 +174,61 @@ class MoleculeBoxes(QWidget):
         """)
         self.selectAllButton.clicked.connect(self.onSelectAllButtonClicked)
 
-        self.selectionHBox.addWidget(self.selectionLabel)
-        self.selectionHBox.addWidget(self.selectAllButton)
-
-        self.selectionContainer = QWidget()
-        self.selectionContainer.setLayout(self.selectionHBox)
+        self.catalogueLabel = QLabel("Catalogue")
+        self.catalogueLabel.setStyleSheet("font-size: 18px; font-weight: bold; padding-bottom: 6px;")
 
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setFixedSize(760, 290)
+        self.scrollArea.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
 
         self.scrollWidget = QWidget()
         self.scrollWidget.setLayout(self.layout)
         self.scrollArea.setWidget(self.scrollWidget)
 
-        self.vbox.addWidget(self.selectionContainer)
-        self.vbox.addWidget(self.scrollArea)
-
-        self.container = QWidget()
-        self.container.setLayout(self.vbox)
-        self.container.setFixedSize(760, 350)
-
-        self.selectedMolecules = []
-        self.newGenerationMolecules = []
-        # Filled by loadNewGeneration(); must exist before removeNewGenerationBoxes() on any code path.
-        self.newGenerationBoxes = []
+        self.selectedSectionLabel = QLabel("Selected for first generation")
+        self.selectedSectionLabel.setStyleSheet(
+            "font-size: 18px; font-weight: bold; color: darkgreen; padding-top: 10px;"
+        )
 
         self.precedentLayout = QGridLayout()
-
-        self.rightHBox1 = QHBoxLayout()
+        self.precedentLayout.setContentsMargins(6, 6, 6, 6)
 
         self.precedentScrollArea = QScrollArea()
         self.precedentScrollArea.setWidgetResizable(True)
-        self.precedentScrollArea.setFixedSize(760, 290)
+        self.precedentScrollArea.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
 
+        self.precedentGridHost = QWidget()
+        self.precedentGridHost.setLayout(self.precedentLayout)
         self.precedentScrollWidget = QWidget()
-        self.precedentScrollWidget.setLayout(self.precedentLayout)
+        self.precedentOuterLayout = QVBoxLayout(self.precedentScrollWidget)
+        self.precedentOuterLayout.setContentsMargins(0, 0, 0, 0)
+        self.precedentOuterLayout.setSpacing(0)
+        self.precedentOuterLayout.addWidget(self.precedentGridHost, 0, Qt.AlignTop)
+        self.precedentOuterLayout.addStretch(1)
         self.precedentScrollArea.setWidget(self.precedentScrollWidget)
 
         self.precedentLabel = QLabel("1. generation")
         self.precedentLabel.setFixedWidth(140)
         self.precedentLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
 
-        self.rightHBox1.addWidget(self.precedentScrollArea)
-        self.rightHBox1.addSpacing(20)
-        self.rightHBox1.addWidget(self.precedentLabel)
+        self.catalogueVBox = QVBoxLayout()
+        self.catalogueVBox.setSpacing(8)
+        self.catalogueVBox.setContentsMargins(0, 0, 4, 0)
+        self.catalogueVBox.addWidget(self.catalogueLabel)
+        self.catalogueVBox.addWidget(self.scrollArea)
+        self.catalogueVBox.addWidget(self.selectedSectionLabel)
+        self.catalogueVBox.addWidget(self.precedentScrollArea)
 
-        self.rightHBox1.setAlignment(Qt.AlignTop)
+        self.container = QWidget()
+        self.container.setLayout(self.catalogueVBox)
+        self.container.setMinimumWidth(STAGE1_SCROLL_WIDTH)
+        self.container.setMinimumSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT * 2 + 120)
+        self.precedentLabel.hide()
 
+        self.rightHBox1 = QHBoxLayout()
         self.rightCont1 = QWidget()
         self.rightCont1.setLayout(self.rightHBox1)
-        self.rightCont1.setFixedSize(920, 325)
+        self.rightCont1.setFixedSize(920, 405)
        
         self.secondLayout = QGridLayout()
         self.secondLayout.setContentsMargins(0, 0, 0, 0)
@@ -194,7 +241,7 @@ class MoleculeBoxes(QWidget):
 
         self.secondScrollArea = QScrollArea()
         self.secondScrollArea.setWidgetResizable(True)
-        self.secondScrollArea.setFixedSize(760, 290)
+        self.secondScrollArea.setFixedSize(760, 320)
 
         self.secondScrollWidget = QWidget()
         self.secondScrollWidget.setLayout(self.secondLayout)
@@ -213,7 +260,7 @@ class MoleculeBoxes(QWidget):
 
         self.rightCont2 = QWidget()
         self.rightCont2.setLayout(self.rightHB)
-        self.rightCont2.setFixedSize(920, 325)
+        self.rightCont2.setFixedSize(920, 355)
 
         self.rightHBox2 = QHBoxLayout()
         self.rightCont3 = QWidget()
@@ -316,6 +363,37 @@ class MoleculeBoxes(QWidget):
     def getPrecedentScrollArea(self):
         return self.rightCont1
 
+    def place_precedent_in_evolution_row(self):
+        """Move the 1st-generation scroll from the catalogue column to the evolution header row (stage 2)."""
+        if self.precedentScrollArea.parentWidget() == self.rightCont1:
+            return
+        self.catalogueVBox.removeWidget(self.precedentScrollArea)
+        self.precedentScrollArea.setParent(None)
+        while self.rightHBox1.count():
+            item = self.rightHBox1.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.setParent(None)
+        self.rightHBox1.addWidget(self.precedentScrollArea)
+        self.rightHBox1.addSpacing(20)
+        self.rightHBox1.addWidget(self.precedentLabel)
+        self.rightHBox1.setAlignment(Qt.AlignTop)
+        self.precedentLabel.show()
+        self.precedentScrollArea.show()
+
+    def place_precedent_in_catalogue_column(self):
+        """Put the selected-molecules scroll back under the catalogue (stage 1)."""
+        if self.precedentScrollArea.parentWidget() == self.container:
+            return
+        while self.rightHBox1.count():
+            item = self.rightHBox1.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.setParent(None)
+        self.catalogueVBox.addWidget(self.precedentScrollArea)
+        self.precedentLabel.hide()
+        self.precedentScrollArea.show()
+
     def getSecondScrollArea(self):
         return self.rightCont2
 
@@ -386,14 +464,8 @@ class MoleculeBoxes(QWidget):
         boxLayout.addWidget(descriptionLabel)
         box.setLayout(boxLayout)
 
-        box.setStyleSheet(f"""
-            QGroupBox {{
-                background-color: rgb(255, 255, 255);  
-                border: 2px solid green;                
-                border-radius: 15px;                    
-                padding: 10px;                          
-            }}
-        """)
+        box.setStyleSheet(MOLECULE_BOX_QSS_NORMAL)
+        box._install_descendant_hover_tracking()
         return box
    
     def onSelectAllButtonClicked(self):
@@ -624,3 +696,4 @@ class MoleculeBoxes(QWidget):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
+        self.application.show_stage_1()

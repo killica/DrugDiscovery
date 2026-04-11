@@ -1,6 +1,23 @@
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QWidget, QSlider, QDesktopWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QScrollArea, QGroupBox
+from PyQt5.QtWidgets import (
+    QApplication,
+    QWidget,
+    QSlider,
+    QDesktopWidget,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QLabel,
+    QLineEdit,
+    QScrollArea,
+    QGroupBox,
+    QStackedWidget,
+    QMessageBox,
+    QFrame,
+    QSizePolicy,
+)
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QPalette
 from PyQt5.QtCore import Qt
 from rdkit import Chem
@@ -13,6 +30,8 @@ from gaParameters import GAParameters
 from individual import Individual
 from mutationInfo import MutationInfo
 
+STAGE1_WINDOW_SIZE = (1180, 940)
+STAGE2_WINDOW_SIZE = (1680, 960)
 
 def apply_light_fusion_theme(app):
     """Use Fusion + a light palette so the UI stays white on macOS/Windows dark mode."""
@@ -46,18 +65,13 @@ def apply_light_fusion_theme(app):
 class Application(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Drug Discovery')
+        self.setWindowTitle("Drug Discovery")
         self.resize(800, 600)
-
-        self.mainLayout = QHBoxLayout()
-        self.leftLayout = QVBoxLayout()
 
         self.molecules = self.readMolecules()
         self.sliderValues = [0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95]
 
-        # Allow transfering molecule boxes between scroll areas
         self.blockTransfer = False
-        # Set True in closeEvent so geneticAlgorithm can exit when the window is closed.
         self._cancel_evolution = False
 
         self.moleculeBoxes = MoleculeBoxes(self)
@@ -68,60 +82,134 @@ class Application(QWidget):
         self.mi = MutationInfo()
 
         self.gaConfig = GAConfig(
-            generations = 100,
-            tournamentSize = 4,
-            elitismSize = 1,
-            mutationProbability = 0.05,
-            rouletteSelection = False
+            generations=100,
+            tournamentSize=4,
+            elitismSize=1,
+            mutationProbability=0.05,
+            rouletteSelection=False,
         )
 
         self.sbmtBtn = self.newMoleculeForm.submitButton
         self.resBtn = self.hyperParamLayout.resetButton
 
-        self.cnt = QWidget()
-        self.h1 = QHBoxLayout()
-        self.h1.setSizeConstraint(760)
+        # --- Stage 1: catalogue + selected (stacked) + sidebar (actions + add molecule) ---
+        self.stage1Sidebar = QWidget()
+        self.stage1Sidebar.setMaximumWidth(300)
+        sidebar_layout = QVBoxLayout(self.stage1Sidebar)
+        sidebar_layout.setSpacing(14)
+        # Extra left inset so controls sit clear of catalogue scroll bars + separator.
+        sidebar_layout.setContentsMargins(40, 8, 30, 8)
+        sidebar_title = QLabel("Actions")
+        sidebar_title.setStyleSheet("font-size: 17px; font-weight: bold;")
+        sidebar_layout.addWidget(sidebar_title)
+        sidebar_layout.addWidget(self.moleculeBoxes.selectAllButton)
+        sidebar_layout.addWidget(self.newMoleculeForm.getForm())
+        sidebar_layout.addStretch(1)
 
-        self.h1.addWidget(self.newMoleculeForm.getForm())
-        self.h1.addWidget(self.hyperParamLayout.getSlidersWidget())
+        self.continueToNextButton = QPushButton("Continue")
+        self.continueToNextButton.setFixedWidth(200)
+        self.continueToNextButton.setStyleSheet("""
+            QPushButton {
+                background-color: #2e7d32;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 12px 16px;
+                font-size: 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #1b5e20; }
+        """)
+        self.continueToNextButton.clicked.connect(self.on_continue_to_stage_2)
+        sidebar_layout.addWidget(self.continueToNextButton)
 
-        self.cnt.setLayout(self.h1)
-        self.cnt.setFixedWidth(765)
-        self.cnt.setFixedHeight(300)
+        stage1_sep = QFrame()
+        stage1_sep.setFrameShape(QFrame.VLine)
+        stage1_sep.setFrameShadow(QFrame.Sunken)
+        stage1_sep.setStyleSheet("color: #c8c8c8;")
+        stage1_sep.setFixedWidth(1)
+        stage1_sep.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 
-        self.leftLayout.addWidget(self.moleculeBoxes.getSelectionWidget())
-        self.leftLayout.addSpacing(70)
-        self.leftLayout.addWidget(self.cnt)
-        self.leftLayout.addSpacing(30)
-        self.leftLayout.addWidget(self.gaParameters.getGAParametersWidget())
-        
-        self.leftWrapper = QWidget()
-        self.leftWrapper.setLayout(self.leftLayout)
-        self.leftWrapper.setFixedHeight(880)
-        self.mainLayout.addWidget(self.leftWrapper)
+        stage1_row = QHBoxLayout()
+        stage1_row.setSpacing(0)
+        stage1_row.setContentsMargins(8, 6, 8, 6)
+        stage1_row.addWidget(self.moleculeBoxes.getSelectionWidget(), 1)
+        stage1_row.addSpacing(20)
+        stage1_row.addWidget(stage1_sep, 0, Qt.AlignTop)
+        stage1_row.addSpacing(16)
+        stage1_row.addWidget(self.stage1Sidebar, 0, Qt.AlignTop)
 
-        self.rightLayout = QVBoxLayout()
-        self.rightLayout.addWidget(self.moleculeBoxes.getPrecedentScrollArea())
-        self.rightLayout.addWidget(self.moleculeBoxes.getSecondScrollArea())
-        self.rightLayout.addWidget(self.moleculeBoxes.getBest())
+        self.stage1Page = QWidget()
+        self.stage1Page.setLayout(stage1_row)
+
+        # --- Stage 2: hyperparameters + GA config (left) | evolution views (right) ---
+        self.stage2LeftLayout = QVBoxLayout()
+        self.stage2LeftLayout.setSpacing(16)
+        self.stage2LeftLayout.addWidget(self.hyperParamLayout.getSlidersWidget())
+        self.stage2LeftLayout.addWidget(self.gaParameters.getGAParametersWidget())
+
+        self.stage2Left = QWidget()
+        self.stage2Left.setLayout(self.stage2LeftLayout)
+        self.stage2Left.setMinimumWidth(780)
+
+        self.evolutionColumn = QVBoxLayout()
+        self.evolutionColumn.addWidget(self.moleculeBoxes.getPrecedentScrollArea())
+        self.evolutionColumn.addWidget(self.moleculeBoxes.getSecondScrollArea())
+        self.evolutionColumn.addWidget(self.moleculeBoxes.getBest())
 
         self.rightWrapper = QWidget()
-        self.rightWrapper.setLayout(self.rightLayout)
-        self.rightWrapper.setFixedHeight(880)
-        self.mainLayout.addWidget(self.rightWrapper)
-        self.mainLayout.setAlignment(Qt.AlignTop)
+        self.rightWrapper.setLayout(self.evolutionColumn)
+        self.rightWrapper.setFixedHeight(1030)
 
-        self.setLayout(self.mainLayout)
-        self.setFixedSize(1750, 900)
+        stage2_row = QHBoxLayout()
+        stage2_row.setSpacing(16)
+        stage2_row.addWidget(self.stage2Left, 0, Qt.AlignTop)
+        stage2_row.addWidget(self.rightWrapper, 0, Qt.AlignTop)
+
+        self.stage2Page = QWidget()
+        self.stage2Page.setLayout(stage2_row)
+
+        self.stack = QStackedWidget()
+        self.stack.addWidget(self.stage1Page)
+        self.stack.addWidget(self.stage2Page)
+
+        root = QVBoxLayout()
+        root.setContentsMargins(8, 8, 8, 8)
+        root.addWidget(self.stack)
+        self.setLayout(root)
+        self.setMinimumSize(1120, 820)
+        self.resize(*STAGE1_WINDOW_SIZE)
         self.setAutoFillBackground(True)
 
+        self.stack.setCurrentIndex(0)
+
         self.show()
+
+    def on_continue_to_stage_2(self):
+        if len(self.moleculeBoxes.selectedMolecules) == 0:
+            QMessageBox.warning(
+                self,
+                "Nothing selected",
+                "Select at least one molecule for the first generation (click cards in the catalogue).",
+            )
+            return
+        self.moleculeBoxes.place_precedent_in_evolution_row()
+        self.stack.setCurrentIndex(1)
+        self.resize(*STAGE2_WINDOW_SIZE)
+
+    def show_stage_1(self):
+        self.moleculeBoxes.place_precedent_in_catalogue_column()
+        self.stack.setCurrentIndex(0)
+        self.resize(*STAGE1_WINDOW_SIZE)
 
     def closeEvent(self, event):
         self._cancel_evolution = True
         super().closeEvent(event)
 
     def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.stack.currentIndex() != 1:
+            return
         painter = QPainter(self)
         painter.setPen(QPen(QColor(128, 128, 128), 2))
         painter.drawLine(10, 685, 800, 685)
@@ -134,9 +222,9 @@ class Application(QWidget):
         self.moleculeBoxes.addToCatalogue(smiles, description)
 
     def readMolecules(self):
-        with open('../data/molecules.json', 'r') as file:
+        with open("../data/molecules.json", "r") as file:
             data = json.load(file)
-        return [Individual(item['SMILES'], item['Description']) for item in data]
+        return [Individual(item["SMILES"], item["Description"]) for item in data]
 
     def getMolecules(self):
         return self.molecules
@@ -147,7 +235,8 @@ class Application(QWidget):
     def getMutationInfo(self):
         return self.mi
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     apply_light_fusion_theme(app)
     window = Application()

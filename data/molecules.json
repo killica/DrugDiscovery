@@ -402,5 +402,9 @@
     {
         "SMILES": "CC=O",
         "Description": "Ethanal"
+    },
+    {
+        "SMILES": "CCO",
+        "Description": "Ethanol"
     }
 ]
