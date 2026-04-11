@@ -1,7 +1,7 @@
 import sys
 import json
 from PyQt5.QtWidgets import QApplication, QWidget, QSlider, QDesktopWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QScrollArea, QGroupBox
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QPalette
 from PyQt5.QtCore import Qt
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -12,6 +12,36 @@ from hyperParameters import HyperParameters
 from gaParameters import GAParameters
 from individual import Individual
 from mutationInfo import MutationInfo
+
+
+def apply_light_fusion_theme(app):
+    """Use Fusion + a light palette so the UI stays white on macOS/Windows dark mode."""
+    app.setStyle("Fusion")
+    palette = QPalette()
+    window = QColor(255, 255, 255)
+    text = QColor(30, 30, 30)
+    muted = QColor(120, 120, 120)
+    palette.setColor(QPalette.Window, window)
+    palette.setColor(QPalette.WindowText, text)
+    palette.setColor(QPalette.Base, window)
+    palette.setColor(QPalette.AlternateBase, QColor(245, 245, 245))
+    palette.setColor(QPalette.ToolTipBase, QColor(255, 255, 220))
+    palette.setColor(QPalette.ToolTipText, text)
+    palette.setColor(QPalette.Text, text)
+    palette.setColor(QPalette.Button, QColor(240, 240, 240))
+    palette.setColor(QPalette.ButtonText, text)
+    palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
+    palette.setColor(QPalette.Link, QColor(0, 100, 200))
+    palette.setColor(QPalette.Highlight, QColor(0, 120, 215))
+    palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
+    if hasattr(QPalette, "PlaceholderText"):
+        palette.setColor(QPalette.PlaceholderText, QColor(127, 127, 127))
+    for group in (QPalette.Disabled,):
+        palette.setColor(group, QPalette.WindowText, muted)
+        palette.setColor(group, QPalette.Text, muted)
+        palette.setColor(group, QPalette.ButtonText, muted)
+    app.setPalette(palette)
+
 
 class Application(QWidget):
     def __init__(self):
@@ -83,6 +113,7 @@ class Application(QWidget):
 
         self.setLayout(self.mainLayout)
         self.setFixedSize(1750, 900)
+        self.setAutoFillBackground(True)
 
         self.show()
 
@@ -118,5 +149,6 @@ class Application(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    apply_light_fusion_theme(app)
     window = Application()
     sys.exit(app.exec_())
