@@ -34,7 +34,8 @@ from individual import Individual
 from mutationInfo import MutationInfo
 
 STAGE1_WINDOW_SIZE = (1240, 980)
-STAGE2_WINDOW_SIZE = (1680, 960)
+STAGE2_GA_WINDOW_SIZE = (1280, 920)
+STAGE3_WINDOW_SIZE = (1240, 900)
 
 def apply_light_fusion_theme(app):
     """Use Fusion + a light palette so the UI stays white on macOS/Windows dark mode."""
@@ -193,9 +194,9 @@ class Application(QWidget):
         self.stage1Page = QWidget()
         self.stage1Page.setLayout(stage1_row)
 
-        # --- Stage 2: GA config (left) | evolution views (right); ---
-        self.stage2LeftLayout = QVBoxLayout()
-        self.stage2LeftLayout.setSpacing(16)
+        # --- Stage 2: GA parameters only ---
+        self.stage2GaLayout = QVBoxLayout()
+        self.stage2GaLayout.setSpacing(16)
 
         self.backToStage1Button = QPushButton("← Back to catalogue & fitness")
         self.backToStage1Button.setStyleSheet(
@@ -213,7 +214,26 @@ class Application(QWidget):
             """
         )
         self.backToStage1Button.clicked.connect(self.on_back_to_stage_1)
-        self.stage2LeftLayout.addWidget(self.backToStage1Button, 0, Qt.AlignLeft)
+        self.stage2GaLayout.addWidget(self.backToStage1Button, 0, Qt.AlignLeft)
+
+        self.viewEvolutionStageButton = QPushButton("View evolution & results")
+        self.viewEvolutionStageButton.setVisible(False)
+        self.viewEvolutionStageButton.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #1565c0;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #0d47a1; }
+            """
+        )
+        self.viewEvolutionStageButton.clicked.connect(self.on_view_evolution_stage)
+        self.stage2GaLayout.addWidget(self.viewEvolutionStageButton, 0, Qt.AlignLeft)
 
         self.stage2_insight_group = QGroupBox("First-generation selection")
         self.stage2_insight_group.setStyleSheet(
@@ -252,33 +272,65 @@ class Application(QWidget):
         self.stage2_insight_scroll.setWidget(self.stage2_insight_inner)
         insight_outer.addWidget(self.stage2_insight_scroll)
 
-        self.stage2LeftLayout.addWidget(self.stage2_insight_group)
-        self.stage2LeftLayout.addWidget(self.gaParameters.getGAParametersWidget())
+        self.stage2GaLayout.addWidget(self.stage2_insight_group)
+        self.stage2GaLayout.addWidget(self.gaParameters.getGAParametersWidget())
+        self.stage2GaLayout.addStretch(1)
 
-        self.stage2Left = QWidget()
-        self.stage2Left.setLayout(self.stage2LeftLayout)
-        self.stage2Left.setMinimumWidth(780)
+        self.stage2GaPage = QWidget()
+        self.stage2GaPage.setLayout(self.stage2GaLayout)
+        self.stage2GaPage.setMinimumWidth(780)
 
-        self.evolutionColumn = QVBoxLayout()
-        self.evolutionColumn.addWidget(self.moleculeBoxes.getPrecedentScrollArea())
-        self.evolutionColumn.addWidget(self.moleculeBoxes.getSecondScrollArea())
-        self.evolutionColumn.addWidget(self.moleculeBoxes.getBest())
+        self.evolutionRowLayout = QHBoxLayout()
+        self.evolutionRowLayout.setSpacing(16)
+        self.evolutionLeftColumn = QVBoxLayout()
+        self.evolutionLeftColumn.setSpacing(12)
+        self.evolutionLeftColumn.addWidget(self.moleculeBoxes.getPrecedentScrollArea(), 1)
+        self.evolutionLeftColumn.addWidget(self.moleculeBoxes.getSecondScrollArea(), 1)
+
+        self.evolutionRowLayout.addLayout(self.evolutionLeftColumn, 1)
+        self.evolutionRowLayout.addWidget(self.moleculeBoxes.getBest(), 0, Qt.AlignTop | Qt.AlignRight)
 
         self.rightWrapper = QWidget()
-        self.rightWrapper.setLayout(self.evolutionColumn)
-        self.rightWrapper.setFixedHeight(1030)
+        self.rightWrapper.setLayout(self.evolutionRowLayout)
+        self.rightWrapper.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        stage2_row = QHBoxLayout()
-        stage2_row.setSpacing(16)
-        stage2_row.addWidget(self.stage2Left, 0, Qt.AlignTop)
-        stage2_row.addWidget(self.rightWrapper, 0, Qt.AlignTop)
+        # --- Stage 3: evolution / progress (after Launch). ---
+        self.backToGaConfigButton = QPushButton("← Back to GA parameters")
+        self.backToGaConfigButton.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #455a64;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #37474f; }
+            """
+        )
+        self.backToGaConfigButton.clicked.connect(self.on_back_to_ga_stage)
+        stage3_top = QHBoxLayout()
+        stage3_top.setContentsMargins(0, 0, 0, 8)
+        stage3_top.addWidget(self.backToGaConfigButton, 0, Qt.AlignLeft)
+        stage3_top.addStretch(1)
+        stage3_top_w = QWidget()
+        stage3_top_w.setLayout(stage3_top)
 
-        self.stage2Page = QWidget()
-        self.stage2Page.setLayout(stage2_row)
+        stage3_outer = QVBoxLayout()
+        stage3_outer.setContentsMargins(8, 8, 8, 8)
+        stage3_outer.setSpacing(0)
+        stage3_outer.addWidget(stage3_top_w, 0)
+        stage3_outer.addWidget(self.rightWrapper, 1)
+
+        self.stage3Page = QWidget()
+        self.stage3Page.setLayout(stage3_outer)
 
         self.stack = QStackedWidget()
         self.stack.addWidget(self.stage1Page)
-        self.stack.addWidget(self.stage2Page)
+        self.stack.addWidget(self.stage2GaPage)
+        self.stack.addWidget(self.stage3Page)
 
         root = QVBoxLayout()
         root.setContentsMargins(8, 8, 8, 8)
@@ -326,7 +378,16 @@ class Application(QWidget):
             return
         self.moleculeBoxes.place_precedent_in_evolution_row()
         self.stack.setCurrentIndex(1)
-        self.resize(*STAGE2_WINDOW_SIZE)
+        self.resize(*STAGE2_GA_WINDOW_SIZE)
+
+    def on_back_to_ga_stage(self):
+        """Return to the GA summary page (parameters are fixed for this run; controls stay disabled)."""
+        self.stack.setCurrentIndex(1)
+        self.resize(*STAGE2_GA_WINDOW_SIZE)
+
+    def on_view_evolution_stage(self):
+        self.stack.setCurrentIndex(2)
+        self.resize(*STAGE3_WINDOW_SIZE)
 
     def on_back_to_stage_1(self):
         if self.blockTransfer:
@@ -372,6 +433,7 @@ class Application(QWidget):
         lay.addStretch(1)
 
     def show_stage_1(self):
+        self.viewEvolutionStageButton.setVisible(False)
         self.moleculeBoxes.place_precedent_in_catalogue_column()
         self.stack.setCurrentIndex(0)
         self.resize(*STAGE1_WINDOW_SIZE)
@@ -382,7 +444,7 @@ class Application(QWidget):
 
     def paintEvent(self, event):
         super().paintEvent(event)
-        if self.stack.currentIndex() != 1:
+        if self.stack.currentIndex() != 2:
             return
         painter = QPainter(self)
         painter.setPen(QPen(QColor(128, 128, 128), 2))

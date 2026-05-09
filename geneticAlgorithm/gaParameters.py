@@ -16,6 +16,8 @@ from PyQt5.QtGui import QIcon
 import geneticAlgorithm
 from mutationInfo import MutationInfo
 
+STAGE3_WINDOW_SIZE = (1200, 900)
+
 GA_PROGRESS_BAR_STYLE = """
 QProgressBar {
     border: 1px solid #9e9e9e;
@@ -260,7 +262,8 @@ class GAParameters:
 
         moleculeBoxes.rightBtnCnt = QWidget()
         moleculeBoxes.rightBtnCnt.setLayout(moleculeBoxes.rightVBox3)
-        moleculeBoxes.rightBtnCnt.setFixedSize(350, 215)
+        moleculeBoxes.rightBtnCnt.setMinimumSize(300, 200)
+        moleculeBoxes.rightBtnCnt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         moleculeBoxes.bestBox = moleculeBoxes.createMoleculeBox("", "To be determined", 0.0, 0, -1)
 
@@ -315,17 +318,25 @@ class GAParameters:
 
         moleculeBoxes.progressCnt = QWidget()
         moleculeBoxes.progressCnt.setLayout(moleculeBoxes.progressVBox)
-        moleculeBoxes.progressCnt.setMinimumWidth(280)
+        moleculeBoxes.progressCnt.setMinimumWidth(300)
         moleculeBoxes.progressCnt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.rightBtnCnt, 0)
-        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.bestBox, 0)
-        moleculeBoxes.rightHBox2.addSpacing(24)
-        moleculeBoxes.rightHBox2.addWidget(moleculeBoxes.progressCnt, 1)
-        moleculeBoxes.rightHBox2.setAlignment(Qt.AlignTop)
+        moleculeBoxes.evolutionControlsLayout.addWidget(moleculeBoxes.rightBtnCnt, 0, Qt.AlignTop)
+        moleculeBoxes.evolutionControlsLayout.addSpacing(12)
+        moleculeBoxes.evolutionControlsLayout.addWidget(moleculeBoxes.bestBox, 0, Qt.AlignTop)
+        moleculeBoxes.evolutionControlsLayout.addSpacing(16)
+        moleculeBoxes.evolutionControlsLayout.addWidget(moleculeBoxes.progressCnt, 0, Qt.AlignTop)
+        moleculeBoxes.evolutionControlsLayout.addStretch(1)
 
-        moleculeBoxes.rightCont3.setLayout(moleculeBoxes.rightHBox2)
-        moleculeBoxes.rightCont3.setFixedSize(920, 270)
+        moleculeBoxes.rightCont3.setLayout(moleculeBoxes.evolutionControlsLayout)
+        moleculeBoxes.rightCont3.setMinimumWidth(380)
+        moleculeBoxes.rightCont3.setMaximumWidth(520)
+        moleculeBoxes.rightCont3.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
+        # Show evolution / progress on stage 3 before the GA blocks the event loop.
+        self.application.stack.setCurrentIndex(2)
+        self.application.resize(*STAGE3_WINDOW_SIZE)
+        self.application.viewEvolutionStageButton.setVisible(True)
 
         self.rouletteCheckBox.setDisabled(True)
         self.rouletteCheckBox.setStyleSheet("""

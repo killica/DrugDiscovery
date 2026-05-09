@@ -160,7 +160,7 @@ class ClickableGroupBox(QGroupBox):
         if self.moleculeBoxes.application.blockTransfer:
             return
         app = self.moleculeBoxes.application
-        if hasattr(app, "stack") and app.stack.currentIndex() == 1:
+        if hasattr(app, "stack") and app.stack.currentIndex() == 2:
             super().mousePressEvent(event)
             return
         if self.ind != 0 and self.ind != 1:
@@ -285,10 +285,10 @@ class MoleculeBoxes(QWidget):
         self.precedentOuterLayout.setSpacing(0)
         self.precedentOuterLayout.addWidget(self.precedentGridHost, 0, Qt.AlignTop)
         self.precedentOuterLayout.addStretch(1)
+        self.precedentScrollWidget.setMinimumWidth(0)
         self.precedentScrollArea.setWidget(self.precedentScrollWidget)
 
         self.precedentLabel = QLabel("1. generation")
-        self.precedentLabel.setFixedWidth(140)
         self.precedentLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
 
         self.stage1SectionSeparator = QFrame()
@@ -334,44 +334,46 @@ class MoleculeBoxes(QWidget):
         self.container.setMinimumSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT * 2 + 112)
         self.precedentLabel.hide()
 
-        self.rightHBox1 = QHBoxLayout()
+        self.evolutionGen1VBox = QVBoxLayout()
+        self.evolutionGen1VBox.setSpacing(8)
+        self.evolutionGen1VBox.setContentsMargins(0, 0, 0, 0)
         self.rightCont1 = QWidget()
-        self.rightCont1.setLayout(self.rightHBox1)
-        self.rightCont1.setFixedSize(920, 405)
-       
+        self.rightCont1.setLayout(self.evolutionGen1VBox)
+        self.rightCont1.setMinimumSize(200, 160)
+        self.rightCont1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         self.secondLayout = QGridLayout()
         self.secondLayout.setContentsMargins(0, 0, 0, 0)
         self.secondLayout.setHorizontalSpacing(12)
         self.secondLayout.setVerticalSpacing(12)
-        for c in range(self.columnsPerRow):
-            self.secondLayout.setColumnMinimumWidth(c, 230)
-
-        self.rightHB = QHBoxLayout()
 
         self.secondScrollArea = QScrollArea()
         self.secondScrollArea.setWidgetResizable(True)
-        self.secondScrollArea.setFixedSize(760, 320)
+        self.secondScrollArea.setMinimumSize(0, 160)
+        self.secondScrollArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.secondScrollWidget = QWidget()
         self.secondScrollWidget.setLayout(self.secondLayout)
-        self.secondScrollWidget.setMinimumWidth(self.columnsPerRow * 230 + (self.columnsPerRow - 1) * 12 + 8)
+        self.secondScrollWidget.setMinimumWidth(0)
         self.secondScrollArea.setWidget(self.secondScrollWidget)
 
         self.secondLabel = QLabel("2. generation")
-        self.secondLabel.setFixedWidth(140)
         self.secondLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
 
-        self.rightHB.addWidget(self.secondScrollArea)
-        self.rightHB.addSpacing(20)
-        self.rightHB.addWidget(self.secondLabel)
-
-        self.rightHB.setAlignment(Qt.AlignTop)
+        self.evolutionGen2VBox = QVBoxLayout()
+        self.evolutionGen2VBox.setSpacing(8)
+        self.evolutionGen2VBox.setContentsMargins(0, 0, 0, 0)
+        self.evolutionGen2VBox.addWidget(self.secondLabel, 0, Qt.AlignLeft)
+        self.evolutionGen2VBox.addWidget(self.secondScrollArea, 1)
 
         self.rightCont2 = QWidget()
-        self.rightCont2.setLayout(self.rightHB)
-        self.rightCont2.setFixedSize(920, 355)
+        self.rightCont2.setLayout(self.evolutionGen2VBox)
+        self.rightCont2.setMinimumSize(200, 160)
+        self.rightCont2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.rightHBox2 = QHBoxLayout()
+        self.evolutionControlsLayout = QVBoxLayout()
+        self.evolutionControlsLayout.setSpacing(0)
+        self.evolutionControlsLayout.setContentsMargins(0, 4, 0, 4)
         self.rightCont3 = QWidget()
 
         self.loadBoxes()
@@ -437,8 +439,10 @@ class MoleculeBoxes(QWidget):
                 self.newGenerationBoxes.append(box)
                 self.secondLayout.addWidget(box, row, col)
 
+            best_idx = -1
             if getattr(self, "bestBox", None) is not None:
-                self.rightHBox2.removeWidget(self.bestBox)
+                best_idx = self.evolutionControlsLayout.indexOf(self.bestBox)
+                self.evolutionControlsLayout.removeWidget(self.bestBox)
                 self.bestBox.deleteLater()
             self.bestBox = self.createMoleculeBox(
                 self.newGenerationMolecules[0].getSmiles(),
@@ -447,7 +451,14 @@ class MoleculeBoxes(QWidget):
                 0,
                 -1,
             )
-            self.rightHBox2.insertWidget(1, self.bestBox)
+            if best_idx >= 0:
+                self.evolutionControlsLayout.insertWidget(best_idx, self.bestBox, 0, Qt.AlignTop)
+            else:
+                pc_idx = self.evolutionControlsLayout.indexOf(getattr(self, "progressCnt", None))
+                if pc_idx >= 0:
+                    self.evolutionControlsLayout.insertWidget(pc_idx, self.bestBox, 0, Qt.AlignTop)
+                else:
+                    self.evolutionControlsLayout.addWidget(self.bestBox, 0, Qt.AlignTop)
             self.secondScrollWidget.updateGeometry()
             QApplication.processEvents()
        
@@ -478,30 +489,33 @@ class MoleculeBoxes(QWidget):
             return
         self.catalogueVBox.removeWidget(self.precedentScrollArea)
         self.precedentScrollArea.setParent(None)
-        while self.rightHBox1.count():
-            item = self.rightHBox1.takeAt(0)
+        while self.evolutionGen1VBox.count():
+            item = self.evolutionGen1VBox.takeAt(0)
             w = item.widget()
             if w is not None:
                 w.setParent(None)
-        self.rightHBox1.addWidget(self.precedentScrollArea)
-        self.rightHBox1.addSpacing(20)
-        self.rightHBox1.addWidget(self.precedentLabel)
-        self.rightHBox1.setAlignment(Qt.AlignTop)
+        self.evolutionGen1VBox.addWidget(self.precedentLabel, 0, Qt.AlignLeft)
+        self.evolutionGen1VBox.addWidget(self.precedentScrollArea, 1)
         self.precedentLabel.show()
         self.precedentScrollArea.show()
+        self.precedentScrollArea.setMinimumSize(0, 160)
+        self.precedentScrollArea.setMaximumSize(16777215, 16777215)
+        self.precedentScrollArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def place_precedent_in_catalogue_column(self):
         """Put the selected-molecules scroll back under the catalogue (stage 1)."""
         if self.precedentScrollArea.parentWidget() == self.container:
             return
-        while self.rightHBox1.count():
-            item = self.rightHBox1.takeAt(0)
+        while self.evolutionGen1VBox.count():
+            item = self.evolutionGen1VBox.takeAt(0)
             w = item.widget()
             if w is not None:
                 w.setParent(None)
         self.catalogueVBox.addWidget(self.precedentScrollArea)
         self.precedentLabel.hide()
         self.precedentScrollArea.show()
+        self.precedentScrollArea.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
+        self.precedentScrollArea.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     def getSecondScrollArea(self):
         return self.rightCont2
@@ -913,8 +927,8 @@ class MoleculeBoxes(QWidget):
         self.application.sbmtBtn.setDisabled(False)
         self.application.resBtn.setDisabled(False)
         self.application.blockTransfer = False
-        while self.rightHBox2.count():
-            item = self.rightHBox2.takeAt(0)
+        while self.evolutionControlsLayout.count():
+            item = self.evolutionControlsLayout.takeAt(0)
             widget = item.widget()
             if widget:
                 widget.deleteLater()
