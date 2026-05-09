@@ -1,5 +1,6 @@
 import sys
 import json
+import html
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -195,6 +196,63 @@ class Application(QWidget):
         # --- Stage 2: GA config (left) | evolution views (right); ---
         self.stage2LeftLayout = QVBoxLayout()
         self.stage2LeftLayout.setSpacing(16)
+
+        self.backToStage1Button = QPushButton("← Back to catalogue & fitness")
+        self.backToStage1Button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #455a64;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #37474f; }
+            """
+        )
+        self.backToStage1Button.clicked.connect(self.on_back_to_stage_1)
+        self.stage2LeftLayout.addWidget(self.backToStage1Button, 0, Qt.AlignLeft)
+
+        self.stage2_insight_group = QGroupBox("First-generation selection")
+        self.stage2_insight_group.setStyleSheet(
+            """
+            QGroupBox {
+                font-weight: bold;
+                font-size: 13px;
+                border: 1px solid #a5d6a7;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 8px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 4px;
+                color: #1b5e20;
+            }
+            """
+        )
+        insight_outer = QVBoxLayout(self.stage2_insight_group)
+        insight_outer.setSpacing(8)
+        self.stage2_insight_summary = QLabel("")
+        self.stage2_insight_summary.setWordWrap(True)
+        self.stage2_insight_summary.setStyleSheet("font-weight: normal; color: #424242;")
+        insight_outer.addWidget(self.stage2_insight_summary)
+        self.stage2_insight_scroll = QScrollArea()
+        self.stage2_insight_scroll.setWidgetResizable(True)
+        self.stage2_insight_scroll.setMaximumHeight(260)
+        self.stage2_insight_scroll.setFrameShape(QFrame.NoFrame)
+        self.stage2_insight_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.stage2_insight_inner = QWidget()
+        self.stage2_insight_list = QVBoxLayout(self.stage2_insight_inner)
+        self.stage2_insight_list.setContentsMargins(4, 4, 4, 4)
+        self.stage2_insight_list.setSpacing(10)
+        self.stage2_insight_scroll.setWidget(self.stage2_insight_inner)
+        insight_outer.addWidget(self.stage2_insight_scroll)
+
+        self.stage2LeftLayout.addWidget(self.stage2_insight_group)
         self.stage2LeftLayout.addWidget(self.gaParameters.getGAParametersWidget())
 
         self.stage2Left = QWidget()
@@ -231,6 +289,7 @@ class Application(QWidget):
         self.setAutoFillBackground(True)
 
         self.stack.setCurrentIndex(0)
+        self.stack.currentChanged.connect(self._on_stack_page_changed)
 
         self.show()
 
@@ -268,6 +327,49 @@ class Application(QWidget):
         self.moleculeBoxes.place_precedent_in_evolution_row()
         self.stack.setCurrentIndex(1)
         self.resize(*STAGE2_WINDOW_SIZE)
+
+    def on_back_to_stage_1(self):
+        if self.blockTransfer:
+            QMessageBox.information(
+                self,
+                "Evolution running",
+                "Wait until the current run finishes, or use Restart, before returning to stage 1.",
+            )
+            return
+        self.show_stage_1()
+
+    def _on_stack_page_changed(self, index):
+        if index == 1:
+            self._refresh_stage2_selection_insight()
+
+    def _refresh_stage2_selection_insight(self):
+        lay = self.stage2_insight_list
+        while lay.count():
+            item = lay.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
+
+        mols = self.moleculeBoxes.selectedMolecules
+        n = len(mols)
+        self.stage2_insight_summary.setText(
+            f"{n} molecule(s) will seed the genetic algorithm. "
+            "You can go back to adjust fitness weights or change the selection."
+        )
+        for i, mol in enumerate(mols):
+            sm = mol.getSmiles()
+            sm_disp = sm if len(sm) <= 76 else (sm[:73] + "…")
+            desc = html.escape(mol.getDescription() or "—", quote=True)
+            sm_safe = html.escape(sm_disp, quote=True)
+            qed = mol.getQED()
+            row = QLabel(
+                f"<b>{i + 1}.</b> {desc} &nbsp;·&nbsp; QED <b>{qed:.4f}</b><br>"
+                f"<span style='color:#555;font-size:11px;'>{sm_safe}</span>"
+            )
+            row.setTextFormat(Qt.RichText)
+            row.setWordWrap(True)
+            lay.addWidget(row)
+        lay.addStretch(1)
 
     def show_stage_1(self):
         self.moleculeBoxes.place_precedent_in_catalogue_column()

@@ -159,6 +159,10 @@ class ClickableGroupBox(QGroupBox):
     def mousePressEvent(self, event):
         if self.moleculeBoxes.application.blockTransfer:
             return
+        app = self.moleculeBoxes.application
+        if hasattr(app, "stack") and app.stack.currentIndex() == 1:
+            super().mousePressEvent(event)
+            return
         if self.ind != 0 and self.ind != 1:
             return
         if event.button() == Qt.LeftButton:
