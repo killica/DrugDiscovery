@@ -10,6 +10,7 @@ class HyperParameters:
         self.hBoxes = []
         self.hyperParamLayout = QVBoxLayout()
         self.adjustLabel = QLabel("Adjust hyperparameter's weights", application)
+        self.adjustLabel.setWordWrap(True)
         self.adjustLabel.setStyleSheet("font-size: 17px; font-weight: bold; border: none; margin-top: 5px;")
 
         self.resetButton = QPushButton("Reset to defaults", application)
@@ -45,9 +46,38 @@ class HyperParameters:
             self.paramSlider.setFixedWidth(350)
             self.paramSlider.setValue(int(default * 100))
             self.paramSlider.valueChanged.connect(lambda _v, idx=i: self._onSliderValueChanged(idx))
-            self.paramSlider.setStyleSheet("""
-                border: none;               
-            """)
+            self.paramSlider.setStyleSheet(
+                """
+                QSlider::groove:horizontal {
+                    border: 1px solid #a5d6a7;
+                    height: 8px;
+                    background: #e8f5e9;
+                    margin: 2px 0;
+                    border-radius: 4px;
+                }
+                QSlider::sub-page:horizontal {
+                    background: #43a047;
+                    border: 1px solid #2e7d32;
+                    border-radius: 4px;
+                }
+                QSlider::add-page:horizontal {
+                    background: #e8f5e9;
+                    border: 1px solid #c8e6c9;
+                    border-radius: 4px;
+                }
+                QSlider::handle:horizontal {
+                    background: #ffffff;
+                    border: 2px solid #2e7d32;
+                    width: 12px;
+                    height: 12px;
+                    margin: -4px 0;
+                    border-radius: 4px;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: #e8f5e9;
+                }
+                """
+            )
 
             self.hBox.addWidget(self.paramLabel)
             self.hBox.addWidget(self.paramSlider)
@@ -91,6 +121,12 @@ class HyperParameters:
             lbl.setText(f"{self.names[i]}: {self.defaultValues[i]}")
         self._syncSliderValuesFromUi()
         self.moleculeBoxes.refreshQEDForAll(tuple(self.application.sliderValues))
+
+    def setSliderTrackWidth(self, width):
+        for hbox in self.hBoxes:
+            w = hbox.itemAt(1).widget()
+            if w is not None:
+                w.setFixedWidth(width)
 
     def getSlidersWidget(self):
         return self.container

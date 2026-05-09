@@ -406,5 +406,21 @@
     {
         "SMILES": "CCO",
         "Description": "Ethanol"
+    },
+    {
+        "SMILES": "CC=O",
+        "Description": "Ethanal"
+    },
+    {
+        "SMILES": "C1CCCCCC1",
+        "Description": "Cycloheptane"
+    },
+    {
+        "SMILES": "C",
+        "Description": "Methane"
+    },
+    {
+        "SMILES": "CPC",
+        "Description": "Molly"
     }
 ]

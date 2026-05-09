@@ -17,6 +17,8 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QFrame,
     QSizePolicy,
+    QButtonGroup,
+    QRadioButton,
 )
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QPalette
 from PyQt5.QtCore import Qt
@@ -30,7 +32,7 @@ from gaParameters import GAParameters
 from individual import Individual
 from mutationInfo import MutationInfo
 
-STAGE1_WINDOW_SIZE = (1050, 980)
+STAGE1_WINDOW_SIZE = (1240, 980)
 STAGE2_WINDOW_SIZE = (1680, 960)
 
 def apply_light_fusion_theme(app):
@@ -73,6 +75,7 @@ class Application(QWidget):
 
         self.blockTransfer = False
         self._cancel_evolution = False
+        self.fitness_mode_id = 0
 
         self.moleculeBoxes = MoleculeBoxes(self)
         self.newMoleculeForm = NewMoleculeForm(self)
@@ -91,18 +94,66 @@ class Application(QWidget):
 
         self.sbmtBtn = self.newMoleculeForm.submitButton
         self.resBtn = self.hyperParamLayout.resetButton
+        self.hyperParamLayout.setSliderTrackWidth(268)
 
-        # --- Stage 1: catalogue + selected (stacked) + sidebar (actions + add molecule) ---
+        # --- Stage 1: catalogue + selected (stacked) + sidebar (fitness + add molecule + continue) ---
         self.stage1Sidebar = QWidget()
-        self.stage1Sidebar.setMaximumWidth(300)
+        self.stage1Sidebar.setMaximumWidth(420)
+        self.stage1Sidebar.setMinimumWidth(320)
+        self.stage1Sidebar.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         sidebar_layout = QVBoxLayout(self.stage1Sidebar)
-        sidebar_layout.setSpacing(14)
-        sidebar_layout.setContentsMargins(40, 8, 30, 8)
-        sidebar_title = QLabel("Actions")
-        sidebar_title.setStyleSheet("font-size: 17px; font-weight: bold;")
-        sidebar_layout.addWidget(sidebar_title)
-        sidebar_layout.addWidget(self.moleculeBoxes.stage1TransferButtons)
-        sidebar_layout.addWidget(self.newMoleculeForm.getForm())
+        sidebar_layout.setSpacing(12)
+        sidebar_layout.setContentsMargins(14, 8, 14, 8)
+
+        fitness_title = QLabel("Fitness")
+        fitness_title.setStyleSheet("font-size: 17px; font-weight: bold; color: #1b5e20;")
+        sidebar_layout.addWidget(fitness_title)
+
+        self.fitness_mode_group = QButtonGroup(self)
+        self.radio_fitness_qed = QRadioButton("QED (weighted)")
+        self.radio_fitness_qed.setChecked(True)
+        self.radio_fitness_m1 = QRadioButton("Model A (placeholder)")
+        self.radio_fitness_m2 = QRadioButton("Model B (placeholder)")
+        self.radio_fitness_m3 = QRadioButton("Model C (placeholder)")
+        for idx, rb in enumerate(
+            (
+                self.radio_fitness_qed,
+                self.radio_fitness_m1,
+                self.radio_fitness_m2,
+                self.radio_fitness_m3,
+            )
+        ):
+            self.fitness_mode_group.addButton(rb, idx)
+            sidebar_layout.addWidget(rb)
+        self.fitness_mode_group.idClicked.connect(self._on_fitness_mode_changed)
+
+        self.fitness_stack = QStackedWidget()
+        self.fitness_stack.addWidget(self.hyperParamLayout.getSlidersWidget())
+        self.fitness_stack.addWidget(self._fitness_model_placeholder_panel("Model A"))
+        self.fitness_stack.addWidget(self._fitness_model_placeholder_panel("Model B"))
+        self.fitness_stack.addWidget(self._fitness_model_placeholder_panel("Model C"))
+        self.fitness_stack.setMinimumHeight(320)
+
+        self.fitness_stack_scroll = QScrollArea()
+        self.fitness_stack_scroll.setWidgetResizable(True)
+        self.fitness_stack_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.fitness_stack_scroll.setWidget(self.fitness_stack)
+        self.fitness_stack_scroll.setMinimumHeight(400)
+        self.fitness_stack_scroll.setMaximumHeight(720)
+        self.fitness_stack_scroll.setFrameShape(QFrame.NoFrame)
+        self.fitness_stack_scroll.setStyleSheet(
+            "QScrollArea { background: transparent; border: 1px solid #c8e6c9; border-radius: 8px; }"
+        )
+        sidebar_layout.addWidget(self.fitness_stack_scroll, 0)
+
+        sidebar_layout.addSpacing(8)
+        sep_actions = QFrame()
+        sep_actions.setFrameShape(QFrame.HLine)
+        sep_actions.setFixedHeight(1)
+        sep_actions.setStyleSheet("background-color: #e0e0e0; border: none;")
+        sidebar_layout.addWidget(sep_actions)
+
+        sidebar_layout.addWidget(self.newMoleculeForm.getPanelWidget())
         sidebar_layout.addStretch(1)
 
         self.continueToNextButton = QPushButton("Continue")
@@ -120,7 +171,7 @@ class Application(QWidget):
             QPushButton:hover { background-color: #1b5e20; }
         """)
         self.continueToNextButton.clicked.connect(self.on_continue_to_stage_2)
-        sidebar_layout.addWidget(self.continueToNextButton)
+        sidebar_layout.addWidget(self.continueToNextButton, 0, Qt.AlignHCenter)
 
         stage1_sep = QFrame()
         stage1_sep.setFrameShape(QFrame.VLine)
@@ -136,15 +187,14 @@ class Application(QWidget):
         stage1_row.addSpacing(20)
         stage1_row.addWidget(stage1_sep, 0, Qt.AlignTop)
         stage1_row.addSpacing(16)
-        stage1_row.addWidget(self.stage1Sidebar, 0, Qt.AlignTop)
+        stage1_row.addWidget(self.stage1Sidebar, 0)
 
         self.stage1Page = QWidget()
         self.stage1Page.setLayout(stage1_row)
 
-        # --- Stage 2: hyperparameters + GA config (left) | evolution views (right) ---
+        # --- Stage 2: GA config (left) | evolution views (right); ---
         self.stage2LeftLayout = QVBoxLayout()
         self.stage2LeftLayout.setSpacing(16)
-        self.stage2LeftLayout.addWidget(self.hyperParamLayout.getSlidersWidget())
         self.stage2LeftLayout.addWidget(self.gaParameters.getGAParametersWidget())
 
         self.stage2Left = QWidget()
@@ -176,13 +226,36 @@ class Application(QWidget):
         root.setContentsMargins(8, 8, 8, 8)
         root.addWidget(self.stack)
         self.setLayout(root)
-        self.setMinimumSize(1120, 860)
+        self.setMinimumSize(1180, 860)
         self.resize(*STAGE1_WINDOW_SIZE)
         self.setAutoFillBackground(True)
 
         self.stack.setCurrentIndex(0)
 
         self.show()
+
+    def _fitness_model_placeholder_panel(self, name):
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setContentsMargins(8, 8, 8, 8)
+        msg = QLabel(
+            f"{name}\n\n"
+            "Add controls for this model here (hyperparameters, checkpoint path, "
+            "train/eval actions, etc.).\n\n"
+            "Ranking still uses QED until this backend is connected."
+        )
+        msg.setWordWrap(True)
+        msg.setStyleSheet("color: #424242; font-size: 13px;")
+        lay.addWidget(msg)
+        lay.addStretch(1)
+        return w
+
+    def _on_fitness_mode_changed(self, mode_id):
+        self.fitness_mode_id = mode_id
+        self.fitness_stack.setCurrentIndex(mode_id)
+
+    def get_fitness_mode_id(self):
+        return self.fitness_mode_id
 
     def on_continue_to_stage_2(self):
         if len(self.moleculeBoxes.selectedMolecules) == 0:
@@ -216,9 +289,9 @@ class Application(QWidget):
         painter.end()
 
     def onSubmitButtonClicked(self):
-        smiles = self.newMoleculeForm.getInputSmilesText()
-        description = self.newMoleculeForm.getInputDescriptionText()
-        self.moleculeBoxes.addToCatalogue(smiles, description)
+        smiles = self.newMoleculeForm.getInputSmilesText().strip()
+        description = self.newMoleculeForm.getInputDescriptionText().strip()
+        return self.moleculeBoxes.addToCatalogue(smiles, description)
 
     def readMolecules(self):
         with open("../data/molecules.json", "r") as file:

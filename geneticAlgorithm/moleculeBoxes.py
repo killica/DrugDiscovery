@@ -205,14 +205,6 @@ class MoleculeBoxes(QWidget):
         """)
         self.removeAllButton.clicked.connect(self.onRemoveAllButtonClicked)
 
-        self.stage1TransferButtons = QWidget()
-        _transfer_row = QHBoxLayout(self.stage1TransferButtons)
-        _transfer_row.setContentsMargins(0, 0, 0, 0)
-        _transfer_row.setSpacing(8)
-        _transfer_row.addWidget(self.selectAllButton, 0, Qt.AlignLeft)
-        _transfer_row.addWidget(self.removeAllButton, 0, Qt.AlignLeft)
-        _transfer_row.addStretch(1)
-
         self.catalogueLabel = QLabel("Catalogue")
         self.catalogueLabel.setStyleSheet(
             "font-size: 18px; font-weight: bold; margin: 0; padding: 0 0 2px 0;"
@@ -263,15 +255,31 @@ class MoleculeBoxes(QWidget):
             "QFrame#stage1SectionSeparator { background-color: #81c784; border-radius: 1px; }"
         )
 
+        self.catalogueHeaderRow = QWidget()
+        _cat_hdr = QHBoxLayout(self.catalogueHeaderRow)
+        _cat_hdr.setContentsMargins(0, 0, 0, 0)
+        _cat_hdr.setSpacing(10)
+        _cat_hdr.addWidget(self.catalogueLabel, 0, Qt.AlignVCenter)
+        _cat_hdr.addStretch(1)
+        _cat_hdr.addWidget(self.selectAllButton, 0, Qt.AlignVCenter)
+
+        self.selectedHeaderRow = QWidget()
+        _sel_hdr = QHBoxLayout(self.selectedHeaderRow)
+        _sel_hdr.setContentsMargins(0, 0, 0, 0)
+        _sel_hdr.setSpacing(10)
+        _sel_hdr.addWidget(self.selectedSectionLabel, 0, Qt.AlignVCenter)
+        _sel_hdr.addStretch(1)
+        _sel_hdr.addWidget(self.removeAllButton, 0, Qt.AlignVCenter)
+
         self.catalogueVBox = QVBoxLayout()
         self.catalogueVBox.setSpacing(4)
         self.catalogueVBox.setContentsMargins(0, 0, 4, 0)
-        self.catalogueVBox.addWidget(self.catalogueLabel)
+        self.catalogueVBox.addWidget(self.catalogueHeaderRow)
         self.catalogueVBox.addWidget(self.scrollArea)
         self.catalogueVBox.addSpacing(12)
         self.catalogueVBox.addWidget(self.stage1SectionSeparator)
         self.catalogueVBox.addSpacing(10)
-        self.catalogueVBox.addWidget(self.selectedSectionLabel)
+        self.catalogueVBox.addWidget(self.selectedHeaderRow)
         self.catalogueVBox.addWidget(self.precedentScrollArea)
 
         self.container = QWidget()
@@ -552,12 +560,12 @@ class MoleculeBoxes(QWidget):
         try:
             molecule = Chem.MolFromSmiles(smiles)
         except ValueError:
-            return
+            return False
         if molecule is None:
-            return
+            return False
         if not description:
             description = "Unknown"
-       
+
         self.removeBoxes()
         self.removeSelectedBoxes()
         self.molecules.append(Individual(smiles, description, self.application.getSliderValues()))
@@ -568,9 +576,10 @@ class MoleculeBoxes(QWidget):
             "Description": description
         })
         with open('../data/molecules.json', 'w') as file:
-            json.dump(data, file, indent = 4)
+            json.dump(data, file, indent=4)
         self.loadBoxes()
         self.loadSelectedBoxes()
+        return True
 
     def onGenerateButtonClicked(self):
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
