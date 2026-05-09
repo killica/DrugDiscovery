@@ -1,7 +1,26 @@
 import json
 import copy
 import re
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar, QApplication, QFrame, QSizePolicy
+import random
+from PyQt5.QtWidgets import (
+    QGroupBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QGraphicsDropShadowEffect,
+    QWidget,
+    QGridLayout,
+    QScrollArea,
+    QPushButton,
+    QProgressBar,
+    QApplication,
+    QFrame,
+    QSizePolicy,
+    QDialog,
+    QDialogButtonBox,
+    QLineEdit,
+)
 from PyQt5.QtGui import QImage, QPixmap, QColor, QFont, QPainter, QPainterPath, QPen, QCursor
 from PyQt5.QtCore import Qt, QRectF, QEvent, QTimer
 
@@ -189,6 +208,22 @@ class MoleculeBoxes(QWidget):
         """)
         self.selectAllButton.clicked.connect(self.onSelectAllButtonClicked)
 
+        self.sampleButton = QPushButton("Sample")
+        self.sampleButton.setFixedWidth(88)
+        self.sampleButton.setStyleSheet("""
+            QPushButton {
+                background-color: #5c8a8a;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #3d6666;
+            }
+        """)
+        self.sampleButton.clicked.connect(self.onSampleButtonClicked)
+
         self.removeAllButton = QPushButton("Remove all")
         self.removeAllButton.setFixedWidth(108)
         self.removeAllButton.setStyleSheet("""
@@ -215,8 +250,14 @@ class MoleculeBoxes(QWidget):
         self.scrollArea.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
         self.scrollArea.setStyleSheet(STAGE1_SCROLL_QSS_CATALOGUE)
 
+        self.catalogueGridHost = QWidget()
+        self.catalogueGridHost.setLayout(self.layout)
         self.scrollWidget = QWidget()
-        self.scrollWidget.setLayout(self.layout)
+        self.catalogueOuterLayout = QVBoxLayout(self.scrollWidget)
+        self.catalogueOuterLayout.setContentsMargins(0, 0, 0, 0)
+        self.catalogueOuterLayout.setSpacing(0)
+        self.catalogueOuterLayout.addWidget(self.catalogueGridHost, 0, Qt.AlignTop)
+        self.catalogueOuterLayout.addStretch(1)
         self.scrollArea.setWidget(self.scrollWidget)
 
         self.selectedSectionLabel = QLabel("Selected for first generation")
@@ -262,6 +303,7 @@ class MoleculeBoxes(QWidget):
         _cat_hdr.addWidget(self.catalogueLabel, 0, Qt.AlignVCenter)
         _cat_hdr.addStretch(1)
         _cat_hdr.addWidget(self.selectAllButton, 0, Qt.AlignVCenter)
+        _cat_hdr.addWidget(self.sampleButton, 0, Qt.AlignVCenter)
 
         self.selectedHeaderRow = QWidget()
         _sel_hdr = QHBoxLayout(self.selectedHeaderRow)
@@ -540,6 +582,106 @@ class MoleculeBoxes(QWidget):
             self.selectedMolecules.append(self.molecules[i])
             # self.molecules.pop(i)
         self.molecules = []
+        self.loadBoxes(tuple(self.application.getSliderValues()))
+        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
+
+    def onSampleButtonClicked(self):
+        if self.application.blockTransfer:
+            return
+        n_cat = len(self.molecules)
+        if n_cat == 0:
+            QMessageBox.information(
+                self,
+                "Sample",
+                "There are no molecules in the catalogue to sample.",
+            )
+            return
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Random sample")
+        dlg.setModal(True)
+        layout = QVBoxLayout(dlg)
+        info = QLabel(
+            f"The catalogue has {n_cat} molecule(s). "
+            "Choose how many to select at random (each picked at most once)."
+        )
+        info.setWordWrap(True)
+        layout.addWidget(info)
+
+        initial = min(5, n_cat)
+        dlg._last_good = initial
+        dlg._chosen_k = initial
+
+        count_edit = QLineEdit(dlg)
+        count_edit.setText(str(initial))
+        count_edit.setPlaceholderText(f"1–{n_cat}")
+
+        def _sync_last_good_from_field():
+            t = count_edit.text().strip()
+            if not t:
+                return
+            try:
+                v = int(t)
+            except ValueError:
+                return
+            if 1 <= v <= n_cat:
+                dlg._last_good = v
+
+        count_edit.editingFinished.connect(_sync_last_good_from_field)
+
+        def try_ok():
+            t = count_edit.text().strip()
+            if not t:
+                QMessageBox.warning(
+                    dlg,
+                    "Invalid number",
+                    f"Enter a whole number between 1 and {n_cat}.",
+                )
+                count_edit.setText(str(dlg._last_good))
+                return
+            try:
+                v = int(t)
+            except ValueError:
+                QMessageBox.warning(
+                    dlg,
+                    "Invalid number",
+                    f"'{t}' is not a valid whole number. Use an integer from 1 to {n_cat}.",
+                )
+                count_edit.setText(str(dlg._last_good))
+                return
+            if v < 1 or v > n_cat:
+                QMessageBox.warning(
+                    dlg,
+                    "Invalid number",
+                    f"Enter a number between 1 and {n_cat} (you entered {v}).",
+                )
+                count_edit.setText(str(dlg._last_good))
+                return
+            dlg._chosen_k = v
+            dlg.accept()
+
+        layout.addWidget(count_edit)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(try_ok)
+        buttons.rejected.connect(dlg.reject)
+        layout.addWidget(buttons)
+
+        if dlg.exec_() != QDialog.Accepted:
+            return
+
+        k = min(dlg._chosen_k, len(self.molecules))
+        if not self.molecules or k < 1:
+            return
+
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+
+        n = len(self.molecules)
+        pick_idx = set(random.sample(range(n), k))
+        to_move = [self.molecules[i] for i in range(n) if i in pick_idx]
+        self.molecules = [self.molecules[i] for i in range(n) if i not in pick_idx]
+        self.selectedMolecules.extend(to_move)
+
         self.loadBoxes(tuple(self.application.getSliderValues()))
         self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
 
