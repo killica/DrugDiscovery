@@ -16,7 +16,6 @@ from PyQt5.QtGui import QIcon
 import geneticAlgorithm
 from mutationInfo import MutationInfo
 
-# Row needs enough width: buttons (~350) + best card (~230) + gap + progress (~min 280).
 GA_PROGRESS_BAR_STYLE = """
 QProgressBar {
     border: 1px solid #9e9e9e;

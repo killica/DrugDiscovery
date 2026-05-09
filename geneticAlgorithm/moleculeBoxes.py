@@ -1,16 +1,31 @@
 import json
 import copy
 import re
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar, QApplication
+from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QMessageBox, QGraphicsDropShadowEffect, QWidget, QGridLayout, QScrollArea, QPushButton, QProgressBar, QApplication, QFrame, QSizePolicy
 from PyQt5.QtGui import QImage, QPixmap, QColor, QFont, QPainter, QPainterPath, QPen, QCursor
 from PyQt5.QtCore import Qt, QRectF, QEvent, QTimer
 
-# Structure thumbnails: fixed size, rounded clip (shadow sits on the frame below).
 MOLECULE_IMAGE_SIZE = 200
 MOLECULE_IMAGE_CORNER_RADIUS = 14
 
 STAGE1_SCROLL_WIDTH = 760
-STAGE1_SCROLL_HEIGHT = 380
+STAGE1_SCROLL_HEIGHT = 420
+
+# Distinct framed scroll panes + separator so the two stage-1 lists are obviously separate.
+STAGE1_SCROLL_QSS_CATALOGUE = """
+    QScrollArea {
+        border: 1px solid #b0bec5;
+        border-radius: 10px;
+        background-color: #fafbfc;
+    }
+"""
+STAGE1_SCROLL_QSS_SELECTED = """
+    QScrollArea {
+        border: 1px solid #43a047;
+        border-radius: 10px;
+        background-color: #f3faf4;
+    }
+"""
 
 MOLECULE_BOX_QSS_NORMAL = """
     QGroupBox {
@@ -174,12 +189,39 @@ class MoleculeBoxes(QWidget):
         """)
         self.selectAllButton.clicked.connect(self.onSelectAllButtonClicked)
 
+        self.removeAllButton = QPushButton("Remove all")
+        self.removeAllButton.setFixedWidth(108)
+        self.removeAllButton.setStyleSheet("""
+            QPushButton {
+                background-color: #8d4d4d;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #6d3333;
+            }
+        """)
+        self.removeAllButton.clicked.connect(self.onRemoveAllButtonClicked)
+
+        self.stage1TransferButtons = QWidget()
+        _transfer_row = QHBoxLayout(self.stage1TransferButtons)
+        _transfer_row.setContentsMargins(0, 0, 0, 0)
+        _transfer_row.setSpacing(8)
+        _transfer_row.addWidget(self.selectAllButton, 0, Qt.AlignLeft)
+        _transfer_row.addWidget(self.removeAllButton, 0, Qt.AlignLeft)
+        _transfer_row.addStretch(1)
+
         self.catalogueLabel = QLabel("Catalogue")
-        self.catalogueLabel.setStyleSheet("font-size: 18px; font-weight: bold; padding-bottom: 6px;")
+        self.catalogueLabel.setStyleSheet(
+            "font-size: 18px; font-weight: bold; margin: 0; padding: 0 0 2px 0;"
+        )
 
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
+        self.scrollArea.setStyleSheet(STAGE1_SCROLL_QSS_CATALOGUE)
 
         self.scrollWidget = QWidget()
         self.scrollWidget.setLayout(self.layout)
@@ -187,7 +229,7 @@ class MoleculeBoxes(QWidget):
 
         self.selectedSectionLabel = QLabel("Selected for first generation")
         self.selectedSectionLabel.setStyleSheet(
-            "font-size: 18px; font-weight: bold; color: darkgreen; padding-top: 10px;"
+            "font-size: 18px; font-weight: bold; color: darkgreen; margin: 0; padding: 2px 0 0 0;"
         )
 
         self.precedentLayout = QGridLayout()
@@ -196,6 +238,7 @@ class MoleculeBoxes(QWidget):
         self.precedentScrollArea = QScrollArea()
         self.precedentScrollArea.setWidgetResizable(True)
         self.precedentScrollArea.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
+        self.precedentScrollArea.setStyleSheet(STAGE1_SCROLL_QSS_SELECTED)
 
         self.precedentGridHost = QWidget()
         self.precedentGridHost.setLayout(self.precedentLayout)
@@ -211,18 +254,30 @@ class MoleculeBoxes(QWidget):
         self.precedentLabel.setFixedWidth(140)
         self.precedentLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: darkgreen;")
 
+        self.stage1SectionSeparator = QFrame()
+        self.stage1SectionSeparator.setObjectName("stage1SectionSeparator")
+        self.stage1SectionSeparator.setFrameShape(QFrame.NoFrame)
+        self.stage1SectionSeparator.setFixedHeight(2)
+        self.stage1SectionSeparator.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.stage1SectionSeparator.setStyleSheet(
+            "QFrame#stage1SectionSeparator { background-color: #81c784; border-radius: 1px; }"
+        )
+
         self.catalogueVBox = QVBoxLayout()
-        self.catalogueVBox.setSpacing(8)
+        self.catalogueVBox.setSpacing(4)
         self.catalogueVBox.setContentsMargins(0, 0, 4, 0)
         self.catalogueVBox.addWidget(self.catalogueLabel)
         self.catalogueVBox.addWidget(self.scrollArea)
+        self.catalogueVBox.addSpacing(12)
+        self.catalogueVBox.addWidget(self.stage1SectionSeparator)
+        self.catalogueVBox.addSpacing(10)
         self.catalogueVBox.addWidget(self.selectedSectionLabel)
         self.catalogueVBox.addWidget(self.precedentScrollArea)
 
         self.container = QWidget()
         self.container.setLayout(self.catalogueVBox)
         self.container.setMinimumWidth(STAGE1_SCROLL_WIDTH)
-        self.container.setMinimumSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT * 2 + 120)
+        self.container.setMinimumSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT * 2 + 112)
         self.precedentLabel.hide()
 
         self.rightHBox1 = QHBoxLayout()
@@ -477,6 +532,18 @@ class MoleculeBoxes(QWidget):
             self.selectedMolecules.append(self.molecules[i])
             # self.molecules.pop(i)
         self.molecules = []
+        self.loadBoxes(tuple(self.application.getSliderValues()))
+        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
+
+    def onRemoveAllButtonClicked(self):
+        if self.application.blockTransfer:
+            return
+        if not self.selectedMolecules:
+            return
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+        self.molecules.extend(self.selectedMolecules)
+        self.selectedMolecules = []
         self.loadBoxes(tuple(self.application.getSliderValues()))
         self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
 

@@ -30,7 +30,7 @@ from gaParameters import GAParameters
 from individual import Individual
 from mutationInfo import MutationInfo
 
-STAGE1_WINDOW_SIZE = (1180, 940)
+STAGE1_WINDOW_SIZE = (1050, 980)
 STAGE2_WINDOW_SIZE = (1680, 960)
 
 def apply_light_fusion_theme(app):
@@ -97,12 +97,11 @@ class Application(QWidget):
         self.stage1Sidebar.setMaximumWidth(300)
         sidebar_layout = QVBoxLayout(self.stage1Sidebar)
         sidebar_layout.setSpacing(14)
-        # Extra left inset so controls sit clear of catalogue scroll bars + separator.
         sidebar_layout.setContentsMargins(40, 8, 30, 8)
         sidebar_title = QLabel("Actions")
         sidebar_title.setStyleSheet("font-size: 17px; font-weight: bold;")
         sidebar_layout.addWidget(sidebar_title)
-        sidebar_layout.addWidget(self.moleculeBoxes.selectAllButton)
+        sidebar_layout.addWidget(self.moleculeBoxes.stage1TransferButtons)
         sidebar_layout.addWidget(self.newMoleculeForm.getForm())
         sidebar_layout.addStretch(1)
 
@@ -177,7 +176,7 @@ class Application(QWidget):
         root.setContentsMargins(8, 8, 8, 8)
         root.addWidget(self.stack)
         self.setLayout(root)
-        self.setMinimumSize(1120, 820)
+        self.setMinimumSize(1120, 860)
         self.resize(*STAGE1_WINDOW_SIZE)
         self.setAutoFillBackground(True)
 
