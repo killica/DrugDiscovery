@@ -419,6 +419,31 @@ class MoleculeBoxes(QWidget):
                 w.deleteLater()
         self.newGenerationBoxes = []
 
+    def _live_generation_on_start(self, gen_index, population_size):
+        """Clear the 2nd-generation pane before filling it for this GA generation."""
+        self._clear_second_generation_grid()
+        QApplication.processEvents()
+
+    def _live_generation_on_new_individual(self, individual, index_in_population, gen_index):
+        """Append one molecule card to the 2nd-generation grid (called from geneticAlgorithm)."""
+        weights = tuple(self.application.getSliderValues())
+        individual.setWeights(weights)
+        cpr = self.columnsPerRow
+        row = index_in_population // cpr
+        col = index_in_population % cpr
+        desc = individual.getDescription() or ""
+        box = self.createMoleculeBox(
+            individual.getSmiles(),
+            desc,
+            individual.getQED(),
+            index_in_population,
+            -1,
+        )
+        self.newGenerationBoxes.append(box)
+        self.secondLayout.addWidget(box, row, col)
+        self.secondScrollWidget.updateGeometry()
+        QApplication.processEvents()
+
     def loadNewGeneration(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self._clear_second_generation_grid()
         QApplication.processEvents()
@@ -767,6 +792,8 @@ class MoleculeBoxes(QWidget):
             self.individualLabel,
             self.individualProgress,
             cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
+            on_generation_start=self._live_generation_on_start,
+            on_new_individual=self._live_generation_on_new_individual,
         )
 
         if getattr(self.application, "_cancel_evolution", False):

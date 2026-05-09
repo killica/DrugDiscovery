@@ -385,6 +385,8 @@ class GAParameters:
             moleculeBoxes.individualLabel,
             moleculeBoxes.individualProgress,
             cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
+            on_generation_start=moleculeBoxes._live_generation_on_start,
+            on_new_individual=moleculeBoxes._live_generation_on_new_individual,
         )
 
         if getattr(self.application, "_cancel_evolution", False):

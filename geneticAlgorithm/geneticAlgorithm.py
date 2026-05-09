@@ -27,6 +27,8 @@ def geneticAlgorithm(
     individualLabel,
     individualProgress,
     cancel_check=None,
+    on_generation_start=None,
+    on_new_individual=None,
 ):
     populationSize = len(population)
     if cancel_check and cancel_check():
@@ -42,13 +44,23 @@ def geneticAlgorithm(
     if elitismSize % 2 != populationSize % 2:
         elitismSize += 1
 
-    for _ in range(generations):
+    for gen_idx in range(generations):
         if cancel_check and cancel_check():
             return population
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
+        if on_generation_start is not None:
+            on_generation_start(gen_idx, populationSize)
         tmp = 0
         _process_gui_events()
+
+        for i in range(elitismSize):
+            if cancel_check and cancel_check():
+                return population
+            if on_new_individual is not None:
+                on_new_individual(newPopulation[i], i, gen_idx)
+            _process_gui_events()
+
         for j in range(elitismSize, populationSize, 2):
             if cancel_check and cancel_check():
                 return population
@@ -68,6 +80,11 @@ def geneticAlgorithm(
 
             individualLabel.setText(f"Individual: {j+1}/{len(population)}")
             individualProgress.setValue(j+1)
+            if on_new_individual is not None:
+                on_new_individual(newPopulation[j], j, gen_idx)
+            _process_gui_events()
+            if on_new_individual is not None:
+                on_new_individual(newPopulation[j + 1], j + 1, gen_idx)
             _process_gui_events()
 
             tmp = j
