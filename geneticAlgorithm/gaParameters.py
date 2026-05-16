@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QVBoxLayout,
     QHBoxLayout,
+    QFormLayout,
     QLabel,
     QSpinBox,
     QWidget,
@@ -15,8 +16,6 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 import geneticAlgorithm
 from mutationInfo import MutationInfo
-
-STAGE3_WINDOW_SIZE = (1200, 900)
 
 GA_PROGRESS_BAR_STYLE = """
 QProgressBar {
@@ -38,14 +37,14 @@ QProgressBar::chunk {
 class GAParameters:
     def __init__(self, application):
         self.application = application
-        self.mainLayout = QHBoxLayout()
-        self.leftLayout = QVBoxLayout()
-        self.gaLabel = QLabel("Parameters for genetic algorithm:", application)
-        self.gaLabel.setStyleSheet("font-size: 17px; font-weight: bold; border: none; margin-bottom: 10px;")
-        self.numGenLabel = QLabel("Number of generations: ", application)
-        self.tournamentSizeLabel = QLabel("Tournament size: ", application)
-        self.elitismSizeLabel = QLabel("Elitism size: ", application)
-        self.mutationProbabilityLabel = QLabel("Mutation probability: ", application)
+        self.paramsLayout = QVBoxLayout()
+        self.paramsLayout.setSpacing(12)
+        self.paramsLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.numGenLabel = QLabel("Number of generations:", application)
+        self.tournamentSizeLabel = QLabel("Tournament size:", application)
+        self.elitismSizeLabel = QLabel("Elitism size:", application)
+        self.mutationProbabilityLabel = QLabel("Mutation probability:", application)
         self.generationSpin = QSpinBox(application)
         self.generationSpin.setMaximum(200)
         self.generationSpin.setFixedWidth(70)
@@ -74,6 +73,14 @@ class GAParameters:
 
         self.rouletteCheckBox.stateChanged.connect(self.onRouletteChanged)
 
+        for label in (
+            self.numGenLabel,
+            self.tournamentSizeLabel,
+            self.elitismSizeLabel,
+            self.mutationProbabilityLabel,
+        ):
+            label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
         self.tournamentSpin = QSpinBox(application)
         self.tournamentSpin.setMaximum(100)
         self.tournamentSpin.setFixedWidth(70)
@@ -86,45 +93,26 @@ class GAParameters:
         self.mutationLineEdit.setFixedWidth(70)
         self.mutationLineEdit.setText("0.05")
 
-        self.h1 = QHBoxLayout()
-        self.h1.addWidget(self.numGenLabel)
-        self.h1.addWidget(self.generationSpin)
-        self.h1Cont = QWidget()
-        self.h1Cont.setLayout(self.h1)
-        self.h1Cont.setFixedSize(300, 37)
+        tournament_field = QWidget(application)
+        tournament_row = QHBoxLayout(tournament_field)
+        tournament_row.setContentsMargins(0, 0, 0, 0)
+        tournament_row.setSpacing(16)
+        tournament_row.addWidget(self.tournamentSpin, 0, Qt.AlignLeft)
+        tournament_row.addWidget(self.rouletteCheckBox, 0, Qt.AlignLeft)
+        tournament_row.addStretch(1)
 
-        self.h2 = QHBoxLayout()
-        self.h2.addWidget(self.tournamentSizeLabel)
-        self.h2.addWidget(self.tournamentSpin)
-        self.h2.addSpacing(20)
-        self.h2.addWidget(self.rouletteCheckBox)
-        self.h2Cont = QWidget()
-        self.h2Cont.setLayout(self.h2)
-        self.h2Cont.setFixedSize(540, 37)
+        self.formLayout = QFormLayout()
+        self.formLayout.setSpacing(10)
+        self.formLayout.setContentsMargins(0, 0, 0, 0)
+        self.formLayout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.formLayout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.formLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        self.formLayout.addRow(self.numGenLabel, self.generationSpin)
+        self.formLayout.addRow(self.tournamentSizeLabel, tournament_field)
+        self.formLayout.addRow(self.elitismSizeLabel, self.elitismSpin)
+        self.formLayout.addRow(self.mutationProbabilityLabel, self.mutationLineEdit)
 
-        self.h3 = QHBoxLayout()
-        self.h3.addWidget(self.elitismSizeLabel)
-        self.h3.addWidget(self.elitismSpin)
-        self.h3Cont = QWidget()
-        self.h3Cont.setLayout(self.h3)
-        self.h3Cont.setFixedSize(300, 37)
-
-        self.h4 = QHBoxLayout()
-        self.h4.addWidget(self.mutationProbabilityLabel)
-        self.h4.addWidget(self.mutationLineEdit)
-        self.h4Cont = QWidget()
-        self.h4Cont.setLayout(self.h4)
-        self.h4Cont.setFixedSize(300, 37)
-
-        self.leftLayout.addWidget(self.gaLabel)
-        self.leftLayout.addWidget(self.h1Cont)
-        self.leftLayout.addWidget(self.h2Cont)
-        self.leftLayout.addWidget(self.h3Cont)
-        self.leftLayout.addWidget(self.h4Cont)
-        self.leftLayout.setAlignment(Qt.AlignLeft)
-
-        self.rightLayout = QVBoxLayout()
-        self.rightLayout.setAlignment(Qt.AlignCenter)
+        self.paramsLayout.addLayout(self.formLayout)
 
         self.launchButton = QPushButton("Launch search!", application)
         self.launchButton.setFixedWidth(200)
@@ -144,20 +132,15 @@ class GAParameters:
         """)
         self.launchButton.clicked.connect(self.onLaunchButtonClicked)
 
-        self.rightLayout.addWidget(self.launchButton)
+        launch_row = QHBoxLayout()
+        launch_row.setContentsMargins(0, 8, 0, 0)
+        launch_row.addWidget(self.launchButton, 0, Qt.AlignLeft)
+        launch_row.addStretch(1)
+        self.paramsLayout.addLayout(launch_row)
 
-        self.leftWrapper = QWidget()
-        self.leftWrapper.setLayout(self.leftLayout)
-
-        self.rightWrapper = QWidget()
-        self.rightWrapper.setLayout(self.rightLayout)
-        self.rightWrapper.setFixedWidth(230)
-
-        self.mainLayout.addWidget(self.leftWrapper)
-        self.mainLayout.addWidget(self.rightWrapper)
         self.container = QWidget()
-        self.container.setLayout(self.mainLayout)
-        self.container.setFixedSize(760, 200)
+        self.container.setLayout(self.paramsLayout)
+        self.container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
     def onRouletteChanged(self, state):
         if state == 2:
@@ -334,8 +317,7 @@ class GAParameters:
         moleculeBoxes.rightCont3.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         # Show evolution / progress on stage 3 before the GA blocks the event loop.
-        self.application.stack.setCurrentIndex(2)
-        self.application.resize(*STAGE3_WINDOW_SIZE)
+        self.application.show_stage_3()
         self.application.viewEvolutionStageButton.setVisible(True)
 
         self.rouletteCheckBox.setDisabled(True)

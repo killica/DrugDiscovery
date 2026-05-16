@@ -1,6 +1,5 @@
 import sys
 import json
-import html
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -13,7 +12,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QScrollArea,
-    QGroupBox,
     QStackedWidget,
     QMessageBox,
     QFrame,
@@ -34,7 +32,9 @@ from individual import Individual
 from mutationInfo import MutationInfo
 
 STAGE1_WINDOW_SIZE = (1240, 980)
-STAGE2_GA_WINDOW_SIZE = (1280, 920)
+STAGE1_MIN_SIZE = (1180, 860)
+STAGE2_GA_WINDOW_SIZE = (520, 400)
+STAGE2_MIN_SIZE = (480, 360)
 STAGE3_WINDOW_SIZE = (1240, 900)
 
 def apply_light_fusion_theme(app):
@@ -194,27 +194,18 @@ class Application(QWidget):
         self.stage1Page = QWidget()
         self.stage1Page.setLayout(stage1_row)
 
-        # --- Stage 2: GA parameters only ---
+        # --- Stage 2: GA parameters + navigation ---
         self.stage2GaLayout = QVBoxLayout()
-        self.stage2GaLayout.setSpacing(16)
+        self.stage2GaLayout.setSpacing(20)
+        self.stage2GaLayout.setContentsMargins(24, 20, 24, 20)
 
-        self.backToStage1Button = QPushButton("← Back to catalogue & fitness")
-        self.backToStage1Button.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #455a64;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 14px;
-                font-size: 13px;
-                font-weight: bold;
-            }
-            QPushButton:hover { background-color: #37474f; }
-            """
+        self.stage2GaTitle = QLabel("Parameters for genetic algorithm")
+        self.stage2GaTitle.setStyleSheet(
+            "font-size: 17px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;"
         )
-        self.backToStage1Button.clicked.connect(self.on_back_to_stage_1)
-        self.stage2GaLayout.addWidget(self.backToStage1Button, 0, Qt.AlignLeft)
+        self.stage2GaLayout.addWidget(self.stage2GaTitle)
+
+        self.stage2GaLayout.addWidget(self.gaParameters.getGAParametersWidget())
 
         self.viewEvolutionStageButton = QPushButton("View evolution & results")
         self.viewEvolutionStageButton.setVisible(False)
@@ -234,51 +225,29 @@ class Application(QWidget):
         )
         self.viewEvolutionStageButton.clicked.connect(self.on_view_evolution_stage)
         self.stage2GaLayout.addWidget(self.viewEvolutionStageButton, 0, Qt.AlignLeft)
+        self.stage2GaLayout.addSpacing(12)
 
-        self.stage2_insight_group = QGroupBox("First-generation selection")
-        self.stage2_insight_group.setStyleSheet(
+        self.backToStage1Button = QPushButton("← Back to catalogue and fitness")
+        self.backToStage1Button.setStyleSheet(
             """
-            QGroupBox {
-                font-weight: bold;
+            QPushButton {
+                background-color: #455a64;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 14px;
                 font-size: 13px;
-                border: 1px solid #a5d6a7;
-                border-radius: 8px;
-                margin-top: 10px;
-                padding-top: 8px;
+                font-weight: bold;
             }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 4px;
-                color: #1b5e20;
-            }
+            QPushButton:hover { background-color: #37474f; }
             """
         )
-        insight_outer = QVBoxLayout(self.stage2_insight_group)
-        insight_outer.setSpacing(8)
-        self.stage2_insight_summary = QLabel("")
-        self.stage2_insight_summary.setWordWrap(True)
-        self.stage2_insight_summary.setStyleSheet("font-weight: normal; color: #424242;")
-        insight_outer.addWidget(self.stage2_insight_summary)
-        self.stage2_insight_scroll = QScrollArea()
-        self.stage2_insight_scroll.setWidgetResizable(True)
-        self.stage2_insight_scroll.setMaximumHeight(260)
-        self.stage2_insight_scroll.setFrameShape(QFrame.NoFrame)
-        self.stage2_insight_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.stage2_insight_inner = QWidget()
-        self.stage2_insight_list = QVBoxLayout(self.stage2_insight_inner)
-        self.stage2_insight_list.setContentsMargins(4, 4, 4, 4)
-        self.stage2_insight_list.setSpacing(10)
-        self.stage2_insight_scroll.setWidget(self.stage2_insight_inner)
-        insight_outer.addWidget(self.stage2_insight_scroll)
-
-        self.stage2GaLayout.addWidget(self.stage2_insight_group)
-        self.stage2GaLayout.addWidget(self.gaParameters.getGAParametersWidget())
-        self.stage2GaLayout.addStretch(1)
+        self.backToStage1Button.clicked.connect(self.on_back_to_stage_1)
+        self.stage2GaLayout.addWidget(self.backToStage1Button, 0, Qt.AlignLeft)
 
         self.stage2GaPage = QWidget()
         self.stage2GaPage.setLayout(self.stage2GaLayout)
-        self.stage2GaPage.setMinimumWidth(780)
+        self.stage2GaPage.setMaximumWidth(560)
 
         self.evolutionRowLayout = QHBoxLayout()
         self.evolutionRowLayout.setSpacing(16)
@@ -336,12 +305,11 @@ class Application(QWidget):
         root.setContentsMargins(8, 8, 8, 8)
         root.addWidget(self.stack)
         self.setLayout(root)
-        self.setMinimumSize(1180, 860)
+        self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.resize(*STAGE1_WINDOW_SIZE)
         self.setAutoFillBackground(True)
 
         self.stack.setCurrentIndex(0)
-        self.stack.currentChanged.connect(self._on_stack_page_changed)
 
         self.show()
 
@@ -377,17 +345,24 @@ class Application(QWidget):
             )
             return
         self.moleculeBoxes.place_precedent_in_evolution_row()
+        self._show_stage_2()
+
+    def _show_stage_2(self):
+        self.setMinimumSize(*STAGE2_MIN_SIZE)
         self.stack.setCurrentIndex(1)
         self.resize(*STAGE2_GA_WINDOW_SIZE)
 
     def on_back_to_ga_stage(self):
         """Return to the GA summary page (parameters are fixed for this run; controls stay disabled)."""
-        self.stack.setCurrentIndex(1)
-        self.resize(*STAGE2_GA_WINDOW_SIZE)
+        self._show_stage_2()
 
-    def on_view_evolution_stage(self):
+    def show_stage_3(self):
+        self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(2)
         self.resize(*STAGE3_WINDOW_SIZE)
+
+    def on_view_evolution_stage(self):
+        self.show_stage_3()
 
     def on_back_to_stage_1(self):
         if self.blockTransfer:
@@ -399,42 +374,10 @@ class Application(QWidget):
             return
         self.show_stage_1()
 
-    def _on_stack_page_changed(self, index):
-        if index == 1:
-            self._refresh_stage2_selection_insight()
-
-    def _refresh_stage2_selection_insight(self):
-        lay = self.stage2_insight_list
-        while lay.count():
-            item = lay.takeAt(0)
-            w = item.widget()
-            if w is not None:
-                w.deleteLater()
-
-        mols = self.moleculeBoxes.selectedMolecules
-        n = len(mols)
-        self.stage2_insight_summary.setText(
-            f"{n} molecule(s) will seed the genetic algorithm. "
-            "You can go back to adjust fitness weights or change the selection."
-        )
-        for i, mol in enumerate(mols):
-            sm = mol.getSmiles()
-            sm_disp = sm if len(sm) <= 76 else (sm[:73] + "…")
-            desc = html.escape(mol.getDescription() or "—", quote=True)
-            sm_safe = html.escape(sm_disp, quote=True)
-            qed = mol.getQED()
-            row = QLabel(
-                f"<b>{i + 1}.</b> {desc} &nbsp;·&nbsp; QED <b>{qed:.4f}</b><br>"
-                f"<span style='color:#555;font-size:11px;'>{sm_safe}</span>"
-            )
-            row.setTextFormat(Qt.RichText)
-            row.setWordWrap(True)
-            lay.addWidget(row)
-        lay.addStretch(1)
-
     def show_stage_1(self):
         self.viewEvolutionStageButton.setVisible(False)
         self.moleculeBoxes.place_precedent_in_catalogue_column()
+        self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(0)
         self.resize(*STAGE1_WINDOW_SIZE)
 
