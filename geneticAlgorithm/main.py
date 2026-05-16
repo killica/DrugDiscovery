@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QButtonGroup,
     QRadioButton,
 )
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QColor, QPen, QPalette
+from PyQt5.QtGui import QColor, QPalette
 from PyQt5.QtCore import Qt
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -253,11 +253,24 @@ class Application(QWidget):
         self.evolutionRowLayout.setSpacing(16)
         self.evolutionLeftColumn = QVBoxLayout()
         self.evolutionLeftColumn.setSpacing(12)
-        self.evolutionLeftColumn.addWidget(self.moleculeBoxes.getPrecedentScrollArea(), 1)
-        self.evolutionLeftColumn.addWidget(self.moleculeBoxes.getSecondScrollArea(), 1)
+        self.evolutionLeftColumn.setContentsMargins(0, 0, 0, 0)
+        self.evolutionLeftColumn.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.evolutionLeftColumn.addWidget(
+            self.moleculeBoxes.getPrecedentScrollArea(), 0, Qt.AlignLeft | Qt.AlignTop
+        )
+        self.evolutionLeftColumn.addWidget(
+            self.moleculeBoxes.getSecondScrollArea(), 0, Qt.AlignLeft | Qt.AlignTop
+        )
 
-        self.evolutionRowLayout.addLayout(self.evolutionLeftColumn, 1)
-        self.evolutionRowLayout.addWidget(self.moleculeBoxes.getBest(), 0, Qt.AlignTop | Qt.AlignRight)
+        self.evolutionLeftColumnHost = QWidget()
+        self.evolutionLeftColumnHost.setLayout(self.evolutionLeftColumn)
+        self.evolutionLeftColumnHost.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        self.evolutionRowLayout.addWidget(self.evolutionLeftColumnHost, 0, Qt.AlignTop)
+        self.evolutionRowLayout.addWidget(
+            self.moleculeBoxes.getBest(), 0, Qt.AlignTop | Qt.AlignLeft
+        )
+        self.evolutionRowLayout.addStretch(1)
 
         self.rightWrapper = QWidget()
         self.rightWrapper.setLayout(self.evolutionRowLayout)
@@ -384,16 +397,6 @@ class Application(QWidget):
     def closeEvent(self, event):
         self._cancel_evolution = True
         super().closeEvent(event)
-
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        if self.stack.currentIndex() != 2:
-            return
-        painter = QPainter(self)
-        painter.setPen(QPen(QColor(128, 128, 128), 2))
-        painter.drawLine(10, 685, 800, 685)
-        painter.drawLine(800, 20, 800, 880)
-        painter.end()
 
     def onSubmitButtonClicked(self):
         smiles = self.newMoleculeForm.getInputSmilesText().strip()

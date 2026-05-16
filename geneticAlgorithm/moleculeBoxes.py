@@ -339,8 +339,7 @@ class MoleculeBoxes(QWidget):
         self.evolutionGen1VBox.setContentsMargins(0, 0, 0, 0)
         self.rightCont1 = QWidget()
         self.rightCont1.setLayout(self.evolutionGen1VBox)
-        self.rightCont1.setMinimumSize(200, 160)
-        self.rightCont1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.rightCont1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.secondLayout = QGridLayout()
         self.secondLayout.setContentsMargins(0, 0, 0, 0)
@@ -349,8 +348,8 @@ class MoleculeBoxes(QWidget):
 
         self.secondScrollArea = QScrollArea()
         self.secondScrollArea.setWidgetResizable(True)
-        self.secondScrollArea.setMinimumSize(0, 160)
-        self.secondScrollArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.secondScrollArea.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
+        self.secondScrollArea.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.secondScrollWidget = QWidget()
         self.secondScrollWidget.setLayout(self.secondLayout)
@@ -364,16 +363,16 @@ class MoleculeBoxes(QWidget):
         self.evolutionGen2VBox.setSpacing(8)
         self.evolutionGen2VBox.setContentsMargins(0, 0, 0, 0)
         self.evolutionGen2VBox.addWidget(self.secondLabel, 0, Qt.AlignLeft)
-        self.evolutionGen2VBox.addWidget(self.secondScrollArea, 1)
+        self.evolutionGen2VBox.addWidget(self.secondScrollArea, 0, Qt.AlignLeft)
 
         self.rightCont2 = QWidget()
         self.rightCont2.setLayout(self.evolutionGen2VBox)
-        self.rightCont2.setMinimumSize(200, 160)
-        self.rightCont2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.rightCont2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.evolutionControlsLayout = QVBoxLayout()
-        self.evolutionControlsLayout.setSpacing(0)
-        self.evolutionControlsLayout.setContentsMargins(0, 4, 0, 4)
+        self.evolutionControlsLayout.setSpacing(16)
+        self.evolutionControlsLayout.setContentsMargins(0, 0, 8, 0)
+        self.evolutionControlsLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.rightCont3 = QWidget()
 
         self.loadBoxes()
@@ -508,9 +507,27 @@ class MoleculeBoxes(QWidget):
     def getPrecedentScrollArea(self):
         return self.rightCont1
 
+    def _configure_evolution_scroll_area(self, scroll_area):
+        scroll_area.setFixedSize(STAGE1_SCROLL_WIDTH, STAGE1_SCROLL_HEIGHT)
+        scroll_area.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+    def _configure_evolution_scroll_column(self, container):
+        container.setFixedWidth(STAGE1_SCROLL_WIDTH)
+        container.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        layout = container.layout()
+        if layout is not None:
+            layout.setStretch(0, 0)
+            if layout.count() > 1:
+                layout.setStretch(1, 0)
+        container.adjustSize()
+
     def place_precedent_in_evolution_row(self):
-        """Move the 1st-generation scroll from the catalogue column to the evolution header row (stage 2)."""
+        """Move the 1st-generation scroll from the catalogue column to the evolution header row (stage 3)."""
         if self.precedentScrollArea.parentWidget() == self.rightCont1:
+            self._configure_evolution_scroll_area(self.precedentScrollArea)
+            self._configure_evolution_scroll_area(self.secondScrollArea)
+            self._configure_evolution_scroll_column(self.rightCont1)
+            self._configure_evolution_scroll_column(self.rightCont2)
             return
         self.catalogueVBox.removeWidget(self.precedentScrollArea)
         self.precedentScrollArea.setParent(None)
@@ -520,12 +537,13 @@ class MoleculeBoxes(QWidget):
             if w is not None:
                 w.setParent(None)
         self.evolutionGen1VBox.addWidget(self.precedentLabel, 0, Qt.AlignLeft)
-        self.evolutionGen1VBox.addWidget(self.precedentScrollArea, 1)
+        self.evolutionGen1VBox.addWidget(self.precedentScrollArea, 0, Qt.AlignLeft)
         self.precedentLabel.show()
         self.precedentScrollArea.show()
-        self.precedentScrollArea.setMinimumSize(0, 160)
-        self.precedentScrollArea.setMaximumSize(16777215, 16777215)
-        self.precedentScrollArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._configure_evolution_scroll_area(self.precedentScrollArea)
+        self._configure_evolution_scroll_area(self.secondScrollArea)
+        self._configure_evolution_scroll_column(self.rightCont1)
+        self._configure_evolution_scroll_column(self.rightCont2)
 
     def place_precedent_in_catalogue_column(self):
         """Put the selected-molecules scroll back under the catalogue (stage 1)."""

@@ -17,6 +17,8 @@ from PyQt5.QtGui import QIcon
 import geneticAlgorithm
 from mutationInfo import MutationInfo
 
+EVOLUTION_ACTION_BTN_WIDTH = 200
+
 GA_PROGRESS_BAR_STYLE = """
 QProgressBar {
     border: 1px solid #9e9e9e;
@@ -156,7 +158,7 @@ class GAParameters:
         moleculeBoxes = self.application.moleculeBoxes
 
         moleculeBoxes.generateButton = QPushButton("Generate next", moleculeBoxes.application)
-        moleculeBoxes.generateButton.setFixedWidth(150)
+        moleculeBoxes.generateButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.generateButton.clicked.connect(moleculeBoxes.onGenerateButtonClicked)
         moleculeBoxes.generateButton.setStyleSheet("""
             QPushButton {
@@ -173,7 +175,7 @@ class GAParameters:
         """)
 
         moleculeBoxes.finalButton = QPushButton("Jump to final")
-        moleculeBoxes.finalButton.setFixedWidth(150)
+        moleculeBoxes.finalButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.finalButton.clicked.connect(moleculeBoxes.onFinalButtonClicked)
         moleculeBoxes.finalButton.setStyleSheet("""
             QPushButton {
@@ -190,7 +192,7 @@ class GAParameters:
         """)
 
         moleculeBoxes.saveButton = QPushButton("Save the best")
-        moleculeBoxes.saveButton.setFixedWidth(150)
+        moleculeBoxes.saveButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.saveButton.clicked.connect(moleculeBoxes.onSaveButtonClicked)
         moleculeBoxes.saveButton.setStyleSheet("""
             QPushButton {
@@ -210,17 +212,18 @@ class GAParameters:
         moleculeBoxes.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
 
         moleculeBoxes.saveBox = QHBoxLayout()
-        moleculeBoxes.saveBox.addSpacing(-7)
-        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveButton)
-        moleculeBoxes.saveBox.addSpacing(10)
-        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveLabel)
+        moleculeBoxes.saveBox.setContentsMargins(0, 0, 0, 0)
+        moleculeBoxes.saveBox.setSpacing(8)
+        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveButton, 0, Qt.AlignLeft)
+        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveLabel, 0, Qt.AlignVCenter)
+        moleculeBoxes.saveBox.addStretch(1)
 
         moleculeBoxes.saveCnt = QWidget()
         moleculeBoxes.saveCnt.setLayout(moleculeBoxes.saveBox)
-        moleculeBoxes.saveCnt.setFixedWidth(350)
+        moleculeBoxes.saveCnt.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         moleculeBoxes.restartButton = QPushButton("Restart analysis")
-        moleculeBoxes.restartButton.setFixedWidth(150)
+        moleculeBoxes.restartButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.restartButton.clicked.connect(moleculeBoxes.onRestartButtonClicked)
         moleculeBoxes.restartButton.setStyleSheet("""
             QPushButton {
@@ -237,16 +240,20 @@ class GAParameters:
         """)
 
         moleculeBoxes.rightVBox3 = QVBoxLayout()
-        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.generateButton)
-        moleculeBoxes.rightVBox3.addSpacing(13)
-        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.finalButton)
-        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.saveCnt)
-        moleculeBoxes.rightVBox3.addWidget(moleculeBoxes.restartButton)
+        moleculeBoxes.rightVBox3.setSpacing(10)
+        moleculeBoxes.rightVBox3.setContentsMargins(0, 0, 0, 0)
+        moleculeBoxes.rightVBox3.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        for w in (
+            moleculeBoxes.generateButton,
+            moleculeBoxes.finalButton,
+            moleculeBoxes.saveCnt,
+            moleculeBoxes.restartButton,
+        ):
+            moleculeBoxes.rightVBox3.addWidget(w, 0, Qt.AlignLeft)
 
         moleculeBoxes.rightBtnCnt = QWidget()
         moleculeBoxes.rightBtnCnt.setLayout(moleculeBoxes.rightVBox3)
-        moleculeBoxes.rightBtnCnt.setMinimumSize(300, 200)
-        moleculeBoxes.rightBtnCnt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        moleculeBoxes.rightBtnCnt.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
 
         moleculeBoxes.bestBox = moleculeBoxes.createMoleculeBox("", "To be determined", 0.0, 0, -1)
 
@@ -304,11 +311,15 @@ class GAParameters:
         moleculeBoxes.progressCnt.setMinimumWidth(300)
         moleculeBoxes.progressCnt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        moleculeBoxes.evolutionControlsLayout.addWidget(moleculeBoxes.rightBtnCnt, 0, Qt.AlignTop)
-        moleculeBoxes.evolutionControlsLayout.addSpacing(12)
-        moleculeBoxes.evolutionControlsLayout.addWidget(moleculeBoxes.bestBox, 0, Qt.AlignTop)
-        moleculeBoxes.evolutionControlsLayout.addSpacing(16)
-        moleculeBoxes.evolutionControlsLayout.addWidget(moleculeBoxes.progressCnt, 0, Qt.AlignTop)
+        moleculeBoxes.evolutionControlsLayout.addWidget(
+            moleculeBoxes.rightBtnCnt, 0, Qt.AlignTop | Qt.AlignLeft
+        )
+        moleculeBoxes.evolutionControlsLayout.addWidget(
+            moleculeBoxes.bestBox, 0, Qt.AlignTop | Qt.AlignLeft
+        )
+        moleculeBoxes.evolutionControlsLayout.addWidget(
+            moleculeBoxes.progressCnt, 0, Qt.AlignTop | Qt.AlignLeft
+        )
         moleculeBoxes.evolutionControlsLayout.addStretch(1)
 
         moleculeBoxes.rightCont3.setLayout(moleculeBoxes.evolutionControlsLayout)
