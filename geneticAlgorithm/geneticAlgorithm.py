@@ -25,6 +25,7 @@ def geneticAlgorithm(
     tournamentSize,
     elitismSize,
     mutationProbability,
+    useSelfiesCrossover,
     mi,
     individualLabel,
     individualProgress,
@@ -32,6 +33,7 @@ def geneticAlgorithm(
     on_generation_start=None,
     on_new_individual=None,
 ):
+    crossover = crossover_selfies if useSelfiesCrossover else crossover_smiles
     populationSize = len(population)
     if cancel_check and cancel_check():
         return population
@@ -69,7 +71,7 @@ def geneticAlgorithm(
             parent1 = selection(population, rouletteSelection, tournamentSize)
             parent2 = selection(population, rouletteSelection, tournamentSize) # TODO: Parents be different
 
-            crossover(parent1, parent2, child1 = newPopulation[j], child2 = newPopulation[j+1])
+            crossover(parent1, parent2, child1=newPopulation[j], child2=newPopulation[j + 1])
 
             mutation(newPopulation[j], mutationProbability, mi)
             mutation(newPopulation[j+1], mutationProbability, mi)
@@ -151,82 +153,88 @@ def isValidSmiles(smiles):
         mol = Chem.MolFromSmiles(smiles)
     return mol is not None
 
-def crossover(parent1, parent2, child1, child2, MAX_ITERS = 2000):
+
+def crossover_smiles(parent1, parent2, child1, child2, MAX_ITERS = 2000):
     # Assuming smiles strings have more than 1 character (in order to be eligible for crossover)
     smiles1 = parent1.getSmiles()
     smiles2 = parent2.getSmiles()
-    # n1 = len(smiles1)
-    # n2 = len(smiles2)
-    # MAXITERS = 2000
+    n1 = len(smiles1)
+    n2 = len(smiles2)
 
-    # # Single-point needs n >= 2; skip crossover if molecules are too short
-    # if n1 < 2 or n2 < 2:
-    #     child1.setSmiles(smiles1)
-    #     child2.setSmiles(smiles2)
-    #     return
+    # Single-point needs n >= 2; skip crossover if molecules are too short
+    if n1 < 2 or n2 < 2:
+        child1.setSmiles(smiles1)
+        child2.setSmiles(smiles2)
+        return
 
-    # i = 0
-    # while i < MAXITERS:
-    #     i += 1
-    #     cp1 = random.randrange(1, n1)
-    #     cp2 = random.randrange(1, n2)
+    i = 0
+    while i < MAX_ITERS:
+        i += 1
+        cp1 = random.randrange(1, n1)
+        cp2 = random.randrange(1, n2)
 
-    #     childSmiles1 = smiles1[:cp1] + smiles2[cp2:]
-    #     childSmiles2 = smiles1[cp1:] + smiles2[:cp2]
+        childSmiles1 = smiles1[:cp1] + smiles2[cp2:]
+        childSmiles2 = smiles1[cp1:] + smiles2[:cp2]
 
-    #     if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
-    #         child1.setSmiles(childSmiles1)
-    #         child2.setSmiles(childSmiles2)
-    #         return
+        if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
+            child1.setSmiles(childSmiles1)
+            child2.setSmiles(childSmiles2)
+            return
     
-    # print('Maximum number of iterations for single point crossover of following molecules exceeded:\n')
-    # print(f'{smiles1}\n{smiles2}\n')
+    print('Maximum number of iterations for single point crossover of following molecules exceeded:\n')
+    print(f'{smiles1}\n{smiles2}\n')
 
-    # # Two-point needs n >= 3; skip crossover if molecules are too short
-    # if n1 < 3 or n2 < 3:
-    #     child1.setSmiles(smiles1)
-    #     child2.setSmiles(smiles2)
-    #     return
-    # print('Attempting two point crossover...')
+    # Two-point needs n >= 3; skip crossover if molecules are too short
+    if n1 < 3 or n2 < 3:
+        child1.setSmiles(smiles1)
+        child2.setSmiles(smiles2)
+        return
+    print('Attempting two point crossover...')
 
-    # i = 0
-    # while i < MAXITERS:
-    #     i += 1
-    #     first1 = random.randrange(1, n1)
-    #     if first1 < n1 - 1:
-    #         first2 = random.randrange(first1 + 1, n1)
-    #     else:
-    #         first2 = random.randrange(1, first1)
-    #         # first2 < first1, so swap them
-    #         first1, first2 = first2, first1
+    i = 0
+    while i < MAX_ITERS:
+        i += 1
+        first1 = random.randrange(1, n1)
+        if first1 < n1 - 1:
+            first2 = random.randrange(first1 + 1, n1)
+        else:
+            first2 = random.randrange(1, first1)
+            # first2 < first1, so swap them
+            first1, first2 = first2, first1
 
-    #     second1 = random.randrange(1, n2)
-    #     if second1 < n2 - 1:
-    #         second2 = random.randrange(second1 + 1, n2)
-    #     else:
-    #         second2 = random.randrange(1, second1)
-    #         # second2 < second1, so swap them
-    #         second1, second2 = second2, second1
+        second1 = random.randrange(1, n2)
+        if second1 < n2 - 1:
+            second2 = random.randrange(second1 + 1, n2)
+        else:
+            second2 = random.randrange(1, second1)
+            # second2 < second1, so swap them
+            second1, second2 = second2, second1
 
-    #     childSmiles1 = smiles1[:first1] + smiles2[second1:second2] + smiles1[first2:]
-    #     childSmiles2 = smiles2[:second1] + smiles1[first1:first2] + smiles2[second2:]
+        childSmiles1 = smiles1[:first1] + smiles2[second1:second2] + smiles1[first2:]
+        childSmiles2 = smiles2[:second1] + smiles1[first1:first2] + smiles2[second2:]
 
-    #     if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
-    #         child1.setSmiles(childSmiles1)
-    #         child2.setSmiles(childSmiles2)
-    #         return
+        if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
+            child1.setSmiles(childSmiles1)
+            child2.setSmiles(childSmiles2)
+            return
 
-    # print('Maximum number of iterations for two point crossover of following molecules exceeded:\n')
-    # print(f'{smiles1}\n{smiles2}\n')
-    # print('Passing them to the new generation.\n')
+    print('Maximum number of iterations for two point crossover of following molecules exceeded:\n')
+    print(f'{smiles1}\n{smiles2}\n')
+    print('Passing them to the new generation.\n')
+    child1.setSmiles(smiles1)
+    child2.setSmiles(smiles2)
 
-
+def crossover_selfies(parent1, parent2, child1, child2, MAX_ITERS = 20):
+    smiles1 = parent1.getSmiles()
+    smiles2 = parent2.getSmiles()
     try:
         selfies1 = sf.encoder(smiles1)
         selfies2 = sf.encoder(smiles2)
 
     except Exception:
-        return None, None
+        child1.setSmiles(smiles1)
+        child2.setSmiles(smiles2)
+        return
 
     tokens1 = list(sf.split_selfies(selfies1))
     tokens2 = list(sf.split_selfies(selfies2))

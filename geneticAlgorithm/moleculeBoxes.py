@@ -806,6 +806,7 @@ class MoleculeBoxes(QWidget):
             self.application.gaConfig.tournamentSize,
             self.application.gaConfig.elitismSize,
             self.application.gaConfig.mutationProbability,
+            self.application.gaConfig.useSelfiesCrossover,
             self.application.getMutationInfo(),
             self.individualLabel,
             self.individualProgress,
@@ -969,6 +970,10 @@ class MoleculeBoxes(QWidget):
         self.application.gaParameters.tournamentSpin.setDisabled(False)
         self.application.gaParameters.elitismSpin.setDisabled(False)
         self.application.gaParameters.mutationLineEdit.setDisabled(False)
+        self.application.gaParameters.crossoverSmilesRadio.setDisabled(False)
+        self.application.gaParameters.crossoverSelfiesRadio.setDisabled(False)
+        if self.application.gaParameters.rouletteCheckBox.isChecked():
+            self.application.gaParameters.tournamentSpin.setDisabled(True)
         self.application.sbmtBtn.setDisabled(False)
         self.application.resBtn.setDisabled(False)
         self.application.blockTransfer = False

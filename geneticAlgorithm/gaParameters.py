@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QLineEdit,
     QCheckBox,
+    QRadioButton,
+    QButtonGroup,
     QProgressBar,
     QSizePolicy,
 )
@@ -47,6 +49,7 @@ class GAParameters:
         self.tournamentSizeLabel = QLabel("Tournament size:", application)
         self.elitismSizeLabel = QLabel("Elitism size:", application)
         self.mutationProbabilityLabel = QLabel("Mutation probability:", application)
+        self.crossoverLabel = QLabel("Crossover:", application)
         self.generationSpin = QSpinBox(application)
         self.generationSpin.setMaximum(200)
         self.generationSpin.setFixedWidth(70)
@@ -80,6 +83,7 @@ class GAParameters:
             self.tournamentSizeLabel,
             self.elitismSizeLabel,
             self.mutationProbabilityLabel,
+            self.crossoverLabel,
         ):
             label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
@@ -113,6 +117,22 @@ class GAParameters:
         self.formLayout.addRow(self.tournamentSizeLabel, tournament_field)
         self.formLayout.addRow(self.elitismSizeLabel, self.elitismSpin)
         self.formLayout.addRow(self.mutationProbabilityLabel, self.mutationLineEdit)
+
+        self.crossoverSmilesRadio = QRadioButton("SMILES", application)
+        self.crossoverSelfiesRadio = QRadioButton("SELFIES", application)
+        self.crossoverSelfiesRadio.setChecked(True)
+        self.crossoverGroup = QButtonGroup(application)
+        self.crossoverGroup.addButton(self.crossoverSmilesRadio, 0)
+        self.crossoverGroup.addButton(self.crossoverSelfiesRadio, 1)
+
+        crossover_field = QWidget(application)
+        crossover_row = QHBoxLayout(crossover_field)
+        crossover_row.setContentsMargins(0, 0, 0, 0)
+        crossover_row.setSpacing(16)
+        crossover_row.addWidget(self.crossoverSmilesRadio, 0, Qt.AlignLeft)
+        crossover_row.addWidget(self.crossoverSelfiesRadio, 0, Qt.AlignLeft)
+        crossover_row.addStretch(1)
+        self.formLayout.addRow(self.crossoverLabel, crossover_field)
 
         self.paramsLayout.addLayout(self.formLayout)
 
@@ -276,6 +296,7 @@ class GAParameters:
         self.application.gaConfig.tournamentSize = self.tournamentSpin.value()
         self.application.gaConfig.elitismSize = self.elitismSpin.value()
         self.application.gaConfig.mutationProbability = float(self.mutationLineEdit.text())
+        self.application.gaConfig.useSelfiesCrossover = self.crossoverSelfiesRadio.isChecked()
 
         moleculeBoxes.progressVBox = QVBoxLayout()
 
@@ -356,6 +377,8 @@ class GAParameters:
         self.tournamentSpin.setDisabled(True)
         self.elitismSpin.setDisabled(True)
         self.mutationLineEdit.setDisabled(True)
+        self.crossoverSmilesRadio.setDisabled(True)
+        self.crossoverSelfiesRadio.setDisabled(True)
 
         self.application.sbmtBtn.setDisabled(True)
         self.application.resBtn.setDisabled(True)
@@ -374,6 +397,7 @@ class GAParameters:
             self.application.gaConfig.tournamentSize,
             self.application.gaConfig.elitismSize,
             self.application.gaConfig.mutationProbability,
+            self.application.gaConfig.useSelfiesCrossover,
             self.application.getMutationInfo(),
             moleculeBoxes.individualLabel,
             moleculeBoxes.individualProgress,

@@ -5,13 +5,15 @@ class GAConfig:
         tournamentSize: int = 4,
         elitismSize: int = 1,
         mutationProbability: float = 0.05,
-        rouletteSelection: bool = False
+        rouletteSelection: bool = False,
+        useSelfiesCrossover: bool = True,
     ):
         self.generations = generations
         self.tournamentSize = tournamentSize
         self.elitismSize = elitismSize
         self.mutationProbability = mutationProbability
         self.rouletteSelection = rouletteSelection
+        self.useSelfiesCrossover = useSelfiesCrossover
 
     def __repr__(self):
         return (
@@ -19,5 +21,6 @@ class GAConfig:
             f"tournamentSize={self.tournamentSize}, "
             f"elitismSize={self.elitismSize}, "
             f"mutationProbability={self.mutationProbability}, "
-            f"rouletteSelection={self.rouletteSelection})"
+            f"rouletteSelection={self.rouletteSelection}, "
+            f"useSelfiesCrossover={self.useSelfiesCrossover})"
         )
