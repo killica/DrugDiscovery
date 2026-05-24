@@ -33,8 +33,8 @@ from mutationInfo import MutationInfo
 
 STAGE1_WINDOW_SIZE = (1240, 980)
 STAGE1_MIN_SIZE = (1180, 860)
-STAGE2_GA_WINDOW_SIZE = (520, 400)
-STAGE2_MIN_SIZE = (480, 360)
+STAGE2_GA_WINDOW_SIZE = (560, 520)
+STAGE2_MIN_SIZE = (520, 480)
 STAGE3_WINDOW_SIZE = (1240, 900)
 
 def apply_light_fusion_theme(app):
@@ -207,26 +207,6 @@ class Application(QWidget):
 
         self.stage2GaLayout.addWidget(self.gaParameters.getGAParametersWidget())
 
-        self.viewEvolutionStageButton = QPushButton("View evolution & results")
-        self.viewEvolutionStageButton.setVisible(False)
-        self.viewEvolutionStageButton.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #1565c0;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 14px;
-                font-size: 13px;
-                font-weight: bold;
-            }
-            QPushButton:hover { background-color: #0d47a1; }
-            """
-        )
-        self.viewEvolutionStageButton.clicked.connect(self.on_view_evolution_stage)
-        self.stage2GaLayout.addWidget(self.viewEvolutionStageButton, 0, Qt.AlignLeft)
-        self.stage2GaLayout.addSpacing(12)
-
         self.backToStage1Button = QPushButton("← Back to catalogue and fitness")
         self.backToStage1Button.setStyleSheet(
             """
@@ -244,10 +224,13 @@ class Application(QWidget):
         )
         self.backToStage1Button.clicked.connect(self.on_back_to_stage_1)
         self.stage2GaLayout.addWidget(self.backToStage1Button, 0, Qt.AlignLeft)
+        self.stage2GaLayout.addStretch(1)
 
         self.stage2GaPage = QWidget()
         self.stage2GaPage.setLayout(self.stage2GaLayout)
-        self.stage2GaPage.setMaximumWidth(560)
+        self.stage2GaPage.setMinimumSize(*STAGE2_MIN_SIZE)
+        self.stage2GaPage.setMaximumWidth(620)
+        self.stage2GaPage.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 
         self.evolutionRowLayout = QHBoxLayout()
         self.evolutionRowLayout.setSpacing(16)
@@ -277,33 +260,9 @@ class Application(QWidget):
         self.rightWrapper.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # --- Stage 3: evolution / progress (after Launch). ---
-        self.backToGaConfigButton = QPushButton("← Back to GA parameters")
-        self.backToGaConfigButton.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #455a64;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 14px;
-                font-size: 13px;
-                font-weight: bold;
-            }
-            QPushButton:hover { background-color: #37474f; }
-            """
-        )
-        self.backToGaConfigButton.clicked.connect(self.on_back_to_ga_stage)
-        stage3_top = QHBoxLayout()
-        stage3_top.setContentsMargins(0, 0, 0, 8)
-        stage3_top.addWidget(self.backToGaConfigButton, 0, Qt.AlignLeft)
-        stage3_top.addStretch(1)
-        stage3_top_w = QWidget()
-        stage3_top_w.setLayout(stage3_top)
-
         stage3_outer = QVBoxLayout()
         stage3_outer.setContentsMargins(8, 8, 8, 8)
         stage3_outer.setSpacing(0)
-        stage3_outer.addWidget(stage3_top_w, 0)
         stage3_outer.addWidget(self.rightWrapper, 1)
 
         self.stage3Page = QWidget()
@@ -365,17 +324,10 @@ class Application(QWidget):
         self.stack.setCurrentIndex(1)
         self.resize(*STAGE2_GA_WINDOW_SIZE)
 
-    def on_back_to_ga_stage(self):
-        """Return to the GA summary page (parameters are fixed for this run; controls stay disabled)."""
-        self._show_stage_2()
-
     def show_stage_3(self):
         self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(2)
         self.resize(*STAGE3_WINDOW_SIZE)
-
-    def on_view_evolution_stage(self):
-        self.show_stage_3()
 
     def on_back_to_stage_1(self):
         if self.blockTransfer:
@@ -388,7 +340,6 @@ class Application(QWidget):
         self.show_stage_1()
 
     def show_stage_1(self):
-        self.viewEvolutionStageButton.setVisible(False)
         self.moleculeBoxes.place_precedent_in_catalogue_column()
         self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(0)

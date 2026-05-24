@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QButtonGroup,
     QProgressBar,
     QSizePolicy,
+    QMessageBox,
 )
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
@@ -100,6 +101,7 @@ class GAParameters:
         self.mutationLineEdit.setText("0.05")
 
         tournament_field = QWidget(application)
+        tournament_field.setMinimumWidth(280)
         tournament_row = QHBoxLayout(tournament_field)
         tournament_row.setContentsMargins(0, 0, 0, 0)
         tournament_row.setSpacing(16)
@@ -113,6 +115,7 @@ class GAParameters:
         self.formLayout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.formLayout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.formLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        self.formLayout.setRowWrapPolicy(QFormLayout.DontWrapRows)
         self.formLayout.addRow(self.numGenLabel, self.generationSpin)
         self.formLayout.addRow(self.tournamentSizeLabel, tournament_field)
         self.formLayout.addRow(self.elitismSizeLabel, self.elitismSpin)
@@ -126,6 +129,7 @@ class GAParameters:
         self.crossoverGroup.addButton(self.crossoverSelfiesRadio, 1)
 
         crossover_field = QWidget(application)
+        crossover_field.setMinimumWidth(180)
         crossover_row = QHBoxLayout(crossover_field)
         crossover_row.setContentsMargins(0, 0, 0, 0)
         crossover_row.setSpacing(16)
@@ -162,7 +166,8 @@ class GAParameters:
 
         self.container = QWidget()
         self.container.setLayout(self.paramsLayout)
-        self.container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        self.container.setMinimumWidth(460)
+        self.container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
 
     def onRouletteChanged(self, state):
         if state == 2:
@@ -172,6 +177,25 @@ class GAParameters:
 
     def getGAParametersWidget(self):
         return self.container
+
+    def showConfiguredParametersDialog(self, parent=None):
+        cfg = self.application.gaConfig
+        if cfg.rouletteSelection:
+            selection = "Roulette wheel"
+        else:
+            selection = f"Tournament (size {cfg.tournamentSize})"
+        crossover = "SELFIES" if cfg.useSelfiesCrossover else "SMILES"
+        QMessageBox.information(
+            parent or self.application,
+            "Genetic algorithm parameters",
+            (
+                f"Number of generations: {cfg.generations}\n"
+                f"Selection: {selection}\n"
+                f"Elitism size: {cfg.elitismSize}\n"
+                f"Mutation probability: {cfg.mutationProbability}\n"
+                f"Crossover representation: {crossover}"
+            ),
+        )
 
     def onLaunchButtonClicked(self):
         # moleculeBoxes is a reference to the right half of the scene
@@ -259,6 +283,25 @@ class GAParameters:
             }
         """)
 
+        moleculeBoxes.gaParametersButton = QPushButton("GA parameters")
+        moleculeBoxes.gaParametersButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
+        moleculeBoxes.gaParametersButton.clicked.connect(
+            lambda: self.showConfiguredParametersDialog(moleculeBoxes.application)
+        )
+        moleculeBoxes.gaParametersButton.setStyleSheet("""
+            QPushButton {
+                background-color: #455a64;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #37474f;
+            }
+        """)
+
         moleculeBoxes.rightVBox3 = QVBoxLayout()
         moleculeBoxes.rightVBox3.setSpacing(10)
         moleculeBoxes.rightVBox3.setContentsMargins(0, 0, 0, 0)
@@ -342,6 +385,9 @@ class GAParameters:
             moleculeBoxes.progressCnt, 0, Qt.AlignTop | Qt.AlignLeft
         )
         moleculeBoxes.evolutionControlsLayout.addStretch(1)
+        moleculeBoxes.evolutionControlsLayout.addWidget(
+            moleculeBoxes.gaParametersButton, 0, Qt.AlignLeft
+        )
 
         moleculeBoxes.rightCont3.setLayout(moleculeBoxes.evolutionControlsLayout)
         moleculeBoxes.rightCont3.setMinimumWidth(380)
@@ -350,35 +396,6 @@ class GAParameters:
 
         # Show evolution / progress on stage 3 before the GA blocks the event loop.
         self.application.show_stage_3()
-        self.application.viewEvolutionStageButton.setVisible(True)
-
-        self.rouletteCheckBox.setDisabled(True)
-        self.rouletteCheckBox.setStyleSheet("""
-            QCheckBox {
-                text-decoration: none;
-            }
-            QCheckBox::indicator {
-                width: 20px;
-                height: 20px;
-                border: 2px solid #777;
-                border-radius: 5px;
-                background-color: white;
-            }
-            QCheckBox::indicator:checked {
-                background-color: lightgray;
-                border: 2px solid gray;
-            }
-            QCheckBox::indicator:unchecked {
-                background-color: lightgray;
-                border: 2px solid gray;
-            }
-        """)
-        self.generationSpin.setDisabled(True)
-        self.tournamentSpin.setDisabled(True)
-        self.elitismSpin.setDisabled(True)
-        self.mutationLineEdit.setDisabled(True)
-        self.crossoverSmilesRadio.setDisabled(True)
-        self.crossoverSelfiesRadio.setDisabled(True)
 
         self.application.sbmtBtn.setDisabled(True)
         self.application.resBtn.setDisabled(True)

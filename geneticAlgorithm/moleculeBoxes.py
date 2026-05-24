@@ -945,35 +945,6 @@ class MoleculeBoxes(QWidget):
                 background-color: #45a049;
             }
         """)
-        self.application.gaParameters.rouletteCheckBox.setDisabled(False)
-        self.application.gaParameters.rouletteCheckBox.setStyleSheet("""
-            QCheckBox {
-                text-decoration: none;
-            }
-            QCheckBox::indicator {
-                width: 20px;
-                height: 20px;
-                border: 2px solid #777;
-                border-radius: 5px;
-                background-color: white;
-            }
-            QCheckBox::indicator:checked {
-                background-color: lightgray;
-                border: 2px solid gray;
-            }
-            QCheckBox::indicator:unchecked {
-                background-color: white;
-                border: 2px solid gray;
-            }
-        """)
-        self.application.gaParameters.generationSpin.setDisabled(False)
-        self.application.gaParameters.tournamentSpin.setDisabled(False)
-        self.application.gaParameters.elitismSpin.setDisabled(False)
-        self.application.gaParameters.mutationLineEdit.setDisabled(False)
-        self.application.gaParameters.crossoverSmilesRadio.setDisabled(False)
-        self.application.gaParameters.crossoverSelfiesRadio.setDisabled(False)
-        if self.application.gaParameters.rouletteCheckBox.isChecked():
-            self.application.gaParameters.tournamentSpin.setDisabled(True)
         self.application.sbmtBtn.setDisabled(False)
         self.application.resBtn.setDisabled(False)
         self.application.blockTransfer = False
