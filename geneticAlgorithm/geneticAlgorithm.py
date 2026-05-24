@@ -6,15 +6,97 @@ import contextlib
 from rdkit import Chem
 import selfies as sf
 import mutationInfo
+from GAConfig import CrossoverMode
 from PyQt5.QtWidgets import QApplication
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
+
+_crossover_stats = {
+    mode: {"attempts": 0, "successes": 0, "failures": 0}
+    for mode in CrossoverMode
+}
+_crossover_gen_stats = {
+    mode: {"attempts": 0, "successes": 0, "failures": 0}
+    for mode in CrossoverMode
+}
+_crossover_run_generation = 0
+
+
+def reset_crossover_gen_stats():
+    for mode in CrossoverMode:
+        _crossover_gen_stats[mode] = {"attempts": 0, "successes": 0, "failures": 0}
+
+
+def reset_crossover_stats():
+    global _crossover_run_generation
+    _crossover_run_generation = 0
+    reset_crossover_gen_stats()
+    for mode in CrossoverMode:
+        _crossover_stats[mode] = {"attempts": 0, "successes": 0, "failures": 0}
+
+
+def _crossover_label(mode: CrossoverMode) -> str:
+    return f"crossover_{mode.name.lower()}"
+
+
+def _print_crossover_stats(mode: CrossoverMode):
+    stats = _crossover_stats[mode]
+    attempts = stats["attempts"]
+    if attempts == 0:
+        return
+    successes = stats["successes"]
+    rate = 100.0 * successes / attempts
+    print(
+        f"[{_crossover_label(mode)}] run success rate: {successes}/{attempts} "
+        f"({rate:.1f}%)"
+    )
+
+
+def _print_crossover_generation_summary(mode: CrossoverMode):
+    global _crossover_run_generation
+    _crossover_run_generation += 1
+    gen_num = _crossover_run_generation
+    stats = _crossover_gen_stats[mode]
+    attempts = stats["attempts"]
+    label = _crossover_label(mode)
+    if attempts == 0:
+        print(f"[{label}] generation {gen_num}: no crossover attempts")
+        return
+    successes = stats["successes"]
+    rate = 100.0 * successes / attempts
+    print(f"[{label}] generation {gen_num} summary: {successes}/{attempts} ({rate:.1f}%)")
+
+
+def _crossover_record_success(mode: CrossoverMode):
+    for stats in (_crossover_stats[mode], _crossover_gen_stats[mode]):
+        stats["attempts"] += 1
+        stats["successes"] += 1
+
+
+def _crossover_use_parents(mode, reason, smiles1, smiles2, child1, child2):
+    for stats in (_crossover_stats[mode], _crossover_gen_stats[mode]):
+        stats["attempts"] += 1
+        stats["failures"] += 1
+    print(f"[{_crossover_label(mode)}] FAILED ({reason}) — using parent structures:")
+    print(f"  parent1: {smiles1}")
+    print(f"  parent2: {smiles2}")
+    _print_crossover_stats(mode)
+    child1.setSmiles(smiles1)
+    child2.setSmiles(smiles2)
 
 def _process_gui_events():
     """Allow progress labels/bars to repaint while GA runs on the main thread."""
     app = QApplication.instance()
     if app is not None:
         app.processEvents()
+
+
+def _crossover_for_mode(mode: CrossoverMode):
+    if mode == CrossoverMode.GRAPH:
+        return crossover_graph
+    if mode == CrossoverMode.SELFIES:
+        return crossover_selfies
+    return crossover_smiles
 
 
 def geneticAlgorithm(
@@ -25,7 +107,7 @@ def geneticAlgorithm(
     tournamentSize,
     elitismSize,
     mutationProbability,
-    useSelfiesCrossover,
+    crossoverMode,
     mi,
     individualLabel,
     individualProgress,
@@ -33,7 +115,7 @@ def geneticAlgorithm(
     on_generation_start=None,
     on_new_individual=None,
 ):
-    crossover = crossover_selfies if useSelfiesCrossover else crossover_smiles
+    crossover = _crossover_for_mode(crossoverMode)
     populationSize = len(population)
     if cancel_check and cancel_check():
         return population
@@ -51,6 +133,7 @@ def geneticAlgorithm(
     for gen_idx in range(generations):
         if cancel_check and cancel_check():
             return population
+        reset_crossover_gen_stats()
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
         if on_generation_start is not None:
@@ -97,6 +180,7 @@ def geneticAlgorithm(
         individualLabel.setText(f"Individual: {tmp+2}/{len(population)}")
         individualProgress.setValue(tmp+2)
         _process_gui_events()
+        _print_crossover_generation_summary(crossoverMode)
 
     return population
 
@@ -155,16 +239,16 @@ def isValidSmiles(smiles):
 
 
 def crossover_smiles(parent1, parent2, child1, child2, MAX_ITERS = 2000):
-    # Assuming smiles strings have more than 1 character (in order to be eligible for crossover)
+    mode = CrossoverMode.SMILES
     smiles1 = parent1.getSmiles()
     smiles2 = parent2.getSmiles()
     n1 = len(smiles1)
     n2 = len(smiles2)
 
-    # Single-point needs n >= 2; skip crossover if molecules are too short
     if n1 < 2 or n2 < 2:
-        child1.setSmiles(smiles1)
-        child2.setSmiles(smiles2)
+        _crossover_use_parents(
+            mode, "molecule too short for single-point crossover", smiles1, smiles2, child1, child2
+        )
         return
 
     i = 0
@@ -179,17 +263,19 @@ def crossover_smiles(parent1, parent2, child1, child2, MAX_ITERS = 2000):
         if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
             child1.setSmiles(childSmiles1)
             child2.setSmiles(childSmiles2)
+            _crossover_record_success(mode)
             return
-    
-    print('Maximum number of iterations for single point crossover of following molecules exceeded:\n')
-    print(f'{smiles1}\n{smiles2}\n')
 
-    # Two-point needs n >= 3; skip crossover if molecules are too short
     if n1 < 3 or n2 < 3:
-        child1.setSmiles(smiles1)
-        child2.setSmiles(smiles2)
+        _crossover_use_parents(
+            mode,
+            f"single-point failed after {MAX_ITERS} attempts; molecule too short for two-point crossover",
+            smiles1,
+            smiles2,
+            child1,
+            child2,
+        )
         return
-    print('Attempting two point crossover...')
 
     i = 0
     while i < MAX_ITERS:
@@ -216,15 +302,20 @@ def crossover_smiles(parent1, parent2, child1, child2, MAX_ITERS = 2000):
         if isValidSmiles(childSmiles1) and isValidSmiles(childSmiles2):
             child1.setSmiles(childSmiles1)
             child2.setSmiles(childSmiles2)
+            _crossover_record_success(mode)
             return
 
-    print('Maximum number of iterations for two point crossover of following molecules exceeded:\n')
-    print(f'{smiles1}\n{smiles2}\n')
-    print('Passing them to the new generation.\n')
-    child1.setSmiles(smiles1)
-    child2.setSmiles(smiles2)
+    _crossover_use_parents(
+        mode,
+        f"no valid recombination after {MAX_ITERS} single-point and {MAX_ITERS} two-point attempts",
+        smiles1,
+        smiles2,
+        child1,
+        child2,
+    )
 
 def crossover_selfies(parent1, parent2, child1, child2, MAX_ITERS = 20):
+    mode = CrossoverMode.SELFIES
     smiles1 = parent1.getSmiles()
     smiles2 = parent2.getSmiles()
     try:
@@ -232,19 +323,15 @@ def crossover_selfies(parent1, parent2, child1, child2, MAX_ITERS = 20):
         selfies2 = sf.encoder(smiles2)
 
     except Exception:
-        child1.setSmiles(smiles1)
-        child2.setSmiles(smiles2)
+        _crossover_use_parents(mode, "SELFIES encoding failed", smiles1, smiles2, child1, child2)
         return
 
     tokens1 = list(sf.split_selfies(selfies1))
     tokens2 = list(sf.split_selfies(selfies2))
 
-    # Molecules too small for crossover
     if len(tokens1) < 2 or len(tokens2) < 2:
-        child1.setSmiles(smiles1)
-        child2.setSmiles(smiles2)
+        _crossover_use_parents(mode, "molecule too small for crossover", smiles1, smiles2, child1, child2)
         return
-
 
     for _ in range(MAX_ITERS):
 
@@ -277,14 +364,201 @@ def crossover_selfies(parent1, parent2, child1, child2, MAX_ITERS = 20):
 
             child1.setSmiles(child1_smiles)
             child2.setSmiles(child2_smiles)
+            _crossover_record_success(mode)
             return
 
         except Exception:
             continue
 
-    # Failed after all attempts
-    child1.setSmiles(smiles1)
-    child2.setSmiles(smiles2)
+    _crossover_use_parents(
+        mode,
+        f"no valid recombination after {MAX_ITERS} attempts",
+        smiles1,
+        smiles2,
+        child1,
+        child2,
+    )
+
+def crossover_graph(parent1, parent2, child1, child2, MAX_ITERS = 100):
+    mode = CrossoverMode.GRAPH
+    smiles1 = parent1.getSmiles()
+    smiles2 = parent2.getSmiles()
+    mol1 = Chem.MolFromSmiles(smiles1)
+    mol2 = Chem.MolFromSmiles(smiles2)
+
+    if mol1 is None or mol2 is None:
+        _crossover_use_parents(mode, "invalid parent SMILES", smiles1, smiles2, child1, child2)
+        return
+
+    # Get non-ring bonds
+    bonds1 = [
+        bond.GetIdx()
+        for bond in mol1.GetBonds()
+        if not bond.IsInRing()
+    ]
+
+    bonds2 = [
+        bond.GetIdx()
+        for bond in mol2.GetBonds()
+        if not bond.IsInRing()
+    ]
+
+    if not bonds1 or not bonds2:
+        _crossover_use_parents(mode, "no cuttable non-ring bonds", smiles1, smiles2, child1, child2)
+        return
+
+    for _ in range(MAX_ITERS):
+        try:
+            # Select random bonds for cutting
+            bond_idx1 = random.choice(bonds1)
+            bond_idx2 = random.choice(bonds2)
+
+            # Fragment molecules -> add dummy atoms at the cut bonds
+            frag_mol1 = Chem.FragmentOnBonds(
+                mol1,
+                [bond_idx1],
+                addDummies=True
+            )
+
+            frag_mol2 = Chem.FragmentOnBonds(
+                mol2,
+                [bond_idx2],
+                addDummies=True
+            )
+
+            # Extract fragments
+            frags1 = Chem.GetMolFrags(
+                frag_mol1,
+                asMols=True,
+                sanitizeFrags=True
+            )
+
+            frags2 = Chem.GetMolFrags(
+                frag_mol2,
+                asMols=True,
+                sanitizeFrags=True
+            )
+
+            # If cut bonds were not parts of the ring, we expect 2 fragments
+            if len(frags1) < 2 or len(frags2) < 2:
+                continue
+
+            # Randomly recombine fragments - we group two disconnected fragments into one molecule
+            child1_base = Chem.CombineMols(
+                frags1[0],
+                frags2[1]
+            )
+
+            child2_base = Chem.CombineMols(
+                frags2[0],
+                frags1[1]
+            )
+
+            # Editable molecules
+            rw_child1 = Chem.RWMol(child1_base)
+            rw_child2 = Chem.RWMol(child2_base)
+
+            # Find dummy atoms
+            dummy_atoms1 = [
+                atom.GetIdx()
+                for atom in rw_child1.GetAtoms()
+                if atom.GetAtomicNum() == 0
+            ]
+
+            dummy_atoms2 = [
+                atom.GetIdx()
+                for atom in rw_child2.GetAtoms()
+                if atom.GetAtomicNum() == 0
+            ]
+
+            # Need exactly 2 dummy atoms to reconnect
+            if len(dummy_atoms1) != 2 or len(dummy_atoms2) != 2:
+                continue
+
+            # Neighbors of dummy atoms - they will be used to reconnect the fragments
+            nbrs1 = [
+                rw_child1.GetAtomWithIdx(idx).GetNeighbors()[0].GetIdx()
+                for idx in dummy_atoms1
+            ]
+
+            nbrs2 = [
+                rw_child2.GetAtomWithIdx(idx).GetNeighbors()[0].GetIdx()
+                for idx in dummy_atoms2
+            ]
+
+            # Remove dummy atoms (reverse order!)
+            for idx in sorted(dummy_atoms1, reverse=True):
+                rw_child1.RemoveAtom(idx)
+
+            for idx in sorted(dummy_atoms2, reverse=True):
+                rw_child2.RemoveAtom(idx)
+
+            # Adjust indices after deletion
+            def adjust_index(idx, removed):
+                shift = sum(1 for r in removed if r < idx)
+                return idx - shift
+
+            removed1 = sorted(dummy_atoms1)
+            removed2 = sorted(dummy_atoms2)
+
+            nbrs1 = [
+                adjust_index(i, removed1)
+                for i in nbrs1
+            ]
+
+            nbrs2 = [
+                adjust_index(i, removed2)
+                for i in nbrs2
+            ]
+
+            # Reconnect fragments - Single bond is the safest option
+            rw_child1.AddBond(
+                nbrs1[0],
+                nbrs1[1],
+                Chem.BondType.SINGLE
+            )
+
+            rw_child2.AddBond(
+                nbrs2[0],
+                nbrs2[1],
+                Chem.BondType.SINGLE
+            )
+
+            # Final molecules
+            child1_mol = rw_child1.GetMol()
+            child2_mol = rw_child2.GetMol()
+
+            # Sanitize
+            Chem.SanitizeMol(child1_mol)
+            Chem.SanitizeMol(child2_mol)
+
+            # Convert to canonical SMILES
+            child1_smiles = Chem.MolToSmiles(
+                child1_mol,
+                canonical=True
+            )
+
+            child2_smiles = Chem.MolToSmiles(
+                child2_mol,
+                canonical=True
+            )
+
+            child1.setSmiles(child1_smiles)
+            child2.setSmiles(child2_smiles)
+            _crossover_record_success(mode)
+            return
+
+        except Exception:
+            continue
+
+    _crossover_use_parents(
+        mode,
+        f"no valid recombination after {MAX_ITERS} attempts",
+        smiles1,
+        smiles2,
+        child1,
+        child2,
+    )
 
 
 def mutation(individual, mutationProbability, mi):

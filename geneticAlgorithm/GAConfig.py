@@ -1,3 +1,12 @@
+from enum import Enum
+
+
+class CrossoverMode(Enum):
+    SMILES = 0
+    SELFIES = 1
+    GRAPH = 2
+
+
 class GAConfig:
     def __init__(
         self,
@@ -6,14 +15,14 @@ class GAConfig:
         elitismSize: int = 1,
         mutationProbability: float = 0.05,
         rouletteSelection: bool = False,
-        useSelfiesCrossover: bool = True,
+        crossoverMode: CrossoverMode = CrossoverMode.SELFIES,
     ):
         self.generations = generations
         self.tournamentSize = tournamentSize
         self.elitismSize = elitismSize
         self.mutationProbability = mutationProbability
         self.rouletteSelection = rouletteSelection
-        self.useSelfiesCrossover = useSelfiesCrossover
+        self.crossoverMode = crossoverMode
 
     def __repr__(self):
         return (
@@ -22,5 +31,5 @@ class GAConfig:
             f"elitismSize={self.elitismSize}, "
             f"mutationProbability={self.mutationProbability}, "
             f"rouletteSelection={self.rouletteSelection}, "
-            f"useSelfiesCrossover={self.useSelfiesCrossover})"
+            f"crossoverMode={self.crossoverMode})"
         )

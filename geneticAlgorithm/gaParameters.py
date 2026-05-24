@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 import geneticAlgorithm
+from GAConfig import CrossoverMode
 from mutationInfo import MutationInfo
 
 EVOLUTION_ACTION_BTN_WIDTH = 200
@@ -123,18 +124,21 @@ class GAParameters:
 
         self.crossoverSmilesRadio = QRadioButton("SMILES", application)
         self.crossoverSelfiesRadio = QRadioButton("SELFIES", application)
+        self.crossoverGraphRadio = QRadioButton("Graph", application)
         self.crossoverSelfiesRadio.setChecked(True)
         self.crossoverGroup = QButtonGroup(application)
-        self.crossoverGroup.addButton(self.crossoverSmilesRadio, 0)
-        self.crossoverGroup.addButton(self.crossoverSelfiesRadio, 1)
+        self.crossoverGroup.addButton(self.crossoverSmilesRadio, CrossoverMode.SMILES.value)
+        self.crossoverGroup.addButton(self.crossoverSelfiesRadio, CrossoverMode.SELFIES.value)
+        self.crossoverGroup.addButton(self.crossoverGraphRadio, CrossoverMode.GRAPH.value)
 
         crossover_field = QWidget(application)
-        crossover_field.setMinimumWidth(180)
+        crossover_field.setMinimumWidth(280)
         crossover_row = QHBoxLayout(crossover_field)
         crossover_row.setContentsMargins(0, 0, 0, 0)
         crossover_row.setSpacing(16)
         crossover_row.addWidget(self.crossoverSmilesRadio, 0, Qt.AlignLeft)
         crossover_row.addWidget(self.crossoverSelfiesRadio, 0, Qt.AlignLeft)
+        crossover_row.addWidget(self.crossoverGraphRadio, 0, Qt.AlignLeft)
         crossover_row.addStretch(1)
         self.formLayout.addRow(self.crossoverLabel, crossover_field)
 
@@ -178,13 +182,16 @@ class GAParameters:
     def getGAParametersWidget(self):
         return self.container
 
+    def selectedCrossoverMode(self) -> CrossoverMode:
+        return CrossoverMode(self.crossoverGroup.checkedId())
+
     def showConfiguredParametersDialog(self, parent=None):
         cfg = self.application.gaConfig
         if cfg.rouletteSelection:
             selection = "Roulette wheel"
         else:
             selection = f"Tournament (size {cfg.tournamentSize})"
-        crossover = "SELFIES" if cfg.useSelfiesCrossover else "SMILES"
+        crossover = cfg.crossoverMode.name
         QMessageBox.information(
             parent or self.application,
             "Genetic algorithm parameters",
@@ -339,7 +346,7 @@ class GAParameters:
         self.application.gaConfig.tournamentSize = self.tournamentSpin.value()
         self.application.gaConfig.elitismSize = self.elitismSpin.value()
         self.application.gaConfig.mutationProbability = float(self.mutationLineEdit.text())
-        self.application.gaConfig.useSelfiesCrossover = self.crossoverSelfiesRadio.isChecked()
+        self.application.gaConfig.crossoverMode = self.selectedCrossoverMode()
 
         moleculeBoxes.progressVBox = QVBoxLayout()
 
@@ -406,6 +413,7 @@ class GAParameters:
         # Paint progress widgets once before the long-running GA blocks the event loop.
         QApplication.processEvents()
 
+        geneticAlgorithm.reset_crossover_stats()
         moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
             moleculeBoxes.selectedMolecules,
             True,
@@ -414,7 +422,7 @@ class GAParameters:
             self.application.gaConfig.tournamentSize,
             self.application.gaConfig.elitismSize,
             self.application.gaConfig.mutationProbability,
-            self.application.gaConfig.useSelfiesCrossover,
+            self.application.gaConfig.crossoverMode,
             self.application.getMutationInfo(),
             moleculeBoxes.individualLabel,
             moleculeBoxes.individualProgress,

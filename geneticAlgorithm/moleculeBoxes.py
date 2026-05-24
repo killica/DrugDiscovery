@@ -806,7 +806,7 @@ class MoleculeBoxes(QWidget):
             self.application.gaConfig.tournamentSize,
             self.application.gaConfig.elitismSize,
             self.application.gaConfig.mutationProbability,
-            self.application.gaConfig.useSelfiesCrossover,
+            self.application.gaConfig.crossoverMode,
             self.application.getMutationInfo(),
             self.individualLabel,
             self.individualProgress,
@@ -930,6 +930,7 @@ class MoleculeBoxes(QWidget):
         self.loadNewGeneration()
         self.precedentLabel.setText("1. generation")
         self.secondLabel.setText("2. generation")
+        geneticAlgorithm.reset_crossover_stats()
         self.application.gaParameters.launchButton.setDisabled(False)
         self.application.gaParameters.launchButton.setStyleSheet("""
             QPushButton {
