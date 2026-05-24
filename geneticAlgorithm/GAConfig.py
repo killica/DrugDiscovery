@@ -5,6 +5,7 @@ class CrossoverMode(Enum):
     SMILES = 0
     SELFIES = 1
     GRAPH = 2
+    BRICS = 3
 
 
 class GAConfig:

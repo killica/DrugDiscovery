@@ -4,6 +4,7 @@ import sys
 import os
 import contextlib
 from rdkit import Chem
+from rdkit.Chem import BRICS
 import selfies as sf
 import mutationInfo
 from GAConfig import CrossoverMode
@@ -96,6 +97,8 @@ def _crossover_for_mode(mode: CrossoverMode):
         return crossover_graph
     if mode == CrossoverMode.SELFIES:
         return crossover_selfies
+    if mode == CrossoverMode.BRICS:
+        return crossover_brics
     return crossover_smiles
 
 
@@ -236,6 +239,18 @@ def isValidSmiles(smiles):
     with suppress_rdkit_warnings():
         mol = Chem.MolFromSmiles(smiles)
     return mol is not None
+
+
+def _brics_build_random(frags, max_candidates=32):
+    """Return one BRICS-rebuilt molecule without enumerating all combinations."""
+    candidates = []
+    for mol in BRICS.BRICSBuild(frags):
+        candidates.append(mol)
+        if len(candidates) >= max_candidates:
+            break
+    if not candidates:
+        return None
+    return random.choice(candidates)
 
 
 def crossover_smiles(parent1, parent2, child1, child2, MAX_ITERS = 2000):
@@ -560,6 +575,82 @@ def crossover_graph(parent1, parent2, child1, child2, MAX_ITERS = 100):
         child2,
     )
 
+def crossover_brics(parent1, parent2, child1, child2, MAX_ITERS=100, MAX_BRICS_CANDIDATES=10):
+    mode = CrossoverMode.BRICS
+    smiles1 = parent1.getSmiles()
+    smiles2 = parent2.getSmiles()
+    mol1 = Chem.MolFromSmiles(smiles1)
+    mol2 = Chem.MolFromSmiles(smiles2)
+
+    if mol1 is None or mol2 is None:
+        _crossover_use_parents(mode, "invalid parent SMILES", smiles1, smiles2, child1, child2)
+        return
+
+    frags1 = list(BRICS.BRICSDecompose(mol1))
+    frags2 = list(BRICS.BRICSDecompose(mol2))
+
+    if len(frags1) < 2 or len(frags2) < 2:
+        _crossover_use_parents(
+            mode, "insufficient BRICS fragments", smiles1, smiles2, child1, child2
+        )
+        return
+
+    for _ in range(MAX_ITERS):
+        _process_gui_events()
+        try:
+            cut1 = random.randint(1, len(frags1) - 1)
+            cut2 = random.randint(1, len(frags2) - 1)
+
+            child1_frag_smiles = frags1[:cut1] + frags2[cut2:]
+            child2_frag_smiles = frags2[:cut2] + frags1[cut1:]
+
+            child1_frags = []
+            child2_frags = []
+            valid = True
+
+            for frag in child1_frag_smiles:
+                frag_mol = Chem.MolFromSmiles(frag)
+                if frag_mol is None:
+                    valid = False
+                    break
+                child1_frags.append(frag_mol)
+
+            if valid:
+                for frag in child2_frag_smiles:
+                    frag_mol = Chem.MolFromSmiles(frag)
+                    if frag_mol is None:
+                        valid = False
+                        break
+                    child2_frags.append(frag_mol)
+
+            if not valid:
+                continue
+
+            child1_mol = _brics_build_random(child1_frags, MAX_BRICS_CANDIDATES)
+            child2_mol = _brics_build_random(child2_frags, MAX_BRICS_CANDIDATES)
+
+            if child1_mol is None or child2_mol is None:
+                continue
+
+            Chem.SanitizeMol(child1_mol)
+            Chem.SanitizeMol(child2_mol)
+
+            child1.setSmiles(Chem.MolToSmiles(child1_mol, canonical=True))
+            child2.setSmiles(Chem.MolToSmiles(child2_mol, canonical=True))
+            _crossover_record_success(mode)
+            return
+
+        except Exception:
+            continue
+
+    _crossover_use_parents(
+        mode,
+        f"no valid recombination after {MAX_ITERS} attempts",
+        smiles1,
+        smiles2,
+        child1,
+        child2,
+    )
 
 def mutation(individual, mutationProbability, mi):
     if random.random() > mutationProbability:
