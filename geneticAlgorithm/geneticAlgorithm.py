@@ -7,7 +7,7 @@ from rdkit import Chem
 from rdkit.Chem import BRICS
 import selfies as sf
 import mutationInfo
-from GAConfig import CrossoverMode
+from GAConfig import CrossoverMode, MutationMode
 from PyQt5.QtWidgets import QApplication
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')
@@ -92,6 +92,20 @@ def _process_gui_events():
         app.processEvents()
 
 
+def _set_individual_progress(individualLabel, individualProgress, current, total):
+    """Update progress widgets; ignore if Qt has already destroyed them."""
+    if individualLabel is None or individualProgress is None:
+        return
+    try:
+        total = max(total, 1)
+        current = max(0, min(current, total))
+        individualLabel.setText(f"Individual: {current}/{total}")
+        individualProgress.setMaximum(total)
+        individualProgress.setValue(current)
+    except RuntimeError:
+        pass
+
+
 def _crossover_for_mode(mode: CrossoverMode):
     if mode == CrossoverMode.GRAPH:
         return crossover_graph
@@ -111,6 +125,7 @@ def geneticAlgorithm(
     elitismSize,
     mutationProbability,
     crossoverMode,
+    mutationMode,
     mi,
     individualLabel,
     individualProgress,
@@ -122,9 +137,7 @@ def geneticAlgorithm(
     populationSize = len(population)
     if cancel_check and cancel_check():
         return population
-    individualProgress.setMaximum(max(populationSize, 1))
-    individualProgress.setValue(0)
-    individualLabel.setText(f"Individual: 0/{populationSize}")
+    _set_individual_progress(individualLabel, individualProgress, 0, populationSize)
     _process_gui_events()
     newPopulation = population.copy()
     if onlyOneGeneration:
@@ -159,8 +172,8 @@ def geneticAlgorithm(
 
             crossover(parent1, parent2, child1=newPopulation[j], child2=newPopulation[j + 1])
 
-            mutation(newPopulation[j], mutationProbability, mi)
-            mutation(newPopulation[j+1], mutationProbability, mi)
+            mutation(newPopulation[j], mutationProbability, mutationMode, mi)
+            mutation(newPopulation[j + 1], mutationProbability, mutationMode, mi)
 
             newPopulation[j].setDescription("")
             newPopulation[j].calcFitness()
@@ -168,8 +181,7 @@ def geneticAlgorithm(
             newPopulation[j+1].setDescription("")
             newPopulation[j+1].calcFitness()
 
-            individualLabel.setText(f"Individual: {j+1}/{len(population)}")
-            individualProgress.setValue(j+1)
+            _set_individual_progress(individualLabel, individualProgress, j + 1, len(population))
             if on_new_individual is not None:
                 on_new_individual(newPopulation[j], j, gen_idx)
             _process_gui_events()
@@ -180,8 +192,7 @@ def geneticAlgorithm(
             tmp = j
 
         population = newPopulation.copy()
-        individualLabel.setText(f"Individual: {tmp+2}/{len(population)}")
-        individualProgress.setValue(tmp+2)
+        _set_individual_progress(individualLabel, individualProgress, tmp + 2, len(population))
         _process_gui_events()
         _print_crossover_generation_summary(crossoverMode)
 
@@ -652,11 +663,32 @@ def crossover_brics(parent1, parent2, child1, child2, MAX_ITERS=100, MAX_BRICS_C
         child2,
     )
 
-def mutation(individual, mutationProbability, mi):
+def _apply_smiles_to_individual(individual, smiles):
+    if not isValidSmiles(smiles):
+        return False
+    mol = Chem.MolFromSmiles(smiles)
+    individual.setSmiles(Chem.MolToSmiles(mol, canonical=True))
+    return True
+
+
+def _mutate_for_mode(mode: MutationMode):
+    if mode == MutationMode.SELFIES:
+        return mutate_selfies
+    if mode == MutationMode.GRAPH:
+        return mutate_graph
+    if mode == MutationMode.BRICS:
+        return mutate_brics
+    return mutate_smiles
+
+
+def mutation(individual, mutationProbability, mutationMode, mi):
     if random.random() > mutationProbability:
         return
+    mutate = _mutate_for_mode(mutationMode)
+    mutate(individual, mi)
 
-    # Mutation will take place
+
+def mutate_smiles(individual, mi):
     mutationType = random.randrange(0, 4)
     # 0 - atom switch
     # 1 - group switch
@@ -671,6 +703,7 @@ def mutation(individual, mutationProbability, mi):
         insertionMutation(individual, mi)
     else:
         deletionMutation(individual, mi)
+
 
 def atomSwitchMutation(individual, mi):
     smiles = individual.getSmiles()
@@ -696,7 +729,8 @@ def atomSwitchMutation(individual, mi):
             changeWith = second
             break
     smiles = smiles[:indicesOfHeteroAtoms[randomHeteroIndex]] + changeWith + smiles[indicesOfHeteroAtoms[randomHeteroIndex] + 1:]
-    individual.setSmiles(smiles)
+    if not _apply_smiles_to_individual(individual, smiles):
+        groupSwitchMutation(individual, mi)
 
 def groupSwitchMutation(individual, mi):
     smiles = individual.getSmiles()
@@ -719,7 +753,7 @@ def groupSwitchMutation(individual, mi):
     newSmiles = smiles
     if len(modifiedSmiles) > 0:
         newSmiles = random.choice(modifiedSmiles)
-    individual.setSmiles(newSmiles)
+    _apply_smiles_to_individual(individual, newSmiles)
     
 def insertionMutation(individual, mi):
     smiles = individual.getSmiles()
@@ -732,7 +766,7 @@ def insertionMutation(individual, mi):
         randomInsertionPosition = random.randrange(n)
         newSmiles = smiles[:randomInsertionPosition] + randomInsertion + smiles[randomInsertionPosition:]
         if isValidSmiles(newSmiles):
-            individual.setSmiles(newSmiles)
+            _apply_smiles_to_individual(individual, newSmiles)
             return
 
     # Insertion failed, in order to perform any other mutation, call deletionMutation (for example)
@@ -767,7 +801,7 @@ def deletionMutation(individual, mi):
 
             newSmiles = smiles[:startIndex] + smiles[endIndex + 1:]
             if isValidSmiles(newSmiles):
-                individual.setSmiles(newSmiles)
+                _apply_smiles_to_individual(individual, newSmiles)
                 return
 
     # Else: zero branches in the molecule, or branches can not be deleted
@@ -779,10 +813,22 @@ def deletionMutation(individual, mi):
         if smiles[randomIndex].isalpha():
             newSmiles = smiles[:randomIndex] + smiles[randomIndex + 1:]
             if isValidSmiles(newSmiles):
-                individual.setSmiles(newSmiles)
+                _apply_smiles_to_individual(individual, newSmiles)
                 break
     # Single atom deletion didn't succeed neither, hence, in order not to leave the molecule unchanged, we call
     # atom switch mutation. In case it also fails, that method will call group mutation, which will not fail,
     # since there are certain mutations that will always succeed.
     if i == MAX_ITERS:
         atomSwitchMutation(individual, mi)
+
+
+def mutate_selfies(individual, mi, MAX_ITERS=50):
+    pass
+
+
+def mutate_graph(individual, mi, MAX_ITERS=40):
+    pass
+
+
+def mutate_brics(individual, mi, MAX_ITERS=30, MAX_BRICS_CANDIDATES=16):
+    pass

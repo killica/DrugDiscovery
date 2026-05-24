@@ -784,50 +784,76 @@ class MoleculeBoxes(QWidget):
         self.loadSelectedBoxes()
         return True
 
+    def _set_evolution_actions_enabled(self, enabled):
+        """Disable Generate / Jump to final / Restart while GA runs on the main thread."""
+        for btn in (
+            getattr(self, "generateButton", None),
+            getattr(self, "finalButton", None),
+            getattr(self, "restartButton", None),
+        ):
+            if btn is None:
+                continue
+            btn.setDisabled(not enabled)
+
     def onGenerateButtonClicked(self):
-        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
-        self.removeSelectedBoxes()
-        self.selectedMolecules = []
-        for ind in self.newGenerationMolecules:
-            self.selectedMolecules.append(Individual(ind.getSmiles(), ind.getDescription(), tuple(self.application.getSliderValues())))
-        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
-
-        n = len(self.selectedMolecules)
-        self.individualProgress.setMaximum(max(n, 1))
-        self.individualProgress.setValue(0)
-        self.individualLabel.setText(f"Individual: 0/{n}")
-        QApplication.processEvents()
-
-        self.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
-            self.selectedMolecules,
-            True,
-            self.application.gaConfig.generations,
-            self.application.gaConfig.rouletteSelection,
-            self.application.gaConfig.tournamentSize,
-            self.application.gaConfig.elitismSize,
-            self.application.gaConfig.mutationProbability,
-            self.application.gaConfig.crossoverMode,
-            self.application.getMutationInfo(),
-            self.individualLabel,
-            self.individualProgress,
-            cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
-            on_generation_start=self._live_generation_on_start,
-            on_new_individual=self._live_generation_on_new_individual,
-        )
-
-        if getattr(self.application, "_cancel_evolution", False):
+        if getattr(self, "_ga_running", False):
             return
+        self._ga_running = True
+        self._set_evolution_actions_enabled(False)
+        try:
+            self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
+            self.removeSelectedBoxes()
+            self.selectedMolecules = []
+            for ind in self.newGenerationMolecules:
+                self.selectedMolecules.append(
+                    Individual(
+                        ind.getSmiles(),
+                        ind.getDescription(),
+                        tuple(self.application.getSliderValues()),
+                    )
+                )
+            self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
 
-        self.loadNewGeneration(tuple(self.application.getSliderValues()))
-        labelText = self.secondLabel.text()
-        self.precedentLabel.setText(labelText)
-        # Regular expression to match a number at the start of the string
-        match = re.match(r'^\d+', labelText)
-        # Check if a match was found and extract the number
-        labelNumber = int(match.group(0)) + 1
-        self.secondLabel.setText(str(labelNumber) + ". generation")
-        self.generationLabel.setText(f"Generation: {labelNumber}/{self.application.gaConfig.generations}")
-        self.generationProgress.setValue(labelNumber)
+            n = len(self.selectedMolecules)
+            geneticAlgorithm._set_individual_progress(
+                self.individualLabel, self.individualProgress, 0, n
+            )
+            QApplication.processEvents()
+
+            self.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
+                self.selectedMolecules,
+                True,
+                self.application.gaConfig.generations,
+                self.application.gaConfig.rouletteSelection,
+                self.application.gaConfig.tournamentSize,
+                self.application.gaConfig.elitismSize,
+                self.application.gaConfig.mutationProbability,
+                self.application.gaConfig.crossoverMode,
+                self.application.gaConfig.mutationMode,
+                self.application.getMutationInfo(),
+                self.individualLabel,
+                self.individualProgress,
+                cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
+                on_generation_start=self._live_generation_on_start,
+                on_new_individual=self._live_generation_on_new_individual,
+            )
+
+            if getattr(self.application, "_cancel_evolution", False):
+                return
+
+            self.loadNewGeneration(tuple(self.application.getSliderValues()))
+            labelText = self.secondLabel.text()
+            self.precedentLabel.setText(labelText)
+            match = re.match(r'^\d+', labelText)
+            labelNumber = int(match.group(0)) + 1
+            self.secondLabel.setText(str(labelNumber) + ". generation")
+            self.generationLabel.setText(
+                f"Generation: {labelNumber}/{self.application.gaConfig.generations}"
+            )
+            self.generationProgress.setValue(labelNumber)
+        finally:
+            self._ga_running = False
+            self._set_evolution_actions_enabled(True)
 
     def onFinalButtonClicked(self):
         self.application._cancel_evolution = False
@@ -905,6 +931,13 @@ class MoleculeBoxes(QWidget):
             tanimotoFile.write(f"{avgQED}\n{formattedDatetime}\n------------------------------------\n")
 
     def onRestartButtonClicked(self):
+        if getattr(self, "_ga_running", False) or self.application.blockTransfer:
+            QMessageBox.information(
+                self,
+                "Evolution running",
+                "Wait until the current generation finishes before restarting.",
+            )
+            return
         self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
         self.generationLabel.setText(f"Generation: 1/{self.application.gaConfig.generations}")
         self.generationProgress.setValue(1)

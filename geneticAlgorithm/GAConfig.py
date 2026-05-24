@@ -8,6 +8,13 @@ class CrossoverMode(Enum):
     BRICS = 3
 
 
+class MutationMode(Enum):
+    SMILES = 0
+    SELFIES = 1
+    GRAPH = 2
+    BRICS = 3
+
+
 class GAConfig:
     def __init__(
         self,
@@ -17,6 +24,7 @@ class GAConfig:
         mutationProbability: float = 0.05,
         rouletteSelection: bool = False,
         crossoverMode: CrossoverMode = CrossoverMode.SELFIES,
+        mutationMode: MutationMode = MutationMode.SMILES,
     ):
         self.generations = generations
         self.tournamentSize = tournamentSize
@@ -24,6 +32,7 @@ class GAConfig:
         self.mutationProbability = mutationProbability
         self.rouletteSelection = rouletteSelection
         self.crossoverMode = crossoverMode
+        self.mutationMode = mutationMode
 
     def __repr__(self):
         return (
@@ -32,5 +41,6 @@ class GAConfig:
             f"elitismSize={self.elitismSize}, "
             f"mutationProbability={self.mutationProbability}, "
             f"rouletteSelection={self.rouletteSelection}, "
-            f"crossoverMode={self.crossoverMode})"
+            f"crossoverMode={self.crossoverMode}, "
+            f"mutationMode={self.mutationMode})"
         )

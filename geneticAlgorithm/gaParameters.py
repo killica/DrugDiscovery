@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 import geneticAlgorithm
-from GAConfig import CrossoverMode
+from GAConfig import CrossoverMode, MutationMode
 from mutationInfo import MutationInfo
 
 EVOLUTION_ACTION_BTN_WIDTH = 200
@@ -52,6 +52,7 @@ class GAParameters:
         self.elitismSizeLabel = QLabel("Elitism size:", application)
         self.mutationProbabilityLabel = QLabel("Mutation probability:", application)
         self.crossoverLabel = QLabel("Crossover:", application)
+        self.mutationLabel = QLabel("Mutation:", application)
         self.generationSpin = QSpinBox(application)
         self.generationSpin.setMaximum(200)
         self.generationSpin.setFixedWidth(70)
@@ -86,6 +87,7 @@ class GAParameters:
             self.elitismSizeLabel,
             self.mutationProbabilityLabel,
             self.crossoverLabel,
+            self.mutationLabel,
         ):
             label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
@@ -145,6 +147,29 @@ class GAParameters:
         crossover_row.addStretch(1)
         self.formLayout.addRow(self.crossoverLabel, crossover_field)
 
+        self.mutationSmilesRadio = QRadioButton("SMILES", application)
+        self.mutationSelfiesRadio = QRadioButton("SELFIES", application)
+        self.mutationGraphRadio = QRadioButton("Graph", application)
+        self.mutationBricsRadio = QRadioButton("BRICS", application)
+        self.mutationSmilesRadio.setChecked(True)
+        self.mutationGroup = QButtonGroup(application)
+        self.mutationGroup.addButton(self.mutationSmilesRadio, MutationMode.SMILES.value)
+        self.mutationGroup.addButton(self.mutationSelfiesRadio, MutationMode.SELFIES.value)
+        self.mutationGroup.addButton(self.mutationGraphRadio, MutationMode.GRAPH.value)
+        self.mutationGroup.addButton(self.mutationBricsRadio, MutationMode.BRICS.value)
+
+        mutation_field = QWidget(application)
+        mutation_field.setMinimumWidth(360)
+        mutation_row = QHBoxLayout(mutation_field)
+        mutation_row.setContentsMargins(0, 0, 0, 0)
+        mutation_row.setSpacing(16)
+        mutation_row.addWidget(self.mutationSmilesRadio, 0, Qt.AlignLeft)
+        mutation_row.addWidget(self.mutationSelfiesRadio, 0, Qt.AlignLeft)
+        mutation_row.addWidget(self.mutationGraphRadio, 0, Qt.AlignLeft)
+        mutation_row.addWidget(self.mutationBricsRadio, 0, Qt.AlignLeft)
+        mutation_row.addStretch(1)
+        self.formLayout.addRow(self.mutationLabel, mutation_field)
+
         self.paramsLayout.addLayout(self.formLayout)
 
         self.launchButton = QPushButton("Launch search!", application)
@@ -188,6 +213,9 @@ class GAParameters:
     def selectedCrossoverMode(self) -> CrossoverMode:
         return CrossoverMode(self.crossoverGroup.checkedId())
 
+    def selectedMutationMode(self) -> MutationMode:
+        return MutationMode(self.mutationGroup.checkedId())
+
     def showConfiguredParametersDialog(self, parent=None):
         cfg = self.application.gaConfig
         if cfg.rouletteSelection:
@@ -195,6 +223,7 @@ class GAParameters:
         else:
             selection = f"Tournament (size {cfg.tournamentSize})"
         crossover = cfg.crossoverMode.name
+        mutation = cfg.mutationMode.name
         QMessageBox.information(
             parent or self.application,
             "Genetic algorithm parameters",
@@ -203,7 +232,8 @@ class GAParameters:
                 f"Selection: {selection}\n"
                 f"Elitism size: {cfg.elitismSize}\n"
                 f"Mutation probability: {cfg.mutationProbability}\n"
-                f"Crossover representation: {crossover}"
+                f"Crossover representation: {crossover}\n"
+                f"Mutation representation: {mutation}"
             ),
         )
 
@@ -350,6 +380,7 @@ class GAParameters:
         self.application.gaConfig.elitismSize = self.elitismSpin.value()
         self.application.gaConfig.mutationProbability = float(self.mutationLineEdit.text())
         self.application.gaConfig.crossoverMode = self.selectedCrossoverMode()
+        self.application.gaConfig.mutationMode = self.selectedMutationMode()
 
         moleculeBoxes.progressVBox = QVBoxLayout()
 
@@ -416,23 +447,30 @@ class GAParameters:
         # Paint progress widgets once before the long-running GA blocks the event loop.
         QApplication.processEvents()
 
+        moleculeBoxes._ga_running = True
+        moleculeBoxes._set_evolution_actions_enabled(False)
         geneticAlgorithm.reset_crossover_stats()
-        moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
-            moleculeBoxes.selectedMolecules,
-            True,
-            self.application.gaConfig.generations,
-            self.application.gaConfig.rouletteSelection,
-            self.application.gaConfig.tournamentSize,
-            self.application.gaConfig.elitismSize,
-            self.application.gaConfig.mutationProbability,
-            self.application.gaConfig.crossoverMode,
-            self.application.getMutationInfo(),
-            moleculeBoxes.individualLabel,
-            moleculeBoxes.individualProgress,
-            cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
-            on_generation_start=moleculeBoxes._live_generation_on_start,
-            on_new_individual=moleculeBoxes._live_generation_on_new_individual,
-        )
+        try:
+            moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
+                moleculeBoxes.selectedMolecules,
+                True,
+                self.application.gaConfig.generations,
+                self.application.gaConfig.rouletteSelection,
+                self.application.gaConfig.tournamentSize,
+                self.application.gaConfig.elitismSize,
+                self.application.gaConfig.mutationProbability,
+                self.application.gaConfig.crossoverMode,
+                self.application.gaConfig.mutationMode,
+                self.application.getMutationInfo(),
+                moleculeBoxes.individualLabel,
+                moleculeBoxes.individualProgress,
+                cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
+                on_generation_start=moleculeBoxes._live_generation_on_start,
+                on_new_individual=moleculeBoxes._live_generation_on_new_individual,
+            )
+        finally:
+            moleculeBoxes._ga_running = False
+            moleculeBoxes._set_evolution_actions_enabled(True)
 
         if getattr(self.application, "_cancel_evolution", False):
             return
