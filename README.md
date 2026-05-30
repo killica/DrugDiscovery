@@ -7,6 +7,7 @@ Project for Computational intelligence course. Genetic algorithm for discovery o
 Before you start, make sure you have the following installed:
 
 - **PyQt5**: A set of Python bindings for Qt libraries to create graphical user interfaces.
+- **matplotlib**
 - **RDKit**: A collection of cheminformatics and machine learning tools.
 
 To install these dependencies, execute either set of the following commands:
