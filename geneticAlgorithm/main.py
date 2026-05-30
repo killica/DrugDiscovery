@@ -30,12 +30,14 @@ from hyperParameters import HyperParameters
 from gaParameters import GAParameters
 from individual import Individual
 from mutationInfo import MutationInfo
+from evolutionStatistics import EvolutionStatistics, EvolutionStatsChart
 
 STAGE1_WINDOW_SIZE = (1240, 980)
 STAGE1_MIN_SIZE = (1180, 860)
 STAGE2_GA_WINDOW_SIZE = (560, 520)
 STAGE2_MIN_SIZE = (520, 480)
 STAGE3_WINDOW_SIZE = (1240, 900)
+STAGE4_WINDOW_SIZE = (1240, 900)
 
 def apply_light_fusion_theme(app):
     """Use Fusion + a light palette so the UI stays white on macOS/Windows dark mode."""
@@ -85,6 +87,7 @@ class Application(QWidget):
         self.gaParameters = GAParameters(self)
 
         self.mi = MutationInfo()
+        self.evolution_statistics = EvolutionStatistics()
 
         self.gaConfig = GAConfig(
             generations=100,
@@ -268,10 +271,46 @@ class Application(QWidget):
         self.stage3Page = QWidget()
         self.stage3Page.setLayout(stage3_outer)
 
+        # --- Stage 4: evolution statistics report ---
+        self.stage4Layout = QVBoxLayout()
+        self.stage4Layout.setContentsMargins(24, 20, 24, 20)
+        self.stage4Layout.setSpacing(16)
+
+        self.stage4Title = QLabel("Evolution report")
+        self.stage4Title.setStyleSheet(
+            "font-size: 17px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;"
+        )
+        self.stage4Layout.addWidget(self.stage4Title)
+
+        self.statsChart = EvolutionStatsChart()
+        self.stage4Layout.addWidget(self.statsChart, 1)
+
+        self.backToStage3Button = QPushButton("← Back to evolution")
+        self.backToStage3Button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #455a64;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #37474f; }
+            """
+        )
+        self.backToStage3Button.clicked.connect(self.show_stage_3)
+        self.stage4Layout.addWidget(self.backToStage3Button, 0, Qt.AlignLeft)
+
+        self.stage4Page = QWidget()
+        self.stage4Page.setLayout(self.stage4Layout)
+
         self.stack = QStackedWidget()
         self.stack.addWidget(self.stage1Page)
         self.stack.addWidget(self.stage2GaPage)
         self.stack.addWidget(self.stage3Page)
+        self.stack.addWidget(self.stage4Page)
 
         root = QVBoxLayout()
         root.setContentsMargins(8, 8, 8, 8)
@@ -328,6 +367,12 @@ class Application(QWidget):
         self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(2)
         self.resize(*STAGE3_WINDOW_SIZE)
+
+    def show_stage_4(self):
+        self.statsChart.update_from_statistics(self.evolution_statistics)
+        self.setMinimumSize(*STAGE1_MIN_SIZE)
+        self.stack.setCurrentIndex(3)
+        self.resize(*STAGE4_WINDOW_SIZE)
 
     def on_back_to_stage_1(self):
         if self.blockTransfer:

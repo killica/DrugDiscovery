@@ -242,6 +242,8 @@ def geneticAlgorithm(
     cancel_check=None,
     on_generation_start=None,
     on_new_individual=None,
+    evolution_stats=None,
+    record_initial=False,
 ):
     crossover = _crossover_for_mode(crossoverMode)
     populationSize = len(population)
@@ -258,6 +260,9 @@ def geneticAlgorithm(
 
     if mutationMode == MutationMode.BRICS:
         init_brics_fragment_pool(population)
+
+    if evolution_stats is not None and record_initial:
+        evolution_stats.record_generation(population)
 
     for gen_idx in range(generations):
         if cancel_check and cancel_check():
@@ -306,6 +311,8 @@ def geneticAlgorithm(
             tmp = j
 
         population = newPopulation.copy()
+        if evolution_stats is not None:
+            evolution_stats.record_generation(population)
         _set_individual_progress(individualLabel, individualProgress, tmp + 2, len(population))
         _process_gui_events()
         _print_crossover_generation_summary(crossoverMode)

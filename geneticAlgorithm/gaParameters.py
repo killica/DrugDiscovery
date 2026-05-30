@@ -306,6 +306,23 @@ class GAParameters:
         moleculeBoxes.saveCnt.setLayout(moleculeBoxes.saveBox)
         moleculeBoxes.saveCnt.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
+        moleculeBoxes.showStatsButton = QPushButton("Show report")
+        moleculeBoxes.showStatsButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
+        moleculeBoxes.showStatsButton.clicked.connect(moleculeBoxes.onShowStatsButtonClicked)
+        moleculeBoxes.showStatsButton.setStyleSheet("""
+            QPushButton {
+                background-color: #5c6bc0;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #3949ab;
+            }
+        """)
+
         moleculeBoxes.restartButton = QPushButton("Restart analysis")
         moleculeBoxes.restartButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.restartButton.clicked.connect(moleculeBoxes.onRestartButtonClicked)
@@ -350,6 +367,7 @@ class GAParameters:
             moleculeBoxes.generateButton,
             moleculeBoxes.finalButton,
             moleculeBoxes.saveCnt,
+            moleculeBoxes.showStatsButton,
             moleculeBoxes.restartButton,
         ):
             moleculeBoxes.rightVBox3.addWidget(w, 0, Qt.AlignLeft)
@@ -451,6 +469,7 @@ class GAParameters:
         moleculeBoxes._set_evolution_actions_enabled(False)
         geneticAlgorithm.reset_crossover_stats()
         geneticAlgorithm.reset_mutation_stats()
+        self.application.evolution_statistics.reset()
         try:
             moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
                 moleculeBoxes.selectedMolecules,
@@ -468,6 +487,8 @@ class GAParameters:
                 cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
                 on_generation_start=moleculeBoxes._live_generation_on_start,
                 on_new_individual=moleculeBoxes._live_generation_on_new_individual,
+                evolution_stats=self.application.evolution_statistics,
+                record_initial=True,
             )
         finally:
             moleculeBoxes._ga_running = False

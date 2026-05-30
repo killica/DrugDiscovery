@@ -790,6 +790,7 @@ class MoleculeBoxes(QWidget):
             getattr(self, "generateButton", None),
             getattr(self, "finalButton", None),
             getattr(self, "restartButton", None),
+            getattr(self, "showStatsButton", None),
         ):
             if btn is None:
                 continue
@@ -836,6 +837,8 @@ class MoleculeBoxes(QWidget):
                 cancel_check=lambda: getattr(self.application, "_cancel_evolution", False),
                 on_generation_start=self._live_generation_on_start,
                 on_new_individual=self._live_generation_on_new_individual,
+                evolution_stats=self.application.evolution_statistics,
+                record_initial=False,
             )
 
             if getattr(self.application, "_cancel_evolution", False):
@@ -909,6 +912,16 @@ class MoleculeBoxes(QWidget):
         if responseAvg == QMessageBox.Yes:
             self.calculateAverageQED()
 
+    def onShowStatsButtonClicked(self):
+        if not self.application.evolution_statistics.has_data():
+            QMessageBox.information(
+                self,
+                "No statistics",
+                "Run the genetic algorithm first to collect evolution statistics.",
+            )
+            return
+        self.application.show_stage_4()
+
     def tanimoto(self):
         smilesList = [s.getSmiles() for s in self.newGenerationMolecules]
         mols = [Chem.MolFromSmiles(s) for s in smilesList]
@@ -968,6 +981,9 @@ class MoleculeBoxes(QWidget):
         self.finalButton.setStyleSheet("Color: #757575;")
         self.saveButton.setDisabled(True)
         self.saveButton.setStyleSheet("Color: #757575;")
+        if getattr(self, "showStatsButton", None) is not None:
+            self.showStatsButton.setDisabled(True)
+            self.showStatsButton.setStyleSheet("Color: #757575;")
         self.restartButton.setDisabled(True)
         self.restartButton.setStyleSheet("Color: #757575;")
         self.loadNewGeneration()
@@ -975,6 +991,7 @@ class MoleculeBoxes(QWidget):
         self.secondLabel.setText("2. generation")
         geneticAlgorithm.reset_crossover_stats()
         geneticAlgorithm.reset_mutation_stats()
+        self.application.evolution_statistics.reset()
         self.application.gaParameters.launchButton.setDisabled(False)
         self.application.gaParameters.launchButton.setStyleSheet("""
             QPushButton {
