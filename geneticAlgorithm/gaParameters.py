@@ -450,6 +450,7 @@ class GAParameters:
         moleculeBoxes._ga_running = True
         moleculeBoxes._set_evolution_actions_enabled(False)
         geneticAlgorithm.reset_crossover_stats()
+        geneticAlgorithm.reset_mutation_stats()
         try:
             moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
                 moleculeBoxes.selectedMolecules,
@@ -476,6 +477,7 @@ class GAParameters:
             return
 
         moleculeBoxes.loadNewGeneration(tuple(self.application.sliderValues))
+        moleculeBoxes._mark_evolution_complete_if_done()
         
         
 

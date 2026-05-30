@@ -23,6 +23,115 @@ _crossover_gen_stats = {
 _crossover_run_generation = 0
 
 
+def _empty_mutation_stats():
+    return {
+        "invocations": 0,
+        "successes": 0,
+        "fallbacks": 0,
+        "skipped_invalid": 0,
+        "unchanged": 0,
+        "total_inner_attempts": 0,
+        "inner_attempts_on_success": 0,
+        "by_kind": {},
+    }
+
+
+_mutation_stats = {
+    mode: _empty_mutation_stats() for mode in MutationMode
+}
+_mutation_gen_stats = {
+    mode: _empty_mutation_stats() for mode in MutationMode
+}
+
+
+def reset_mutation_gen_stats():
+    for mode in MutationMode:
+        _mutation_gen_stats[mode] = _empty_mutation_stats()
+
+
+def reset_mutation_stats():
+    reset_mutation_gen_stats()
+    for mode in MutationMode:
+        _mutation_stats[mode] = _empty_mutation_stats()
+
+
+def _mutation_label(mode: MutationMode) -> str:
+    return f"mutation_{mode.name.lower()}"
+
+
+def _mutation_stats_targets(mode: MutationMode):
+    return _mutation_stats[mode], _mutation_gen_stats[mode]
+
+
+def _mutation_record_invocation(mode: MutationMode):
+    for stats in _mutation_stats_targets(mode):
+        stats["invocations"] += 1
+
+
+def _mutation_record_success(mode: MutationMode, inner_attempts: int, kind=None):
+    for stats in _mutation_stats_targets(mode):
+        stats["successes"] += 1
+        stats["total_inner_attempts"] += inner_attempts
+        stats["inner_attempts_on_success"] += inner_attempts
+        if kind is not None:
+            stats["by_kind"][kind] = stats["by_kind"].get(kind, 0) + 1
+
+
+def _mutation_record_fallback(mode: MutationMode, inner_attempts: int):
+    for stats in _mutation_stats_targets(mode):
+        stats["fallbacks"] += 1
+        stats["total_inner_attempts"] += inner_attempts
+
+
+def _mutation_record_skipped(mode: MutationMode):
+    for stats in _mutation_stats_targets(mode):
+        stats["skipped_invalid"] += 1
+
+
+def _mutation_record_unchanged(mode: MutationMode):
+    for stats in _mutation_stats_targets(mode):
+        stats["unchanged"] += 1
+
+
+def _print_mutation_stats(mode: MutationMode):
+    stats = _mutation_stats[mode]
+    invocations = stats["invocations"]
+    if invocations == 0:
+        return
+    successes = stats["successes"]
+    rate = 100.0 * successes / invocations
+    avg_attempts = stats["inner_attempts_on_success"] / successes if successes else 0.0
+    print(
+        f"[{_mutation_label(mode)}] run summary: {successes}/{invocations} successes "
+        f"({rate:.1f}%), {stats['fallbacks']} fallbacks, "
+        f"{stats['skipped_invalid']} skipped invalid, {stats['unchanged']} unchanged; "
+        f"avg attempts on success: {avg_attempts:.1f}"
+    )
+
+
+def _print_mutation_generation_summary(mode: MutationMode):
+    stats = _mutation_gen_stats[mode]
+    invocations = stats["invocations"]
+    label = _mutation_label(mode)
+    gen_num = _crossover_run_generation
+    if invocations == 0:
+        print(f"[{label}] generation {gen_num}: no mutation invocations")
+        return
+    successes = stats["successes"]
+    success_rate = 100.0 * successes / invocations
+    fallback_rate = 100.0 * stats["fallbacks"] / invocations
+    avg_attempts = stats["inner_attempts_on_success"] / successes if successes else 0.0
+    kind_parts = [f"{kind}={count}" for kind, count in sorted(stats["by_kind"].items())]
+    kind_str = f", by kind: {', '.join(kind_parts)}" if kind_parts else ""
+    print(
+        f"[{label}] generation {gen_num} summary: "
+        f"{successes}/{invocations} successes ({success_rate:.1f}%), "
+        f"{stats['fallbacks']} fallbacks ({fallback_rate:.1f}%), "
+        f"{stats['skipped_invalid']} skipped invalid, {stats['unchanged']} unchanged; "
+        f"avg attempts on success: {avg_attempts:.1f}{kind_str}"
+    )
+
+
 def reset_crossover_gen_stats():
     for mode in CrossoverMode:
         _crossover_gen_stats[mode] = {"attempts": 0, "successes": 0, "failures": 0}
@@ -150,6 +259,7 @@ def geneticAlgorithm(
         if cancel_check and cancel_check():
             return population
         reset_crossover_gen_stats()
+        reset_mutation_gen_stats()
         # current population is already sorted
         newPopulation[:elitismSize] = population[:elitismSize]
         if on_generation_start is not None:
@@ -195,7 +305,9 @@ def geneticAlgorithm(
         _set_individual_progress(individualLabel, individualProgress, tmp + 2, len(population))
         _process_gui_events()
         _print_crossover_generation_summary(crossoverMode)
+        _print_mutation_generation_summary(mutationMode)
 
+    _print_mutation_stats(mutationMode)
     return population
 
 def selection(population, rouletteSelection, tournamentSize):
@@ -684,11 +796,18 @@ def _mutate_for_mode(mode: MutationMode):
 def mutation(individual, mutationProbability, mutationMode, mi):
     if random.random() > mutationProbability:
         return
+    _mutation_record_invocation(mutationMode)
     mutate = _mutate_for_mode(mutationMode)
     mutate(individual, mi)
 
 
 def mutate_smiles(individual, mi):
+    mode = MutationMode.SMILES
+    smiles_before = individual.getSmiles()
+    if not isValidSmiles(smiles_before):
+        _mutation_record_skipped(mode)
+        return
+
     mutationType = random.randrange(0, 4)
     # 0 - atom switch
     # 1 - group switch
@@ -703,6 +822,11 @@ def mutate_smiles(individual, mi):
         insertionMutation(individual, mi)
     else:
         deletionMutation(individual, mi)
+
+    if individual.getSmiles() != smiles_before:
+        _mutation_record_success(mode, 1)
+    else:
+        _mutation_record_unchanged(mode)
 
 
 def atomSwitchMutation(individual, mi):
@@ -822,13 +946,152 @@ def deletionMutation(individual, mi):
         atomSwitchMutation(individual, mi)
 
 
-def mutate_selfies(individual, mi, MAX_ITERS=50):
-    pass
+def mutate_selfies(individual, mi):
+    mode = MutationMode.SELFIES
+    smiles = individual.getSmiles()
+    if not isValidSmiles(smiles):
+        _mutation_record_skipped(mode)
+        return
+    # Canonicalize input
+    smiles = Chem.MolToSmiles(Chem.MolFromSmiles(smiles), canonical=True)
+    try:
+        selfies_str = sf.encoder(smiles)
+
+    except Exception:
+        deletionMutation(individual, mi)
+        _mutation_record_fallback(mode, 0)
+        return
+
+    alphabet = list(sf.get_semantic_robust_alphabet())
+    original_tokens = list(sf.split_selfies(selfies_str))
+    if len(original_tokens) == 0:
+        deletionMutation(individual, mi)
+        _mutation_record_fallback(mode, 0)
+        return
+    
+    MAX_MUTATION_ATTEMPTS = 20
+    for attempt in range(1, MAX_MUTATION_ATTEMPTS + 1):
+
+        tokens = original_tokens.copy()
+
+        # Choose mutation type (prevent empty molecule by not allowing deletion if there is only one token)
+        if len(tokens) > 1:
+            mutation_type = random.choice(["replace", "insert", "delete"])
+        else:
+            mutation_type = random.choice(["replace", "insert"])
+
+        try:
+            if mutation_type == "replace":
+                idx = random.randrange(len(tokens))
+                tokens[idx] = random.choice(alphabet)
+
+            elif mutation_type == "insert":
+                idx = random.randrange(len(tokens) + 1)
+                tokens.insert(idx, random.choice(alphabet))
+
+            elif mutation_type == "delete":
+                idx = random.randrange(len(tokens))
+                del tokens[idx]
+
+            # Convert back to SELFIES
+            mutated_selfies = "".join(tokens)
+
+            # Decode SELFIES -> SMILES
+            mutated_smiles = sf.decoder(mutated_selfies)
+
+            # Validate with RDKit
+            mutated_mol = Chem.MolFromSmiles(mutated_smiles)
+
+            if mutated_mol is None:
+                continue
+
+            # Sanitize
+            Chem.SanitizeMol(mutated_mol)
+
+            # Canonical SMILES
+            mutated_smiles = Chem.MolToSmiles(mutated_mol, canonical=True)
+
+            # Avoid identical molecule
+            if mutated_smiles == smiles:
+                continue
+
+            individual.setSmiles(mutated_smiles)
+            _mutation_record_success(mode, attempt, mutation_type)
+            return
+
+        except Exception:
+            continue
+
+    deletionMutation(individual, mi)
+    _mutation_record_fallback(mode, MAX_MUTATION_ATTEMPTS)
+
+_GRAPH_ALLOWED_ATOMS = [
+    6,   # C
+    7,   # N
+    8,   # O
+    9,   # F
+    16,  # S
+    17,  # Cl
+]
+
+def mutate_graph(individual, mi):
+    mode = MutationMode.GRAPH
+    smiles = individual.getSmiles()
+    if not isValidSmiles(smiles):
+        _mutation_record_skipped(mode)
+        return
+
+    mol = Chem.MolFromSmiles(smiles)
+    smiles = Chem.MolToSmiles(mol, canonical=True)
+
+    MAX_MUTATION_ATTEMPTS = 50
+    for attempt in range(1, MAX_MUTATION_ATTEMPTS + 1):
+        try:
+            rwmol = Chem.RWMol(mol)
+            mutation_type = random.choice(["atom", "bond"])
+
+            if mutation_type == "atom":
+                atoms = [
+                    atom.GetIdx()
+                    for atom in rwmol.GetAtoms()
+                    if atom.GetAtomicNum() > 1
+                ]
+                if not atoms:
+                    continue
+
+                idx = random.choice(atoms)
+                rwmol.GetAtomWithIdx(idx).SetAtomicNum(
+                    random.choice(_GRAPH_ALLOWED_ATOMS)
+                )
+
+            else:
+                bonds = list(rwmol.GetBonds())
+                if not bonds:
+                    continue
+
+                bond_idx = random.choice(bonds).GetIdx()
+                new_type = random.choice([
+                    Chem.BondType.SINGLE,
+                    Chem.BondType.DOUBLE,
+                ])
+                rwmol.GetBondWithIdx(bond_idx).SetBondType(new_type)
+
+            mutated = rwmol.GetMol()
+            # Sanitization fails if the mutated molecule is invalid
+            Chem.SanitizeMol(mutated)
+            new_smiles = Chem.MolToSmiles(mutated, canonical=True)
+
+            if new_smiles != smiles:
+                individual.setSmiles(new_smiles)
+                _mutation_record_success(mode, attempt, mutation_type)
+                return
+
+        except Exception:
+            continue
+
+    deletionMutation(individual, mi)
+    _mutation_record_fallback(mode, MAX_MUTATION_ATTEMPTS)
 
 
-def mutate_graph(individual, mi, MAX_ITERS=40):
-    pass
-
-
-def mutate_brics(individual, mi, MAX_ITERS=30, MAX_BRICS_CANDIDATES=16):
+def mutate_brics(individual, mi):
     pass

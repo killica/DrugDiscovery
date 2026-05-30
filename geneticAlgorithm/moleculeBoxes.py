@@ -851,6 +851,7 @@ class MoleculeBoxes(QWidget):
                 f"Generation: {labelNumber}/{self.application.gaConfig.generations}"
             )
             self.generationProgress.setValue(labelNumber)
+            self._mark_evolution_complete_if_done()
         finally:
             self._ga_running = False
             self._set_evolution_actions_enabled(True)
@@ -867,6 +868,7 @@ class MoleculeBoxes(QWidget):
             if getattr(self.application, "_cancel_evolution", False):
                 break
             self.onGenerateButtonClicked()
+        self._mark_evolution_complete_if_done()
 
     def onSaveButtonClicked(self):
         formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -930,8 +932,16 @@ class MoleculeBoxes(QWidget):
         with open('results/averageQED.txt', 'a') as tanimotoFile:
             tanimotoFile.write(f"{avgQED}\n{formattedDatetime}\n------------------------------------\n")
 
+    def _current_generation_number(self):
+        match = re.match(r"^\d+", self.secondLabel.text())
+        return int(match.group(0)) if match else 0
+
+    def _mark_evolution_complete_if_done(self):
+        if self._current_generation_number() >= self.application.gaConfig.generations:
+            self.application.blockTransfer = False
+
     def onRestartButtonClicked(self):
-        if getattr(self, "_ga_running", False) or self.application.blockTransfer:
+        if getattr(self, "_ga_running", False):
             QMessageBox.information(
                 self,
                 "Evolution running",
@@ -964,6 +974,7 @@ class MoleculeBoxes(QWidget):
         self.precedentLabel.setText("1. generation")
         self.secondLabel.setText("2. generation")
         geneticAlgorithm.reset_crossover_stats()
+        geneticAlgorithm.reset_mutation_stats()
         self.application.gaParameters.launchButton.setDisabled(False)
         self.application.gaParameters.launchButton.setStyleSheet("""
             QPushButton {
