@@ -51,6 +51,7 @@ def reset_mutation_gen_stats():
 
 def reset_mutation_stats():
     reset_mutation_gen_stats()
+    reset_brics_fragment_pool()
     for mode in MutationMode:
         _mutation_stats[mode] = _empty_mutation_stats()
 
@@ -255,6 +256,9 @@ def geneticAlgorithm(
     if elitismSize % 2 != populationSize % 2:
         elitismSize += 1
 
+    if mutationMode == MutationMode.BRICS:
+        init_brics_fragment_pool(population)
+
     for gen_idx in range(generations):
         if cancel_check and cancel_check():
             return population
@@ -374,6 +378,50 @@ def _brics_build_random(frags, max_candidates=32):
     if not candidates:
         return None
     return random.choice(candidates)
+
+
+_DEFAULT_BRICS_SEED_SMILES = [
+    "c1ccccc1",
+    "CCO",
+    "CC(=O)O",
+    "c1ccncc1",
+    "CC(C)C",
+    "CCN(CC)CC",
+    "c1ccc(O)cc1",
+]
+
+_brics_fragment_pool = []
+
+
+def build_brics_fragment_pool(smiles_list):
+    pool = set()
+    for smiles in smiles_list:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            continue
+        try:
+            pool.update(BRICS.BRICSDecompose(mol))
+        except Exception:
+            pass
+    return list(pool)
+
+
+def _default_brics_fragment_pool():
+    return build_brics_fragment_pool(_DEFAULT_BRICS_SEED_SMILES)
+
+
+def init_brics_fragment_pool(population):
+    global _brics_fragment_pool
+    smiles_list = [individual.getSmiles() for individual in population]
+    pool = set(build_brics_fragment_pool(smiles_list))
+    pool.update(_default_brics_fragment_pool())
+    _brics_fragment_pool = list(pool)
+    print(f"[mutation_brics] fragment pool size: {len(_brics_fragment_pool)}")
+
+
+def reset_brics_fragment_pool():
+    global _brics_fragment_pool
+    _brics_fragment_pool = []
 
 
 def crossover_smiles(parent1, parent2, child1, child2, MAX_ITERS = 2000):
@@ -1094,4 +1142,73 @@ def mutate_graph(individual, mi):
 
 
 def mutate_brics(individual, mi):
-    pass
+    mode = MutationMode.BRICS
+    smiles = individual.getSmiles()
+    if not isValidSmiles(smiles):
+        _mutation_record_skipped(mode)
+        return
+
+    mol = Chem.MolFromSmiles(smiles)
+    original_smiles = Chem.MolToSmiles(mol, canonical=True)
+
+    try:
+        fragments = list(BRICS.BRICSDecompose(mol))
+    except Exception:
+        deletionMutation(individual, mi)
+        _mutation_record_fallback(mode, 0)
+        return
+
+    if len(fragments) == 0:
+        deletionMutation(individual, mi)
+        _mutation_record_fallback(mode, 0)
+        return
+
+    fragment_pool = _brics_fragment_pool
+    if len(fragment_pool) == 0:
+        deletionMutation(individual, mi)
+        _mutation_record_fallback(mode, 0)
+        return
+
+    MAX_MUTATION_ATTEMPTS = 20
+    MAX_BRICS_CANDIDATES = 32
+
+    for attempt in range(1, MAX_MUTATION_ATTEMPTS + 1):
+        try:
+            mutated_fragments = fragments.copy()
+            idx = random.randrange(len(mutated_fragments))
+            replacement = random.choice(fragment_pool)
+
+            if replacement == mutated_fragments[idx]:
+                continue
+
+            mutated_fragments[idx] = replacement
+
+            fragment_mols = []
+            valid = True
+            for frag in mutated_fragments:
+                frag_mol = Chem.MolFromSmiles(frag)
+                if frag_mol is None:
+                    valid = False
+                    break
+                fragment_mols.append(frag_mol)
+
+            if not valid:
+                continue
+
+            candidate = _brics_build_random(fragment_mols, MAX_BRICS_CANDIDATES)
+            if candidate is None:
+                continue
+
+            Chem.SanitizeMol(candidate)
+            candidate_smiles = Chem.MolToSmiles(candidate, canonical=True)
+
+            if candidate_smiles != original_smiles:
+                individual.setSmiles(candidate_smiles)
+                _mutation_record_success(mode, attempt, "replace")
+                return
+
+        except Exception:
+            continue
+
+    deletionMutation(individual, mi)
+    _mutation_record_fallback(mode, MAX_MUTATION_ATTEMPTS)
