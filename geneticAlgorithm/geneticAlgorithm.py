@@ -2,6 +2,7 @@ import random
 import re
 import sys
 import os
+import copy
 import contextlib
 from rdkit import Chem
 from rdkit.Chem import BRICS
@@ -133,6 +134,22 @@ def _print_mutation_generation_summary(mode: MutationMode):
     )
 
 
+def get_crossover_generation_stats(mode: CrossoverMode):
+    return copy.deepcopy(_crossover_gen_stats[mode])
+
+
+def get_mutation_generation_stats(mode: MutationMode):
+    return copy.deepcopy(_mutation_gen_stats[mode])
+
+
+def get_crossover_run_stats(mode: CrossoverMode):
+    return copy.deepcopy(_crossover_stats[mode])
+
+
+def get_mutation_run_stats(mode: MutationMode):
+    return copy.deepcopy(_mutation_stats[mode])
+
+
 def reset_crossover_gen_stats():
     for mode in CrossoverMode:
         _crossover_gen_stats[mode] = {"attempts": 0, "successes": 0, "failures": 0}
@@ -262,7 +279,13 @@ def geneticAlgorithm(
         init_brics_fragment_pool(population)
 
     if evolution_stats is not None and record_initial:
-        evolution_stats.record_generation(population)
+        evolution_stats.record_generation(
+            population,
+            crossover_mode=crossoverMode,
+            mutation_mode=mutationMode,
+            crossover_stats=get_crossover_generation_stats(crossoverMode),
+            mutation_stats=get_mutation_generation_stats(mutationMode),
+        )
 
     for gen_idx in range(generations):
         if cancel_check and cancel_check():
@@ -312,12 +335,25 @@ def geneticAlgorithm(
 
         population = newPopulation.copy()
         if evolution_stats is not None:
-            evolution_stats.record_generation(population)
+            evolution_stats.record_generation(
+                population,
+                crossover_mode=crossoverMode,
+                mutation_mode=mutationMode,
+                crossover_stats=get_crossover_generation_stats(crossoverMode),
+                mutation_stats=get_mutation_generation_stats(mutationMode),
+            )
         _set_individual_progress(individualLabel, individualProgress, tmp + 2, len(population))
         _process_gui_events()
         _print_crossover_generation_summary(crossoverMode)
         _print_mutation_generation_summary(mutationMode)
 
+    if evolution_stats is not None:
+        evolution_stats.update_operators_summary(
+            crossoverMode,
+            mutationMode,
+            get_crossover_run_stats(crossoverMode),
+            get_mutation_run_stats(mutationMode),
+        )
     _print_mutation_stats(mutationMode)
     return population
 

@@ -30,7 +30,8 @@ from hyperParameters import HyperParameters
 from gaParameters import GAParameters
 from individual import Individual
 from mutationInfo import MutationInfo
-from evolutionStatistics import EvolutionStatistics, EvolutionStatsChart
+from evolutionRun import EvolutionStatistics
+from evolutionStatistics import EvolutionStatsChart
 
 STAGE1_WINDOW_SIZE = (1240, 980)
 STAGE1_MIN_SIZE = (1180, 860)

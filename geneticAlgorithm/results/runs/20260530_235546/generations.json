@@ -1,0 +1,160 @@
+{
+  "run_id": "20260530_235546",
+  "started_at": "2026-05-30T23:55:46",
+  "config": {
+    "generations": 20,
+    "tournament_size": 7,
+    "elitism_size": 2,
+    "mutation_probability": 0.05,
+    "roulette_selection": false,
+    "crossover_mode": "GRAPH",
+    "mutation_mode": "GRAPH"
+  },
+  "generations": [
+    {
+      "generation": 1,
+      "best_fitness": 0.7844085498087081,
+      "average_fitness": 0.37895562707599145,
+      "population_size": 107,
+      "crossover": {
+        "mode": "GRAPH",
+        "stats": {
+          "attempts": 0,
+          "successes": 0,
+          "failures": 0
+        }
+      },
+      "mutation": {
+        "mode": "GRAPH",
+        "stats": {
+          "invocations": 0,
+          "successes": 0,
+          "fallbacks": 0,
+          "skipped_invalid": 0,
+          "unchanged": 0,
+          "total_inner_attempts": 0,
+          "inner_attempts_on_success": 0,
+          "by_kind": {}
+        }
+      }
+    },
+    {
+      "generation": 2,
+      "best_fitness": 0.9202343768965151,
+      "average_fitness": 0.5940946520188982,
+      "population_size": 107,
+      "crossover": {
+        "mode": "GRAPH",
+        "stats": {
+          "attempts": 52,
+          "successes": 51,
+          "failures": 1
+        }
+      },
+      "mutation": {
+        "mode": "GRAPH",
+        "stats": {
+          "invocations": 3,
+          "successes": 3,
+          "fallbacks": 0,
+          "skipped_invalid": 0,
+          "unchanged": 0,
+          "total_inner_attempts": 16,
+          "inner_attempts_on_success": 16,
+          "by_kind": {
+            "atom": 3
+          }
+        }
+      }
+    },
+    {
+      "generation": 3,
+      "best_fitness": 0.9202343768965151,
+      "average_fitness": 0.5868257328615344,
+      "population_size": 107,
+      "crossover": {
+        "mode": "GRAPH",
+        "stats": {
+          "attempts": 52,
+          "successes": 52,
+          "failures": 0
+        }
+      },
+      "mutation": {
+        "mode": "GRAPH",
+        "stats": {
+          "invocations": 6,
+          "successes": 6,
+          "fallbacks": 0,
+          "skipped_invalid": 0,
+          "unchanged": 0,
+          "total_inner_attempts": 31,
+          "inner_attempts_on_success": 31,
+          "by_kind": {
+            "bond": 1,
+            "atom": 5
+          }
+        }
+      }
+    },
+    {
+      "generation": 4,
+      "best_fitness": 0.9252807447919394,
+      "average_fitness": 0.5983276308901503,
+      "population_size": 107,
+      "crossover": {
+        "mode": "GRAPH",
+        "stats": {
+          "attempts": 52,
+          "successes": 52,
+          "failures": 0
+        }
+      },
+      "mutation": {
+        "mode": "GRAPH",
+        "stats": {
+          "invocations": 9,
+          "successes": 9,
+          "fallbacks": 0,
+          "skipped_invalid": 0,
+          "unchanged": 0,
+          "total_inner_attempts": 30,
+          "inner_attempts_on_success": 30,
+          "by_kind": {
+            "bond": 2,
+            "atom": 7
+          }
+        }
+      }
+    },
+    {
+      "generation": 5,
+      "best_fitness": 0.9252807447919394,
+      "average_fitness": 0.6594833159392355,
+      "population_size": 107,
+      "crossover": {
+        "mode": "GRAPH",
+        "stats": {
+          "attempts": 52,
+          "successes": 52,
+          "failures": 0
+        }
+      },
+      "mutation": {
+        "mode": "GRAPH",
+        "stats": {
+          "invocations": 7,
+          "successes": 7,
+          "fallbacks": 0,
+          "skipped_invalid": 0,
+          "unchanged": 0,
+          "total_inner_attempts": 32,
+          "inner_attempts_on_success": 32,
+          "by_kind": {
+            "atom": 7
+          }
+        }
+      }
+    }
+  ]
+}

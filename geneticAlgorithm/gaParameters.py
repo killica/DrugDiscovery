@@ -469,7 +469,18 @@ class GAParameters:
         moleculeBoxes._set_evolution_actions_enabled(False)
         geneticAlgorithm.reset_crossover_stats()
         geneticAlgorithm.reset_mutation_stats()
-        self.application.evolution_statistics.reset()
+        cfg = self.application.gaConfig
+        self.application.evolution_statistics.begin_run(
+            {
+                "generations": cfg.generations,
+                "tournament_size": cfg.tournamentSize,
+                "elitism_size": cfg.elitismSize,
+                "mutation_probability": cfg.mutationProbability,
+                "roulette_selection": cfg.rouletteSelection,
+                "crossover_mode": cfg.crossoverMode.name,
+                "mutation_mode": cfg.mutationMode.name,
+            }
+        )
         try:
             moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
                 moleculeBoxes.selectedMolecules,
