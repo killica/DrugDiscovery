@@ -368,8 +368,8 @@ class MoleculeBoxes(QWidget):
 
         self.evolutionControlsLayout = QVBoxLayout()
         self.evolutionControlsLayout.setSpacing(16)
-        self.evolutionControlsLayout.setContentsMargins(0, 0, 8, 0)
-        self.evolutionControlsLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.evolutionControlsLayout.setContentsMargins(8, 0, 8, 0)
+        self.evolutionControlsLayout.setAlignment(Qt.AlignCenter)
         self.rightCont3 = QWidget()
 
         self.loadBoxes()
@@ -887,14 +887,10 @@ class MoleculeBoxes(QWidget):
         self.selectedMolecules = []
         self.newGenerationMolecules = []
         self.generateButton.setDisabled(True)
-        self.generateButton.setStyleSheet("Color: #757575;")
         self.finalButton.setDisabled(True)
-        self.finalButton.setStyleSheet("Color: #757575;")
         if getattr(self, "showStatsButton", None) is not None:
             self.showStatsButton.setDisabled(True)
-            self.showStatsButton.setStyleSheet("Color: #757575;")
         self.restartButton.setDisabled(True)
-        self.restartButton.setStyleSheet("Color: #757575;")
         self.loadNewGeneration()
         self.precedentLabel.setText("1. generation")
         self.secondLabel.setText("2. generation")

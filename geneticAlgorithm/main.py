@@ -257,9 +257,8 @@ class Application(QWidget):
 
         self.evolutionRowLayout.addWidget(self.evolutionLeftColumnHost, 0, Qt.AlignTop)
         self.evolutionRowLayout.addWidget(
-            self.moleculeBoxes.getEvolutionControls(), 0, Qt.AlignTop | Qt.AlignLeft
+            self.moleculeBoxes.getEvolutionControls(), 1, Qt.AlignCenter
         )
-        self.evolutionRowLayout.addStretch(1)
 
         self.rightWrapper = QWidget()
         self.rightWrapper.setLayout(self.evolutionRowLayout)

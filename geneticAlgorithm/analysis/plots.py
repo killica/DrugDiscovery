@@ -105,7 +105,6 @@ def operators_table_rows(operators_summary):
 
     rows = [
         ("__section__", "Crossover"),
-        ("Mode", str(crossover.get("mode", "n/a"))),
         (
             "Successes",
             f"{crossover_stats.get('successes', 0)} / {crossover_stats.get('attempts', 0)}",
@@ -113,7 +112,6 @@ def operators_table_rows(operators_summary):
         ("Success rate", _format_rate(crossover_summary, "success_rate_pct")),
         ("Failure rate", _format_rate(crossover_summary, "failure_rate_pct")),
         ("__section__", "Mutation"),
-        ("Mode", str(mutation.get("mode", "n/a"))),
         (
             "Successes",
             f"{mutation_stats.get('successes', 0)} / {mutation_stats.get('invocations', 0)}",

@@ -14,30 +14,109 @@ from PyQt5.QtWidgets import (
     QProgressBar,
     QSizePolicy,
     QMessageBox,
+    QGroupBox,
+    QGraphicsDropShadowEffect,
 )
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 import geneticAlgorithm
 from GAConfig import CrossoverMode, MutationMode
 from mutationInfo import MutationInfo
 
-EVOLUTION_ACTION_BTN_WIDTH = 200
+EVOLUTION_PANEL_QSS = """
+    QGroupBox#evolutionPanel {
+        background-color: rgb(255, 255, 255);
+        border: 2px solid #43a047;
+        border-radius: 12px;
+        padding: 12px;
+        padding-top: 24px;
+        margin-top: 8px;
+        font-size: 13px;
+        font-weight: bold;
+        color: #1b5e20;
+    }
+    QGroupBox#evolutionPanel::title {
+        subcontrol-origin: margin;
+        left: 12px;
+        padding: 0 6px;
+    }
+"""
+
+EVOLUTION_PANEL_WIDTH = 256
+
+
+def _configure_evolution_panel_card(card):
+    card.setObjectName("evolutionPanel")
+    card.setStyleSheet(EVOLUTION_PANEL_QSS)
+    card.setFixedWidth(EVOLUTION_PANEL_WIDTH)
+    card.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    _apply_evolution_panel_shadow(card)
+
 
 GA_PROGRESS_BAR_STYLE = """
 QProgressBar {
-    border: 1px solid #9e9e9e;
+    border: 1px solid #c5cae9;
     border-radius: 6px;
-    background-color: #e8e8e8;
+    background-color: #f5f5f5;
     text-align: center;
-    min-height: 24px;
-    max-height: 28px;
+    min-height: 22px;
+    max-height: 26px;
     color: #1a1a1a;
+    font-size: 11px;
 }
 QProgressBar::chunk {
     background-color: #2e7d32;
     border-radius: 5px;
 }
 """
+
+GA_PROGRESS_INDIVIDUAL_STYLE = """
+QProgressBar {
+    border: 1px solid #c5cae9;
+    border-radius: 6px;
+    background-color: #f5f5f5;
+    text-align: center;
+    min-height: 22px;
+    max-height: 26px;
+    color: #1a1a1a;
+    font-size: 11px;
+}
+QProgressBar::chunk {
+    background-color: #1565c0;
+    border-radius: 5px;
+}
+"""
+
+
+def _evolution_action_button_style(background, hover):
+    return f"""
+        QPushButton {{
+            background-color: {background};
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            min-height: 28px;
+            max-height: 32px;
+        }}
+        QPushButton:hover {{
+            background-color: {hover};
+        }}
+        QPushButton:disabled {{
+            background-color: #bdbdbd;
+            color: #f5f5f5;
+        }}
+    """
+
+
+def _apply_evolution_panel_shadow(widget):
+    shadow = QGraphicsDropShadowEffect(widget)
+    shadow.setOffset(2, 4)
+    shadow.setBlurRadius(16)
+    shadow.setColor(QColor(0, 0, 0, 70))
+    widget.setGraphicsEffect(shadow)
 
 
 class GAParameters:
@@ -221,88 +300,49 @@ class GAParameters:
         moleculeBoxes = self.application.moleculeBoxes
 
         moleculeBoxes.generateButton = QPushButton("Generate next", moleculeBoxes.application)
-        moleculeBoxes.generateButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.generateButton.clicked.connect(moleculeBoxes.onGenerateButtonClicked)
-        moleculeBoxes.generateButton.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        moleculeBoxes.generateButton.setStyleSheet(
+            _evolution_action_button_style("#43a047", "#2e7d32")
+        )
 
         moleculeBoxes.finalButton = QPushButton("Jump to final")
-        moleculeBoxes.finalButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.finalButton.clicked.connect(moleculeBoxes.onFinalButtonClicked)
-        moleculeBoxes.finalButton.setStyleSheet("""
-            QPushButton {
-                background-color: #6495ED;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #0047AB;
-            }
-        """)
+        moleculeBoxes.finalButton.setStyleSheet(
+            _evolution_action_button_style("#5c6bc0", "#3949ab")
+        )
 
         moleculeBoxes.showStatsButton = QPushButton("Show report")
-        moleculeBoxes.showStatsButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.showStatsButton.clicked.connect(moleculeBoxes.onShowStatsButtonClicked)
-        moleculeBoxes.showStatsButton.setStyleSheet("""
-            QPushButton {
-                background-color: #5c6bc0;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #3949ab;
-            }
-        """)
+        moleculeBoxes.showStatsButton.setStyleSheet(
+            _evolution_action_button_style("#455a64", "#37474f")
+        )
 
         moleculeBoxes.restartButton = QPushButton("Restart analysis")
-        moleculeBoxes.restartButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.restartButton.clicked.connect(moleculeBoxes.onRestartButtonClicked)
-        moleculeBoxes.restartButton.setStyleSheet("""
-            QPushButton {
-                background-color: #ff4040;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: red;
-            }
-        """)
+        moleculeBoxes.restartButton.setStyleSheet(
+            _evolution_action_button_style("#e53935", "#c62828")
+        )
 
-        moleculeBoxes.rightVBox3 = QVBoxLayout()
-        moleculeBoxes.rightVBox3.setSpacing(10)
-        moleculeBoxes.rightVBox3.setContentsMargins(0, 0, 0, 0)
-        moleculeBoxes.rightVBox3.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        for w in (
+        action_buttons = (
             moleculeBoxes.generateButton,
             moleculeBoxes.finalButton,
             moleculeBoxes.showStatsButton,
             moleculeBoxes.restartButton,
-        ):
-            moleculeBoxes.rightVBox3.addWidget(w, 0, Qt.AlignLeft)
+        )
+        for button in action_buttons:
+            button.setMinimumWidth(220)
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        moleculeBoxes.rightBtnCnt = QWidget()
-        moleculeBoxes.rightBtnCnt.setLayout(moleculeBoxes.rightVBox3)
-        moleculeBoxes.rightBtnCnt.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
+        actions_card = QGroupBox("Actions")
+        _configure_evolution_panel_card(actions_card)
+
+        actions_layout = QVBoxLayout(actions_card)
+        actions_layout.setContentsMargins(12, 10, 12, 12)
+        actions_layout.setSpacing(8)
+        for button in action_buttons:
+            actions_layout.addWidget(button, 0, Qt.AlignTop)
+
+        moleculeBoxes.actionsCard = actions_card
 
         self.launchButton.setDisabled(True)
         self.launchButton.setStyleSheet("""
@@ -326,10 +366,19 @@ class GAParameters:
         self.application.gaConfig.crossoverMode = self.selectedCrossoverMode()
         self.application.gaConfig.mutationMode = self.selectedMutationMode()
 
-        moleculeBoxes.progressVBox = QVBoxLayout()
+        progress_card = QGroupBox("Progress")
+        _configure_evolution_panel_card(progress_card)
 
-        moleculeBoxes.generationLabel = QLabel(f"Generation: 2/{self.application.gaConfig.generations}")
-        moleculeBoxes.generationLabel.setStyleSheet("color: blue; font-style: bold;")
+        progress_layout = QVBoxLayout(progress_card)
+        progress_layout.setContentsMargins(12, 10, 12, 12)
+        progress_layout.setSpacing(8)
+
+        moleculeBoxes.generationLabel = QLabel(
+            f"Generation: 2/{self.application.gaConfig.generations}"
+        )
+        moleculeBoxes.generationLabel.setStyleSheet(
+            "color: #1b5e20; font-size: 12px; font-weight: bold;"
+        )
 
         moleculeBoxes.generationProgress = QProgressBar()
         moleculeBoxes.generationProgress.setRange(0, self.application.gaConfig.generations)
@@ -340,38 +389,38 @@ class GAParameters:
 
         n_selected = len(moleculeBoxes.selectedMolecules)
         moleculeBoxes.individualLabel = QLabel(f"Individual: 0/{n_selected}")
-        moleculeBoxes.individualLabel.setStyleSheet("color: blue; font-style: bold;")
+        moleculeBoxes.individualLabel.setStyleSheet(
+            "color: #1565c0; font-size: 12px; font-weight: bold;"
+        )
 
         moleculeBoxes.individualProgress = QProgressBar()
         moleculeBoxes.individualProgress.setRange(0, max(n_selected, 1))
         moleculeBoxes.individualProgress.setValue(0)
-        moleculeBoxes.individualProgress.setStyleSheet(GA_PROGRESS_BAR_STYLE)
+        moleculeBoxes.individualProgress.setStyleSheet(GA_PROGRESS_INDIVIDUAL_STYLE)
         moleculeBoxes.individualProgress.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         moleculeBoxes.individualProgress.setTextVisible(True)
 
-        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.generationLabel)
-        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.generationProgress)
-        moleculeBoxes.progressVBox.addSpacing(30)
-        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.individualLabel)
-        moleculeBoxes.progressVBox.addWidget(moleculeBoxes.individualProgress)
+        progress_layout.addWidget(moleculeBoxes.generationLabel)
+        progress_layout.addWidget(moleculeBoxes.generationProgress)
+        progress_layout.addSpacing(6)
+        progress_layout.addWidget(moleculeBoxes.individualLabel)
+        progress_layout.addWidget(moleculeBoxes.individualProgress)
 
-        moleculeBoxes.progressCnt = QWidget()
-        moleculeBoxes.progressCnt.setLayout(moleculeBoxes.progressVBox)
-        moleculeBoxes.progressCnt.setMinimumWidth(300)
-        moleculeBoxes.progressCnt.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        moleculeBoxes.progressCard = progress_card
 
+        moleculeBoxes.evolutionControlsLayout.setSpacing(14)
+        moleculeBoxes.evolutionControlsLayout.setAlignment(Qt.AlignCenter)
+        moleculeBoxes.evolutionControlsLayout.addStretch(1)
         moleculeBoxes.evolutionControlsLayout.addWidget(
-            moleculeBoxes.rightBtnCnt, 0, Qt.AlignTop | Qt.AlignLeft
+            moleculeBoxes.actionsCard, 0, Qt.AlignCenter
         )
         moleculeBoxes.evolutionControlsLayout.addWidget(
-            moleculeBoxes.progressCnt, 0, Qt.AlignTop | Qt.AlignLeft
+            moleculeBoxes.progressCard, 0, Qt.AlignCenter
         )
         moleculeBoxes.evolutionControlsLayout.addStretch(1)
 
         moleculeBoxes.rightCont3.setLayout(moleculeBoxes.evolutionControlsLayout)
-        moleculeBoxes.rightCont3.setMinimumWidth(300)
-        moleculeBoxes.rightCont3.setMaximumWidth(400)
-        moleculeBoxes.rightCont3.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        moleculeBoxes.rightCont3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # Show evolution / progress on stage 3 before the GA blocks the event loop.
         self.application.show_stage_3()
