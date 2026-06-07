@@ -131,7 +131,7 @@ class Application(QWidget):
         ):
             self.fitness_mode_group.addButton(rb, idx)
             sidebar_layout.addWidget(rb)
-        self.fitness_mode_group.idClicked.connect(self._on_fitness_mode_changed)
+        self.fitness_mode_group.buttonClicked.connect(self._on_fitness_mode_changed)
 
         self.fitness_stack = QStackedWidget()
         self.fitness_stack.addWidget(self.hyperParamLayout.getSlidersWidget())
@@ -341,7 +341,8 @@ class Application(QWidget):
         lay.addStretch(1)
         return w
 
-    def _on_fitness_mode_changed(self, mode_id):
+    def _on_fitness_mode_changed(self, button):
+        mode_id = self.fitness_mode_group.id(button)
         self.fitness_mode_id = mode_id
         self.fitness_stack.setCurrentIndex(mode_id)
 
