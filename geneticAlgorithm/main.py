@@ -369,8 +369,23 @@ class Application(QWidget):
         self.stack.setCurrentIndex(2)
         self.resize(*STAGE3_WINDOW_SIZE)
 
+    def _current_best_molecule(self):
+        molecules = self.moleculeBoxes.newGenerationMolecules
+        if not molecules:
+            return None
+        best = molecules[0]
+        return {
+            "smiles": best.getSmiles(),
+            "description": best.getDescription() or "",
+            "fitness": best.getQED(),
+            "generation": len(self.evolution_statistics.generations_data),
+        }
+
     def show_stage_4(self):
-        self.statsChart.update_from_statistics(self.evolution_statistics)
+        self.statsChart.update_from_statistics(
+            self.evolution_statistics,
+            best_molecule=self._current_best_molecule(),
+        )
         self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(3)
         self.resize(*STAGE4_WINDOW_SIZE)

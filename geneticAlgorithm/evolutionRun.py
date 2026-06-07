@@ -57,6 +57,7 @@ class EvolutionStatistics:
         self.config = {}
         self.generations_data = []
         self.operators_summary = None
+        self.best_candidate = None
         self._next_generation = 1
 
     @property
@@ -98,6 +99,16 @@ class EvolutionStatistics:
             return
 
         fitness_values = [individual.getQED() for individual in population]
+        best_individual = max(population, key=lambda individual: individual.getQED())
+        candidate = {
+            "smiles": best_individual.getSmiles(),
+            "description": best_individual.getDescription() or "",
+            "fitness": best_individual.getQED(),
+            "generation": self._next_generation,
+        }
+        if self.best_candidate is None or candidate["fitness"] > self.best_candidate["fitness"]:
+            self.best_candidate = deepcopy(candidate)
+
         crossover_raw = deepcopy(crossover_stats or {})
         mutation_raw = deepcopy(mutation_stats or {})
         entry = {
@@ -154,6 +165,8 @@ class EvolutionStatistics:
         }
         if self.operators_summary is not None:
             payload["operators_summary"] = deepcopy(self.operators_summary)
+        if self.best_candidate is not None:
+            payload["best_candidate"] = deepcopy(self.best_candidate)
         return payload
 
     def run_directory(self):
@@ -186,6 +199,7 @@ class EvolutionStatistics:
         stats.config = data.get("config", {})
         stats.generations_data = data.get("generations", [])
         stats.operators_summary = data.get("operators_summary")
+        stats.best_candidate = data.get("best_candidate")
         if stats.generations_data:
             stats._next_generation = stats.generations_data[-1]["generation"] + 1
         return stats
