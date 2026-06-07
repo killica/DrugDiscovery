@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from analysis.molecule_render import smiles_to_pixmap, DEFAULT_IMAGE_SIZE
+from analysis.molecule_render import smiles_to_pixmap
 from analysis.plots import (
     plot_fitness_over_generations,
     plot_tanimoto_histogram,
@@ -137,7 +137,7 @@ class EvolutionStatsChart(QWidget):
 
     TOP_CARD_MIN_WIDTH = 260
     CHART_CARD_MIN_WIDTH = 400
-    REPORT_MOLECULE_SIZE = 130
+    REPORT_MOLECULE_SIZE = 250
 
     def __init__(self):
         super().__init__()

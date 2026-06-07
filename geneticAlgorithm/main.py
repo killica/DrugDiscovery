@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QScrollArea,
     QStackedWidget,
     QMessageBox,
+    QFileDialog,
     QFrame,
     QSizePolicy,
     QButtonGroup,
@@ -32,6 +33,7 @@ from individual import Individual
 from mutationInfo import MutationInfo
 from evolutionRun import EvolutionStatistics
 from evolutionStatistics import EvolutionStatsChart
+from analysis.report_pdf import export_evolution_report_pdf
 
 STAGE1_WINDOW_SIZE = (1240, 980)
 STAGE1_MIN_SIZE = (1180, 860)
@@ -286,6 +288,27 @@ class Application(QWidget):
         self.statsChart = EvolutionStatsChart()
         self.stage4Layout.addWidget(self.statsChart, 1)
 
+        stage4_actions = QHBoxLayout()
+        stage4_actions.setSpacing(12)
+
+        self.saveReportPdfButton = QPushButton("Save report as PDF")
+        self.saveReportPdfButton.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #5c6bc0;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #3949ab; }
+            """
+        )
+        self.saveReportPdfButton.clicked.connect(self.on_save_report_pdf)
+        stage4_actions.addWidget(self.saveReportPdfButton, 0, Qt.AlignLeft)
+
         self.backToStage3Button = QPushButton("← Back to evolution")
         self.backToStage3Button.setStyleSheet(
             """
@@ -302,7 +325,10 @@ class Application(QWidget):
             """
         )
         self.backToStage3Button.clicked.connect(self.show_stage_3)
-        self.stage4Layout.addWidget(self.backToStage3Button, 0, Qt.AlignLeft)
+        stage4_actions.addWidget(self.backToStage3Button, 0, Qt.AlignLeft)
+        stage4_actions.addStretch(1)
+
+        self.stage4Layout.addLayout(stage4_actions)
 
         self.stage4Page = QWidget()
         self.stage4Page.setLayout(self.stage4Layout)
@@ -390,6 +416,47 @@ class Application(QWidget):
         self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(3)
         self.resize(*STAGE4_WINDOW_SIZE)
+
+    def on_save_report_pdf(self):
+        if not self.evolution_statistics.has_data():
+            QMessageBox.information(
+                self,
+                "No report data",
+                "Run the genetic algorithm first, then open the report before saving.",
+            )
+            return
+
+        default_name = f"evolution_report_{self.evolution_statistics.run_id or 'run'}.pdf"
+        output_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save evolution report",
+            default_name,
+            "PDF files (*.pdf)",
+        )
+        if not output_path:
+            return
+        if not output_path.lower().endswith(".pdf"):
+            output_path = f"{output_path}.pdf"
+
+        try:
+            export_evolution_report_pdf(
+                self.evolution_statistics,
+                output_path,
+                best_molecule=self._current_best_molecule(),
+            )
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                "Save failed",
+                f"Could not save the report:\n{exc}",
+            )
+            return
+
+        QMessageBox.information(
+            self,
+            "Report saved",
+            f"Evolution report saved to:\n{output_path}",
+        )
 
     def on_back_to_stage_1(self):
         if self.blockTransfer:
