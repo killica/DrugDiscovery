@@ -255,7 +255,7 @@ class Application(QWidget):
 
         self.evolutionRowLayout.addWidget(self.evolutionLeftColumnHost, 0, Qt.AlignTop)
         self.evolutionRowLayout.addWidget(
-            self.moleculeBoxes.getBest(), 0, Qt.AlignTop | Qt.AlignLeft
+            self.moleculeBoxes.getEvolutionControls(), 0, Qt.AlignTop | Qt.AlignLeft
         )
         self.evolutionRowLayout.addStretch(1)
 

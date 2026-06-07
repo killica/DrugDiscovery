@@ -216,27 +216,6 @@ class GAParameters:
     def selectedMutationMode(self) -> MutationMode:
         return MutationMode(self.mutationGroup.checkedId())
 
-    def showConfiguredParametersDialog(self, parent=None):
-        cfg = self.application.gaConfig
-        if cfg.rouletteSelection:
-            selection = "Roulette wheel"
-        else:
-            selection = f"Tournament (size {cfg.tournamentSize})"
-        crossover = cfg.crossoverMode.name
-        mutation = cfg.mutationMode.name
-        QMessageBox.information(
-            parent or self.application,
-            "Genetic algorithm parameters",
-            (
-                f"Number of generations: {cfg.generations}\n"
-                f"Selection: {selection}\n"
-                f"Elitism size: {cfg.elitismSize}\n"
-                f"Mutation probability: {cfg.mutationProbability}\n"
-                f"Crossover representation: {crossover}\n"
-                f"Mutation representation: {mutation}"
-            ),
-        )
-
     def onLaunchButtonClicked(self):
         # moleculeBoxes is a reference to the right half of the scene
         moleculeBoxes = self.application.moleculeBoxes
@@ -275,37 +254,6 @@ class GAParameters:
             }
         """)
 
-        moleculeBoxes.saveButton = QPushButton("Save the best")
-        moleculeBoxes.saveButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
-        moleculeBoxes.saveButton.clicked.connect(moleculeBoxes.onSaveButtonClicked)
-        moleculeBoxes.saveButton.setStyleSheet("""
-            QPushButton {
-                background-color: #606060;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: black;
-            }
-        """)
-
-        moleculeBoxes.saveLabel = QLabel("Saved!")
-        moleculeBoxes.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
-
-        moleculeBoxes.saveBox = QHBoxLayout()
-        moleculeBoxes.saveBox.setContentsMargins(0, 0, 0, 0)
-        moleculeBoxes.saveBox.setSpacing(8)
-        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveButton, 0, Qt.AlignLeft)
-        moleculeBoxes.saveBox.addWidget(moleculeBoxes.saveLabel, 0, Qt.AlignVCenter)
-        moleculeBoxes.saveBox.addStretch(1)
-
-        moleculeBoxes.saveCnt = QWidget()
-        moleculeBoxes.saveCnt.setLayout(moleculeBoxes.saveBox)
-        moleculeBoxes.saveCnt.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-
         moleculeBoxes.showStatsButton = QPushButton("Show report")
         moleculeBoxes.showStatsButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
         moleculeBoxes.showStatsButton.clicked.connect(moleculeBoxes.onShowStatsButtonClicked)
@@ -340,25 +288,6 @@ class GAParameters:
             }
         """)
 
-        moleculeBoxes.gaParametersButton = QPushButton("GA parameters")
-        moleculeBoxes.gaParametersButton.setFixedWidth(EVOLUTION_ACTION_BTN_WIDTH)
-        moleculeBoxes.gaParametersButton.clicked.connect(
-            lambda: self.showConfiguredParametersDialog(moleculeBoxes.application)
-        )
-        moleculeBoxes.gaParametersButton.setStyleSheet("""
-            QPushButton {
-                background-color: #455a64;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #37474f;
-            }
-        """)
-
         moleculeBoxes.rightVBox3 = QVBoxLayout()
         moleculeBoxes.rightVBox3.setSpacing(10)
         moleculeBoxes.rightVBox3.setContentsMargins(0, 0, 0, 0)
@@ -366,7 +295,6 @@ class GAParameters:
         for w in (
             moleculeBoxes.generateButton,
             moleculeBoxes.finalButton,
-            moleculeBoxes.saveCnt,
             moleculeBoxes.showStatsButton,
             moleculeBoxes.restartButton,
         ):
@@ -375,8 +303,6 @@ class GAParameters:
         moleculeBoxes.rightBtnCnt = QWidget()
         moleculeBoxes.rightBtnCnt.setLayout(moleculeBoxes.rightVBox3)
         moleculeBoxes.rightBtnCnt.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Maximum)
-
-        moleculeBoxes.bestBox = moleculeBoxes.createMoleculeBox("", "To be determined", 0.0, 0, -1)
 
         self.launchButton.setDisabled(True)
         self.launchButton.setStyleSheet("""
@@ -438,19 +364,13 @@ class GAParameters:
             moleculeBoxes.rightBtnCnt, 0, Qt.AlignTop | Qt.AlignLeft
         )
         moleculeBoxes.evolutionControlsLayout.addWidget(
-            moleculeBoxes.bestBox, 0, Qt.AlignTop | Qt.AlignLeft
-        )
-        moleculeBoxes.evolutionControlsLayout.addWidget(
             moleculeBoxes.progressCnt, 0, Qt.AlignTop | Qt.AlignLeft
         )
         moleculeBoxes.evolutionControlsLayout.addStretch(1)
-        moleculeBoxes.evolutionControlsLayout.addWidget(
-            moleculeBoxes.gaParametersButton, 0, Qt.AlignLeft
-        )
 
         moleculeBoxes.rightCont3.setLayout(moleculeBoxes.evolutionControlsLayout)
-        moleculeBoxes.rightCont3.setMinimumWidth(380)
-        moleculeBoxes.rightCont3.setMaximumWidth(520)
+        moleculeBoxes.rightCont3.setMinimumWidth(300)
+        moleculeBoxes.rightCont3.setMaximumWidth(400)
         moleculeBoxes.rightCont3.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         # Show evolution / progress on stage 3 before the GA blocks the event loop.

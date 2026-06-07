@@ -102,14 +102,11 @@ class RoundedMoleculeImage(QLabel):
         painter.drawRoundedRect(QRectF(0.5, 0.5, w - 1, h - 1), r, r)
         painter.end()
 from rdkit import Chem
-from rdkit.Chem import Draw, rdMolDescriptors
-from rdkit.DataStructs import FingerprintSimilarity
+from rdkit.Chem import Draw
 from fitness import Fitness
 from individual import Individual
 import geneticAlgorithm
 from mutationInfo import MutationInfo
-from datetime import datetime
-
 class ClickableGroupBox(QGroupBox):
     def __init__(self, moleculeBoxes, index, ind, parent=None):
         super().__init__(parent)
@@ -463,26 +460,6 @@ class MoleculeBoxes(QWidget):
                 self.newGenerationBoxes.append(box)
                 self.secondLayout.addWidget(box, row, col)
 
-            best_idx = -1
-            if getattr(self, "bestBox", None) is not None:
-                best_idx = self.evolutionControlsLayout.indexOf(self.bestBox)
-                self.evolutionControlsLayout.removeWidget(self.bestBox)
-                self.bestBox.deleteLater()
-            self.bestBox = self.createMoleculeBox(
-                self.newGenerationMolecules[0].getSmiles(),
-                "Current best",
-                self.newGenerationMolecules[0].getQED(),
-                0,
-                -1,
-            )
-            if best_idx >= 0:
-                self.evolutionControlsLayout.insertWidget(best_idx, self.bestBox, 0, Qt.AlignTop)
-            else:
-                pc_idx = self.evolutionControlsLayout.indexOf(getattr(self, "progressCnt", None))
-                if pc_idx >= 0:
-                    self.evolutionControlsLayout.insertWidget(pc_idx, self.bestBox, 0, Qt.AlignTop)
-                else:
-                    self.evolutionControlsLayout.addWidget(self.bestBox, 0, Qt.AlignTop)
             self.secondScrollWidget.updateGeometry()
             QApplication.processEvents()
        
@@ -563,7 +540,7 @@ class MoleculeBoxes(QWidget):
     def getSecondScrollArea(self):
         return self.rightCont2
 
-    def getBest(self):
+    def getEvolutionControls(self):
         return self.rightCont3
 
     def _structure_pixmap_for_smiles(self, smiles):
@@ -802,7 +779,6 @@ class MoleculeBoxes(QWidget):
         self._ga_running = True
         self._set_evolution_actions_enabled(False)
         try:
-            self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
             self.removeSelectedBoxes()
             self.selectedMolecules = []
             for ind in self.newGenerationMolecules:
@@ -861,7 +837,6 @@ class MoleculeBoxes(QWidget):
 
     def onFinalButtonClicked(self):
         self.application._cancel_evolution = False
-        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
         labelText = self.secondLabel.text()
         # Regular expression to match a number at the start of the string
         match = re.match(r'^\d+', labelText)
@@ -873,45 +848,6 @@ class MoleculeBoxes(QWidget):
             self.onGenerateButtonClicked()
         self._mark_evolution_complete_if_done()
 
-    def onSaveButtonClicked(self):
-        formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open('results/best_candidate_molecules.txt', 'a') as candidatesFile:
-            candidatesFile.write(f"SMILES: {self.newGenerationMolecules[0].getSmiles()}\nQED: {round(self.newGenerationMolecules[0].getQED(), 4)}\nDate created: {formattedDatetime}\nParameter weights:")
-            for value in list(self.newGenerationMolecules[0].getWeights()):
-                candidatesFile.write(f"{value} ")
-            candidatesFile.write("\n-------------------------------------------\n")
-        self.saveLabel.setStyleSheet("color: green; font-style: italic;")
-
-        # Create a QMessageBox
-        msgBox = QMessageBox(self)
-        # Set the icon for the dialog
-        msgBox.setIcon(QMessageBox.Question)
-        # Set the window title
-        msgBox.setWindowTitle("Population diversity")
-        # Set the message in the dialog
-        msgBox.setText("Do you want to calculate Tanimoto similarity coefficient for current generation?")
-        # Add Yes and No buttons
-        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        # Show the message box and capture the response
-        response = msgBox.exec_()
-        if response == QMessageBox.Yes:
-            self.tanimoto() 
-        
-        # Create a QMessageBox
-        msgBoxAvg = QMessageBox(self)
-        # Set the icon for the dialog
-        msgBoxAvg.setIcon(QMessageBox.Question)
-        # Set the window title
-        msgBoxAvg.setWindowTitle("Average QED coefficient")
-        # Set the message in the dialog
-        msgBoxAvg.setText("Do you want to average QED coefficient for current generation?")
-        # Add Yes and No buttons
-        msgBoxAvg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        # Show the message box and capture the response
-        responseAvg = msgBoxAvg.exec_()
-        if responseAvg == QMessageBox.Yes:
-            self.calculateAverageQED()
-
     def onShowStatsButtonClicked(self):
         if not self.application.evolution_statistics.has_data():
             QMessageBox.information(
@@ -921,29 +857,6 @@ class MoleculeBoxes(QWidget):
             )
             return
         self.application.show_stage_4()
-
-    def tanimoto(self):
-        smilesList = [s.getSmiles() for s in self.newGenerationMolecules]
-        mols = [Chem.MolFromSmiles(s) for s in smilesList]
-        fingerprints = [rdMolDescriptors.GetMorganFingerprintAsBitVect(mol, 2, nBits = 2048) for mol in mols]
-        # Calculate pairwise Tanimoto similarity
-        similarities = []
-        for i in range(len(fingerprints)):
-            for j in range(i+1, len(fingerprints)):
-                similarity = FingerprintSimilarity(fingerprints[i], fingerprints[j])
-                similarities.append(similarity)
-        with open('results/tanimoto.txt', 'a') as tanimotoFile:
-            tanimotoFile.write("[")
-            for sim in similarities:
-                tanimotoFile.write(f"{sim}, ")
-            tanimotoFile.write("]\n------------------------------------\n")
-
-    def calculateAverageQED(self):
-        formattedDatetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        coeffList = [s.getQED() for s in self.newGenerationMolecules]
-        avgQED = sum(coeffList) / len(coeffList)
-        with open('results/averageQED.txt', 'a') as tanimotoFile:
-            tanimotoFile.write(f"{avgQED}\n{formattedDatetime}\n------------------------------------\n")
 
     def _current_generation_number(self):
         match = re.match(r"^\d+", self.secondLabel.text())
@@ -961,7 +874,6 @@ class MoleculeBoxes(QWidget):
                 "Wait until the current generation finishes before restarting.",
             )
             return
-        self.saveLabel.setStyleSheet("color: transparent; font-style: italic;")
         self.generationLabel.setText(f"Generation: 1/{self.application.gaConfig.generations}")
         self.generationProgress.setValue(1)
         self.individualLabel.setText(f"Individual: 0/{len(self.selectedMolecules)}")
@@ -974,13 +886,10 @@ class MoleculeBoxes(QWidget):
         self.application.molecules = []
         self.selectedMolecules = []
         self.newGenerationMolecules = []
-        self.bestBox.deleteLater()
         self.generateButton.setDisabled(True)
         self.generateButton.setStyleSheet("Color: #757575;")
         self.finalButton.setDisabled(True)
         self.finalButton.setStyleSheet("Color: #757575;")
-        self.saveButton.setDisabled(True)
-        self.saveButton.setStyleSheet("Color: #757575;")
         if getattr(self, "showStatsButton", None) is not None:
             self.showStatsButton.setDisabled(True)
             self.showStatsButton.setStyleSheet("Color: #757575;")
