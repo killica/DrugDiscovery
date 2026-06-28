@@ -426,5 +426,9 @@
     {
         "SMILES": "C2CC1OCCC1O2",
         "Description": "My molecule"
+    },
+    {
+        "SMILES": "CCO",
+        "Description": "Ethanol"
     }
 ]
