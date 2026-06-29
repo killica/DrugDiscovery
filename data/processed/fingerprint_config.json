@@ -1,0 +1,7 @@
+{
+  "type": "morgan",
+  "radius": 2,
+  "n_bits": 2048,
+  "use_chirality": true,
+  "use_bond_types": true
+}
