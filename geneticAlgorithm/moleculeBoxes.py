@@ -2,6 +2,7 @@ import json
 import copy
 import re
 import random
+from typing import Any
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -103,7 +104,7 @@ class RoundedMoleculeImage(QLabel):
         painter.end()
 from rdkit import Chem
 from rdkit.Chem import Draw
-from fitness import Fitness
+from fitness import format_fitness_display
 from individual import Individual
 import geneticAlgorithm
 from mutationInfo import MutationInfo
@@ -375,33 +376,65 @@ class MoleculeBoxes(QWidget):
         self.loadBoxes()
         self.loadSelectedBoxes()
        
-    def loadBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+    def _all_individuals(self):
+        return self.molecules + self.selectedMolecules + self.newGenerationMolecules
+
+    def _sync_individual_fitness_context(self, individual):
+        individual.update_fitness_context(
+            tuple[Any, ...](self.application.getSliderValues()),
+            self.application.get_fitness_mode_id(),
+        )
+
+    def sync_all_individual_fitness_context(self):
+        for individual in self._all_individuals():
+            self._sync_individual_fitness_context(individual)
+
+    def refreshFitnessForAll(self, weights=None):
+        weights = weights or tuple(self.application.getSliderValues())
+        mode = self.application.get_fitness_mode_id()
+        for individual in self._all_individuals():
+            individual.update_fitness_context(weights, mode)
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+        self.loadBoxes(weights)
+        self.loadSelectedBoxes(weights)
+
+    def refreshQEDForAll(self, weights):
+        self.refreshFitnessForAll(weights)
+
+    def loadBoxes(self, weights=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.boxes = []
+        fitness_mode = self.application.get_fitness_mode_id()
         for individual in self.molecules:
-            individual.setWeights(weights)
+            individual.update_fitness_context(weights, fitness_mode)
         self.molecules.sort(reverse=True)
         for index, individual in enumerate(self.molecules):
             row = index // 3
             col = index % 3
             smiles = individual.getSmiles()
             description = individual.getDescription()
-            qed = individual.getQED()
-            self.moleculeBox = self.createMoleculeBox(smiles, description, qed, index, 0)
+            fitness = individual.getFitness()
+            self.moleculeBox = self.createMoleculeBox(
+                smiles, description, fitness, index, 0, fitness_mode
+            )
             self.boxes.append(self.moleculeBox)
             self.layout.addWidget(self.moleculeBox, row, col)
 
-    def loadSelectedBoxes(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+    def loadSelectedBoxes(self, weights=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self.selectedBoxes = []
+        fitness_mode = self.application.get_fitness_mode_id()
         for individual in self.selectedMolecules:
-            individual.setWeights(weights)
+            individual.update_fitness_context(weights, fitness_mode)
         self.selectedMolecules.sort(reverse=True)
         for index, individual in enumerate(self.selectedMolecules):
             row = index // 3
             col = index % 3
             smiles = individual.getSmiles()
             description = individual.getDescription()
-            qed = individual.getQED()
-            self.selectedMoleculeBox = self.createMoleculeBox(smiles, description, qed, index, 1)
+            fitness = individual.getFitness()
+            self.selectedMoleculeBox = self.createMoleculeBox(
+                smiles, description, fitness, index, 1, fitness_mode
+            )
             self.selectedBoxes.append(self.selectedMoleculeBox)
             self.precedentLayout.addWidget(self.selectedMoleculeBox, row, col)
 
@@ -422,8 +455,7 @@ class MoleculeBoxes(QWidget):
 
     def _live_generation_on_new_individual(self, individual, index_in_population, gen_index):
         """Append one molecule card to the 2nd-generation grid (called from geneticAlgorithm)."""
-        weights = tuple(self.application.getSliderValues())
-        individual.setWeights(weights)
+        self._sync_individual_fitness_context(individual)
         cpr = self.columnsPerRow
         row = index_in_population // cpr
         col = index_in_population % cpr
@@ -431,19 +463,23 @@ class MoleculeBoxes(QWidget):
         box = self.createMoleculeBox(
             individual.getSmiles(),
             desc,
-            individual.getQED(),
+            individual.getFitness(),
             index_in_population,
             -1,
+            individual.getFitnessMode(),
         )
         self.newGenerationBoxes.append(box)
         self.secondLayout.addWidget(box, row, col)
         self.secondScrollWidget.updateGeometry()
         QApplication.processEvents()
 
-    def loadNewGeneration(self, weights = (0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+    def loadNewGeneration(self, weights=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
         self._clear_second_generation_grid()
         QApplication.processEvents()
         if len(self.newGenerationMolecules) > 0:
+            fitness_mode = self.application.get_fitness_mode_id()
+            for individual in self.newGenerationMolecules:
+                individual.update_fitness_context(weights, fitness_mode)
             self.newGenerationMolecules.sort(reverse=True)
             mols = self.newGenerationMolecules
             n = len(mols)
@@ -454,9 +490,10 @@ class MoleculeBoxes(QWidget):
                 individual = mols[index]
                 smiles = individual.getSmiles()
                 description = individual.getDescription()
-                individual.setWeights(weights)
-                qed = individual.getQED()
-                box = self.createMoleculeBox(smiles, description, qed, index, -1)
+                fitness = individual.getFitness()
+                box = self.createMoleculeBox(
+                    smiles, description, fitness, index, -1, fitness_mode
+                )
                 self.newGenerationBoxes.append(box)
                 self.secondLayout.addWidget(box, row, col)
 
@@ -557,14 +594,9 @@ class MoleculeBoxes(QWidget):
         self._structure_pixmap_cache[smiles] = pm
         return pm
 
-    def refreshQEDForAll(self, weights):
-
-        self.removeBoxes()
-        self.removeSelectedBoxes()
-        self.loadBoxes(weights)
-        self.loadSelectedBoxes(weights)
-
-    def createMoleculeBox(self, smiles, description, qed, index, ind):
+    def createMoleculeBox(self, smiles, description, fitness, index, ind, fitness_mode=None):
+        if fitness_mode is None:
+            fitness_mode = self.application.get_fitness_mode_id()
         box = ClickableGroupBox(self, index, ind)
         box.setFixedWidth(230)
         boxLayout = QVBoxLayout()
@@ -594,7 +626,9 @@ class MoleculeBoxes(QWidget):
         imageRow.addWidget(imageFrame, 0, Qt.AlignHCenter)
         imageRow.addStretch(1)
 
-        descriptionLabel = QLabel(description + "\n" + "QED: " + str(round(qed, 4)))
+        descriptionLabel = QLabel(
+            description + "\n" + format_fitness_display(fitness_mode, fitness)
+        )
         descriptionLabel.setWordWrap(True)
         descriptionLabel.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         descriptionLabel.setStyleSheet(
@@ -748,7 +782,14 @@ class MoleculeBoxes(QWidget):
 
         self.removeBoxes()
         self.removeSelectedBoxes()
-        self.molecules.append(Individual(smiles, description, self.application.getSliderValues()))
+        self.molecules.append(
+            Individual(
+                smiles,
+                description,
+                self.application.getSliderValues(),
+                fitness_mode=self.application.get_fitness_mode_id(),
+            )
+        )
         with open('../data/molecules.json', 'r') as file:
             data = json.load(file)
         data.append({
@@ -779,6 +820,7 @@ class MoleculeBoxes(QWidget):
         self._ga_running = True
         self._set_evolution_actions_enabled(False)
         try:
+            self.sync_all_individual_fitness_context()
             self.removeSelectedBoxes()
             self.selectedMolecules = []
             for ind in self.newGenerationMolecules:
@@ -787,6 +829,7 @@ class MoleculeBoxes(QWidget):
                         ind.getSmiles(),
                         ind.getDescription(),
                         tuple(self.application.getSliderValues()),
+                        fitness_mode=self.application.get_fitness_mode_id(),
                     )
                 )
             self.loadSelectedBoxes(tuple(self.application.getSliderValues()))

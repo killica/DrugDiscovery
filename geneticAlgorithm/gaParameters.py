@@ -21,6 +21,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 import geneticAlgorithm
 from GAConfig import CrossoverMode, MutationMode
+from fitness import mode_label
 from mutationInfo import MutationInfo
 
 EVOLUTION_PANEL_QSS = """
@@ -436,9 +437,11 @@ class GAParameters:
 
         moleculeBoxes._ga_running = True
         moleculeBoxes._set_evolution_actions_enabled(False)
+        moleculeBoxes.sync_all_individual_fitness_context()
         geneticAlgorithm.reset_crossover_stats()
         geneticAlgorithm.reset_mutation_stats()
         cfg = self.application.gaConfig
+        fitness_mode = self.application.get_fitness_mode_id()
         self.application.evolution_statistics.begin_run(
             {
                 "generations": cfg.generations,
@@ -448,6 +451,8 @@ class GAParameters:
                 "roulette_selection": cfg.rouletteSelection,
                 "crossover_mode": cfg.crossoverMode.name,
                 "mutation_mode": cfg.mutationMode.name,
+                "fitness_mode": fitness_mode,
+                "fitness_mode_label": mode_label(fitness_mode),
             }
         )
         try:

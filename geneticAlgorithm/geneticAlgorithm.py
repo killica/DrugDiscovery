@@ -363,11 +363,11 @@ def selection(population, rouletteSelection, tournamentSize):
     return tournamentSelection(population, tournamentSize)
 
 def rouletteWheelSelection(population):
-    totalFitness = sum([individual.getQED() for individual in population])
+    totalFitness = sum(individual.getFitness() for individual in population)
     probabilitiesPartialSums = []
     tmp = 0
     for individual in population:
-        tmp += individual.getQED() / totalFitness
+        tmp += individual.getFitness() / totalFitness
         probabilitiesPartialSums.append(tmp)
     
     randomValue = random.random()
@@ -380,11 +380,11 @@ def rouletteWheelSelection(population):
 
 def tournamentSelection(population, tournamentSize):
     populationSample = random.sample(population, k = tournamentSize)
-    bestQED = -1
+    bestFitness = -1
     bestIndividual = None
     for individual in populationSample:
-        if individual.getQED() > bestQED:
-            bestQED = individual.getQED()
+        if individual.getFitness() > bestFitness:
+            bestFitness = individual.getFitness()
             bestIndividual = individual
     return bestIndividual
 

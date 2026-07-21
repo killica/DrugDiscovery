@@ -98,12 +98,13 @@ class EvolutionStatistics:
         if not population:
             return
 
-        fitness_values = [individual.getQED() for individual in population]
-        best_individual = max(population, key=lambda individual: individual.getQED())
+        fitness_values = [individual.getFitness() for individual in population]
+        best_individual = max(population, key=lambda individual: individual.getFitness())
         candidate = {
             "smiles": best_individual.getSmiles(),
             "description": best_individual.getDescription() or "",
-            "fitness": best_individual.getQED(),
+            "fitness": best_individual.getFitness(),
+            "fitness_mode": best_individual.getFitnessMode(),
             "generation": self._next_generation,
         }
         if self.best_candidate is None or candidate["fitness"] > self.best_candidate["fitness"]:

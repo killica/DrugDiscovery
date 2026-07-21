@@ -13,8 +13,8 @@ class MoleculeCatalogue:
         # Newly generated molecules
         self.newGenerationMolecules: list[Individual] = []
 
-    def addMolecule(self, smiles: str, description: str, weights):
-        individual = Individual(smiles, description, weights)
+    def addMolecule(self, smiles: str, description: str, weights, fitness_mode=0):
+        individual = Individual(smiles, description, weights, fitness_mode=fitness_mode)
         self.molecules.append(individual)
         self.saveToFile(smiles, description)
         return individual
@@ -52,13 +52,16 @@ class MoleculeCatalogue:
         self.selectedMolecules.extend(self.molecules)
         self.molecules.clear()
 
-    def sortMolecules(self, weights):
+    def sortMolecules(self, weights, fitness_mode=None):
         for ind in (
             self.molecules
             + self.selectedMolecules
             + self.newGenerationMolecules
         ):
-            ind.setWeights(weights)
+            if fitness_mode is None:
+                ind.setWeights(weights)
+            else:
+                ind.update_fitness_context(weights, fitness_mode)
 
         self.molecules.sort(reverse=True)
         self.selectedMolecules.sort(reverse=True)

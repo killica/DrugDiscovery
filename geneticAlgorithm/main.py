@@ -29,6 +29,7 @@ from moleculeBoxes import MoleculeBoxes
 from insertMolecule import NewMoleculeForm
 from hyperParameters import HyperParameters
 from gaParameters import GAParameters
+from fitness import mode_label
 from individual import Individual
 from mutationInfo import MutationInfo
 from evolutionRun import EvolutionStatistics
@@ -77,12 +78,14 @@ class Application(QWidget):
         self.setWindowTitle("Drug Discovery")
         self.resize(800, 600)
 
-        self.molecules = self.readMolecules()
         self.sliderValues = [0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95]
+        self.fitness_mode_id = 0
+
+        self.molecules = self.readMolecules()
+
 
         self.blockTransfer = False
         self._cancel_evolution = False
-        self.fitness_mode_id = 0
 
         self.moleculeBoxes = MoleculeBoxes(self)
         self.newMoleculeForm = NewMoleculeForm(self)
@@ -120,9 +123,9 @@ class Application(QWidget):
         self.fitness_mode_group = QButtonGroup(self)
         self.radio_fitness_qed = QRadioButton("QED (weighted)")
         self.radio_fitness_qed.setChecked(True)
-        self.radio_fitness_m1 = QRadioButton("Model A (placeholder)")
-        self.radio_fitness_m2 = QRadioButton("Model B (placeholder)")
-        self.radio_fitness_m3 = QRadioButton("Model C (placeholder)")
+        self.radio_fitness_m1 = QRadioButton("Random Forest (pIC50)")
+        self.radio_fitness_m2 = QRadioButton("LightGBM (pIC50)")
+        self.radio_fitness_m3 = QRadioButton("Ridge (pIC50)")
         for idx, rb in enumerate(
             (
                 self.radio_fitness_qed,
@@ -370,9 +373,18 @@ class Application(QWidget):
         mode_id = self.fitness_mode_group.id(button)
         self.fitness_mode_id = mode_id
         self.fitness_stack.setCurrentIndex(mode_id)
+        self.moleculeBoxes.refreshFitnessForAll()
 
     def get_fitness_mode_id(self):
         return self.fitness_mode_id
+
+    def create_individual(self, smiles, description, weights=None):
+        return Individual(
+            smiles,
+            description,
+            weights if weights is not None else self.getSliderValues(),
+            fitness_mode=self.fitness_mode_id,
+        )
 
     def on_continue_to_stage_2(self):
         if len(self.moleculeBoxes.selectedMolecules) == 0:
@@ -382,6 +394,7 @@ class Application(QWidget):
                 "Select at least one molecule for the first generation (click cards in the catalogue).",
             )
             return
+        self.moleculeBoxes.sync_all_individual_fitness_context()
         self.moleculeBoxes.place_precedent_in_evolution_row()
         self._show_stage_2()
 
@@ -403,7 +416,7 @@ class Application(QWidget):
         return {
             "smiles": best.getSmiles(),
             "description": best.getDescription() or "",
-            "fitness": best.getQED(),
+            "fitness": best.getFitness(),
             "generation": len(self.evolution_statistics.generations_data),
         }
 
@@ -485,7 +498,10 @@ class Application(QWidget):
     def readMolecules(self):
         with open("../data/molecules.json", "r") as file:
             data = json.load(file)
-        return [Individual(item["SMILES"], item["Description"]) for item in data]
+        return [
+            self.create_individual(item["SMILES"], item["Description"])
+            for item in data
+        ]
 
     def getMolecules(self):
         return self.molecules

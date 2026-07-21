@@ -26,6 +26,12 @@ MODE_LABELS = {
 
 INVALID_FITNESS = 0.0
 
+
+def format_fitness_display(mode: int, value: float) -> str:
+    if mode == FITNESS_MODE_QED:
+        return f"QED: {value:.4f}"
+    return f"pIC50: {value:.4f}"
+
 _predictor_cache: dict[str, PotencyPredictor] = {}
 
 
