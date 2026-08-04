@@ -166,3 +166,8 @@ geneticAlgorithm/results/
 
 # Trained ML models (regenerate via data/03_models.ipynb)
 *.joblib
+
+# Local scratch script
+test.py
+
+.DS_Store
