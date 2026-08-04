@@ -11,6 +11,15 @@
 
 % Paket koji definiše sve specifičnosti mastera Matematičkog fakulteta
 \usepackage{matfmaster/matfmaster}
+
+% Linkovi u PDF-u bez crvenih/plavih okvira (ref, sadržaj, URL)
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=black,
+  pdfpagemode=UseOutlines,
+}
 %
 % Podrazumevano pismo je ćirilica.
 %   Ako koristite pdflatex, a ne xetex, sav latinički tekst na srpskom jeziku
@@ -42,6 +51,7 @@
 
 % Ostali paketi koji se koriste u dokumentu
 \usepackage{listings} % listing programskog koda
+\usepackage{array} % vertikalno poravnanje u tabelama (m{...} kolone)
 
 % Datoteka sa literaturom u BibTex tj. BibLaTeX/Biber formatu
 \bib{literatura}
@@ -215,31 +225,18 @@ SMILES (енг. \textit{Simplified Molecular Input Line Entry System}) пред�
 
 \begin{table}[h]
 \centering
-\begin{tabular}{|c|c|c|}
+\begin{tabular}{|>{\centering\arraybackslash}m{2.4cm}|>{\centering\arraybackslash}m{3.2cm}|>{\centering\arraybackslash}m{2.4cm}|}
 \hline
-\textbf{Молекул} & \textbf{Рационална структурна формула} & \textbf{SMILES} \\
+\textbf{Молекул} & \textbf{Структура} & \textbf{SMILES} \\
 \hline
-
-Етанол &
-\includegraphics[height=1.6cm]{slike/Etanol.png} &
-\texttt{CCO} \\
+Етанол & \includegraphics[height=1.6cm]{slike/Etanol.png} & \texttt{CCO} \\
 \hline
-
-Етен &
-\includegraphics[height=1.6cm]{slike/Eten.png} &
-\texttt{C=C} \\
+Етен & \includegraphics[height=1.6cm]{slike/Eten.png} & \texttt{C=C} \\
 \hline
-
-Изобутан &
-\includegraphics[height=1.6cm]{slike/Izobutan.png} &
-\texttt{CC(C)C} \\
+Изобутан & \includegraphics[height=1.6cm]{slike/Izobutan.png} & \texttt{CC(C)C} \\
 \hline
-
-Бензен &
-\includegraphics[height=1.6cm]{slike/Benzen.png} &
-\texttt{c1ccccc1} \\
+Бензен & \includegraphics[height=1.6cm]{slike/Benzen.png} & \texttt{c1ccccc1} \\
 \hline
-
 \end{tabular}
 \label{tab:smiles_examples}
 \caption{Примери молекулских структура и одговарајућих SMILES записа}
@@ -250,8 +247,42 @@ SMILES (енг. \textit{Simplified Molecular Input Line Entry System}) пред�
 \section{Објекат Mol библиотеке RDKit}
 \label{chp:rdkit-mol}
 
+RDKit (енг. \textit{RDKit Cheminformatics Toolkit}) је open-source библиотека за рад са молекулским 
+структурама \cite{Landrum2006}. Имплементирана је у C++-у, са Python интерфејсом, и широко се користи 
+у областима попут хемоинформатике и машинског учења \footnote{Поготово у комбинацији ове две области - 
+компјутерски потпомогнуто откривање лекова, што је и суштина овог рада.}. За разлику од текстуалних 
+формата попут SMILES-a, RDKit пружа богат интерфејс за рад са молекулима, кроз објекат \texttt{Mol}. 
+Објекат \texttt{Mol} интерно представља молекулску структуру као граф чији су чворови атоми, а гране хемијске везе, уз додатне информације о особинама веза и атома. Оваква репрезентација омогућава ефикасно извршавање различитих операција 
+над молекулима, као што су валидација структуре, израчунавање молекулских дескриптора, 
+генерисање Morgan fingerprint вектора, као и визуализацију структура у корисничком интерфејсу.
+
 \section{Morgan fingerprint вектори}
 \label{chp:mf-vec}
+
+Morgan fingerprint \cite{RogersHahn2010} представља нумеричку репрезентацију молекулске структуре у облику 
+бит-вектора фиксне дужине, погодну за примену алгоритама машинског учења. За разлику 
+од SMILES записа и RDKit Mol објекта, који чувају информације о структури молекула, 
+Morgan fingerprint издваја присуство одређених локалних структурних карактеристика
+молекула и кодира их у бинарни вектор. На тај начин сваки бит представља присуство 
+или одсуство одређеног структурног мотива, што омогућава једноставну примену математичких 
+и машинских метода над молекулским подацима (слика \ref{fig:morgan-fingerprint}).
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{slike/MorganFingerprint.png}
+  \caption{Пример Morgan fingerprint репрезентације (аспирин): бит-вектор и подструктуре за различите радијусе. Преузето из \cite{NguyenVo2024}.}
+  \label{fig:morgan-fingerprint}
+\end{figure}
+
+Генерисање Morgan fingerprint вектора заснива се на итеративном обиласку околине сваког 
+атома у молекулу. За сваки атом посматрају се суседни атоми до задатог растојања, 
+дефинисаног параметром \textit{radius}, након чега се добијене локалне структуре хеширају 
+и пресликавају у позиције бит-вектора.
+Избор вредности овог параметра представља компромис између детаљности и 
+генерализације молекулске репрезентације. Мање вредности описују локалне карактеристике 
+блиске појединачним атомима, док веће омогућавају кодирање сложенијих 
+структурних фрагмената који обухватају већи део молекула.
+
 
 % ------------------------------------------------------------------------------
 \chapter{Предиктивни модели}
