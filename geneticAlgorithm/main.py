@@ -29,7 +29,8 @@ from moleculeBoxes import MoleculeBoxes
 from insertMolecule import NewMoleculeForm
 from hyperParameters import HyperParameters
 from gaParameters import GAParameters
-from fitness import mode_label
+from fitness import MODE_LABELS, MODE_TO_MODEL_FAMILY
+from potency.predictor import format_model_bundle_html, load_model_bundle, model_path_for_family
 from individual import Individual
 from mutationInfo import MutationInfo
 from evolutionRun import EvolutionStatistics
@@ -37,7 +38,10 @@ from evolutionStatistics import EvolutionStatsChart
 from analysis.report_pdf import export_evolution_report_pdf
 
 STAGE1_WINDOW_SIZE = (1240, 980)
-STAGE1_MIN_SIZE = (1180, 860)
+STAGE1_MIN_SIZE = (1180, 920)
+FITNESS_PANEL_MIN_HEIGHT = 480
+FITNESS_SCROLL_MIN_HEIGHT = 485
+FITNESS_SCROLL_MAX_HEIGHT = 900
 STAGE2_GA_WINDOW_SIZE = (560, 520)
 STAGE2_MIN_SIZE = (520, 480)
 STAGE3_WINDOW_SIZE = (1240, 900)
@@ -140,17 +144,19 @@ class Application(QWidget):
 
         self.fitness_stack = QStackedWidget()
         self.fitness_stack.addWidget(self.hyperParamLayout.getSlidersWidget())
-        self.fitness_stack.addWidget(self._fitness_model_placeholder_panel("Model A"))
-        self.fitness_stack.addWidget(self._fitness_model_placeholder_panel("Model B"))
-        self.fitness_stack.addWidget(self._fitness_model_placeholder_panel("Model C"))
-        self.fitness_stack.setMinimumHeight(320)
+        for mode_id in sorted(MODE_TO_MODEL_FAMILY):
+            family = MODE_TO_MODEL_FAMILY[mode_id]
+            self.fitness_stack.addWidget(
+                self._fitness_model_info_panel(family, MODE_LABELS[mode_id])
+            )
+        self.fitness_stack.setMinimumHeight(FITNESS_PANEL_MIN_HEIGHT)
 
         self.fitness_stack_scroll = QScrollArea()
         self.fitness_stack_scroll.setWidgetResizable(True)
         self.fitness_stack_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.fitness_stack_scroll.setWidget(self.fitness_stack)
-        self.fitness_stack_scroll.setMinimumHeight(400)
-        self.fitness_stack_scroll.setMaximumHeight(720)
+        self.fitness_stack_scroll.setMinimumHeight(FITNESS_SCROLL_MIN_HEIGHT)
+        self.fitness_stack_scroll.setMaximumHeight(FITNESS_SCROLL_MAX_HEIGHT)
         self.fitness_stack_scroll.setFrameShape(QFrame.NoFrame)
         self.fitness_stack_scroll.setStyleSheet(
             "QScrollArea { background: transparent; border: 1px solid #c8e6c9; border-radius: 8px; }"
@@ -353,21 +359,40 @@ class Application(QWidget):
 
         self.show()
 
-    def _fitness_model_placeholder_panel(self, name):
-        w = QWidget()
-        lay = QVBoxLayout(w)
-        lay.setContentsMargins(8, 8, 8, 8)
-        msg = QLabel(
-            f"{name}\n\n"
-            "Add controls for this model here (hyperparameters, checkpoint path, "
-            "train/eval actions, etc.).\n\n"
-            "Ranking still uses QED until this backend is connected."
-        )
+    def _fitness_model_info_panel(self, family: str, title: str) -> QWidget:
+        """Sidebar panel: load ``data/models/{family}_best.joblib`` and show metrics."""
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(8, 8, 8, 8)
+
+        msg = QLabel()
         msg.setWordWrap(True)
-        msg.setStyleSheet("color: #424242; font-size: 13px;")
-        lay.addWidget(msg)
-        lay.addStretch(1)
-        return w
+        msg.setTextFormat(Qt.RichText)
+        msg.setOpenExternalLinks(False)
+        msg.setAlignment(Qt.AlignTop)
+
+        path = model_path_for_family(family)
+        try:
+            bundle = load_model_bundle(path=path)
+            msg.setText(format_model_bundle_html(bundle, path, title=title))
+        except FileNotFoundError:
+            msg.setText(
+                f"<p style='color:#c62828;font-size:13px;'>"
+                f"<b>{title}</b> not found.<br>"
+                f"Expected file:<br><code>{path}</code><br><br>"
+                f"Run <code>data/03_models.ipynb</code> through the save step first."
+                f"</p>"
+            )
+        except Exception as exc:
+            msg.setText(
+                f"<p style='color:#c62828;font-size:13px;'>"
+                f"<b>{title}</b> — could not load model bundle:<br>{exc}"
+                f"</p>"
+            )
+
+        layout.addWidget(msg)
+        layout.addStretch(1)
+        return panel
 
     def _on_fitness_mode_changed(self, button):
         mode_id = self.fitness_mode_group.id(button)

@@ -9,7 +9,34 @@ class HyperParameters:
         self.defaultValues = [0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95]
         self.hBoxes = []
         self.hyperParamLayout = QVBoxLayout()
-        self.adjustLabel = QLabel("Adjust hyperparameter's weights", application)
+
+        self.introLabel = QLabel(application)
+        self.introLabel.setWordWrap(True)
+        self.introLabel.setTextFormat(Qt.RichText)
+        self.introLabel.setText(
+            """
+<div style='font-size:13px;color:#333;line-height:1.45;'>
+  <p style='margin:0 0 4px;font-size:15px;font-weight:bold;color:#1b5e20;'>QED (weighted)</p>
+  <p style='margin:0 0 10px;font-size:11px;color:#666;'>
+    Fitness score = <b>Quantitative Estimate of Drug-likeness</b> (RDKit QED).
+    Output is a single value in <b>[0, 1]</b>; higher means more drug-like properties.
+    Unlike the pIC50 models, QED does <i>not</i> predict EGFR potency — it scores
+    general medicinal-chemistry quality from the structure alone.
+  </p>
+  <p style='margin:0 0 4px;font-weight:bold;color:#424242;'>Component weights</p>
+  <p style='margin:0 0 10px;font-size:12px;color:#555;'>
+    Use the sliders below to set how much each descriptor contributes to the score:
+    MW (molecular weight), ALOGP (lipophilicity), HBA/HBD (H-bond acceptors/donors),
+    PSA (polar surface area), ROTB (rotatable bonds), AROM (aromatic rings),
+    ALERTS (undesirable substructures). Default weights match the RDKit preset.
+  </p>
+</div>
+"""
+        )
+        self.hyperParamLayout.addWidget(self.introLabel)
+        self.hyperParamLayout.addSpacing(8)
+
+        self.adjustLabel = QLabel("Adjust component weights", application)
         self.adjustLabel.setWordWrap(True)
         self.adjustLabel.setStyleSheet("font-size: 17px; font-weight: bold; border: none; margin-top: 5px;")
 

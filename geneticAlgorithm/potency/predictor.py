@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,66 @@ def load_model_bundle(path: Path | None = None, *, family: str | None = None) ->
     if missing:
         raise ValueError(f"Invalid model bundle at {path}: missing keys {sorted(missing)}")
     return bundle
+
+
+def _metric_table_rows(metrics: dict[str, float]) -> str:
+    labels = {"rmse": "RMSE", "mae": "MAE", "r2": "R²", "pearson": "Pearson"}
+    rows = []
+    for key in ("rmse", "mae", "r2", "pearson"):
+        value = metrics[key]
+        rows.append(
+            f"<tr><td style='padding:2px 8px 2px 0;color:#555;'>{labels[key]}</td>"
+            f"<td align='right' style='padding:2px 0;font-family:monospace;'>{value:.4f}</td></tr>"
+        )
+    return "\n".join(rows)
+
+
+def format_model_bundle_html(
+    bundle: dict[str, Any],
+    path: Path,
+    *,
+    title: str,
+) -> str:
+    """Rich-text summary of a saved model bundle for the GA sidebar."""
+    test = bundle["metrics"]["test"]
+    val = bundle["metrics"]["val"]
+    params = bundle["best_params"]
+    fp = bundle["fingerprint_config"]
+
+    param_items = "".join(
+        f"<li><b>{html.escape(str(key))}</b>: {html.escape(str(value))}</li>"
+        for key, value in sorted(params.items())
+    )
+    tuning_log = html.escape(str(bundle.get("tuning_history", "—")))
+    file_name = html.escape(path.name)
+
+    return f"""
+<div style='font-size:13px;color:#333;line-height:1.45;'>
+  <p style='margin:0 0 4px;font-size:15px;font-weight:bold;color:#1b5e20;'>{html.escape(title)}</p>
+  <p style='margin:0 0 10px;font-size:11px;color:#666;'>
+    Fitness score = predicted pIC50 (higher is better). Scaffold-split test metrics below.
+  </p>
+
+  <p style='margin:0 0 4px;font-weight:bold;color:#424242;'>Test (refit on train+val)</p>
+  <table style='margin:0 0 10px 0;border-collapse:collapse;'>{_metric_table_rows(test)}</table>
+
+  <p style='margin:0 0 4px;font-weight:bold;color:#424242;'>Validation (tuning selection)</p>
+  <table style='margin:0 0 10px 0;border-collapse:collapse;'>{_metric_table_rows(val)}</table>
+
+  <p style='margin:0 0 4px;font-weight:bold;color:#424242;'>Hyperparameters</p>
+  <ul style='margin:0 0 10px 16px;padding:0;'>{param_items}</ul>
+
+  <p style='margin:0 0 4px;font-weight:bold;color:#424242;'>Fingerprint</p>
+  <p style='margin:0 0 10px;font-size:12px;color:#555;'>
+    Morgan r={fp.get('radius', '?')}, {fp.get('n_bits', '?')} bits
+    (chirality={'on' if fp.get('use_chirality') else 'off'})
+  </p>
+
+  <p style='margin:0;font-size:11px;color:#888;'>
+    Model: {file_name}<br>Tuning log: {tuning_log}
+  </p>
+</div>
+"""
 
 
 class PotencyPredictor:
