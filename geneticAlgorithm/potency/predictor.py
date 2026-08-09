@@ -46,7 +46,7 @@ def _metric_table_rows(metrics: dict[str, float]) -> str:
         value = metrics[key]
         rows.append(
             f"<tr><td style='padding:2px 8px 2px 0;color:#555;'>{labels[key]}</td>"
-            f"<td align='right' style='padding:2px 0;font-family:monospace;'>{value:.4f}</td></tr>"
+            f"<td align='right' style='padding:2px 0;'>{value:.4f}</td></tr>"
         )
     return "\n".join(rows)
 
