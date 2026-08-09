@@ -3,6 +3,7 @@ import copy
 import re
 import random
 from typing import Any
+from catalog_paths import append_to_catalog
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -172,8 +173,7 @@ class ClickableGroupBox(QGroupBox):
             elif self.ind == 1:
                 self.moleculeBoxes.molecules.append(self.moleculeBoxes.selectedMolecules[self.index])
                 self.moleculeBoxes.selectedMolecules.pop(self.index)
-            self.moleculeBoxes.loadBoxes(tuple(self.moleculeBoxes.application.getSliderValues()))
-            self.moleculeBoxes.loadSelectedBoxes(tuple(self.moleculeBoxes.application.getSliderValues()))
+            self.moleculeBoxes._reload_catalog_panels(recalculate_fitness=False)
 
         super().mousePressEvent(event)
 
@@ -373,8 +373,8 @@ class MoleculeBoxes(QWidget):
         self.evolutionControlsLayout.setAlignment(Qt.AlignCenter)
         self.rightCont3 = QWidget()
 
-        self.loadBoxes()
-        self.loadSelectedBoxes()
+        self.loadBoxes(recalculate_fitness=False)
+        self.loadSelectedBoxes(recalculate_fitness=False)
        
     def _all_individuals(self):
         return self.molecules + self.selectedMolecules + self.newGenerationMolecules
@@ -402,11 +402,17 @@ class MoleculeBoxes(QWidget):
     def refreshQEDForAll(self, weights):
         self.refreshFitnessForAll(weights)
 
-    def loadBoxes(self, weights=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+    def loadBoxes(
+        self,
+        weights=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
+        *,
+        recalculate_fitness=True,
+    ):
         self.boxes = []
         fitness_mode = self.application.get_fitness_mode_id()
-        for individual in self.molecules:
-            individual.update_fitness_context(weights, fitness_mode)
+        if recalculate_fitness:
+            for individual in self.molecules:
+                individual.update_fitness_context(weights, fitness_mode)
         self.molecules.sort(reverse=True)
         for index, individual in enumerate(self.molecules):
             row = index // 3
@@ -420,11 +426,17 @@ class MoleculeBoxes(QWidget):
             self.boxes.append(self.moleculeBox)
             self.layout.addWidget(self.moleculeBox, row, col)
 
-    def loadSelectedBoxes(self, weights=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)):
+    def loadSelectedBoxes(
+        self,
+        weights=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
+        *,
+        recalculate_fitness=True,
+    ):
         self.selectedBoxes = []
         fitness_mode = self.application.get_fitness_mode_id()
-        for individual in self.selectedMolecules:
-            individual.update_fitness_context(weights, fitness_mode)
+        if recalculate_fitness:
+            for individual in self.selectedMolecules:
+                individual.update_fitness_context(weights, fitness_mode)
         self.selectedMolecules.sort(reverse=True)
         for index, individual in enumerate(self.selectedMolecules):
             row = index // 3
@@ -437,6 +449,14 @@ class MoleculeBoxes(QWidget):
             )
             self.selectedBoxes.append(self.selectedMoleculeBox)
             self.precedentLayout.addWidget(self.selectedMoleculeBox, row, col)
+
+    def _reload_catalog_panels(self, *, recalculate_fitness=True):
+        """Rebuild catalogue + selected grids"""
+        weights = tuple(self.application.getSliderValues())
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+        self.loadBoxes(weights, recalculate_fitness=recalculate_fitness)
+        self.loadSelectedBoxes(weights, recalculate_fitness=recalculate_fitness)
 
     def _clear_second_generation_grid(self):
         """Remove every widget from the 2nd-generation layout without relying on
@@ -654,8 +674,7 @@ class MoleculeBoxes(QWidget):
             self.selectedMolecules.append(self.molecules[i])
             # self.molecules.pop(i)
         self.molecules = []
-        self.loadBoxes(tuple(self.application.getSliderValues()))
-        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
+        self._reload_catalog_panels(recalculate_fitness=False)
 
     def onSampleButtonClicked(self):
         if self.application.blockTransfer:
@@ -754,8 +773,7 @@ class MoleculeBoxes(QWidget):
         self.molecules = [self.molecules[i] for i in range(n) if i not in pick_idx]
         self.selectedMolecules.extend(to_move)
 
-        self.loadBoxes(tuple(self.application.getSliderValues()))
-        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
+        self._reload_catalog_panels(recalculate_fitness=False)
 
     def onRemoveAllButtonClicked(self):
         if self.application.blockTransfer:
@@ -766,8 +784,7 @@ class MoleculeBoxes(QWidget):
         self.removeSelectedBoxes()
         self.molecules.extend(self.selectedMolecules)
         self.selectedMolecules = []
-        self.loadBoxes(tuple(self.application.getSliderValues()))
-        self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
+        self._reload_catalog_panels(recalculate_fitness=False)
 
     def addToCatalogue(self, smiles, description):
         molecule = None
@@ -790,16 +807,8 @@ class MoleculeBoxes(QWidget):
                 fitness_mode=self.application.get_fitness_mode_id(),
             )
         )
-        with open('../data/molecules.json', 'r') as file:
-            data = json.load(file)
-        data.append({
-            "SMILES": smiles,
-            "Description": description
-        })
-        with open('../data/molecules.json', 'w') as file:
-            json.dump(data, file, indent=4)
-        self.loadBoxes()
-        self.loadSelectedBoxes()
+        append_to_catalog(smiles, description)
+        self._reload_catalog_panels(recalculate_fitness=False)
         return True
 
     def _set_evolution_actions_enabled(self, enabled):
@@ -832,7 +841,10 @@ class MoleculeBoxes(QWidget):
                         fitness_mode=self.application.get_fitness_mode_id(),
                     )
                 )
-            self.loadSelectedBoxes(tuple(self.application.getSliderValues()))
+            self.loadSelectedBoxes(
+                tuple(self.application.getSliderValues()),
+                recalculate_fitness=False,
+            )
 
             n = len(self.selectedMolecules)
             geneticAlgorithm._set_individual_progress(
@@ -925,7 +937,7 @@ class MoleculeBoxes(QWidget):
         self.removeSelectedBoxes()
         self.removeNewGenerationBoxes()
         self.molecules = self.application.readMolecules()
-        self.loadBoxes(self.application.getSliderValues())
+        self.loadBoxes(self.application.getSliderValues(), recalculate_fitness=False)
         self.application.molecules = []
         self.selectedMolecules = []
         self.newGenerationMolecules = []

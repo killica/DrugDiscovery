@@ -1,5 +1,6 @@
 import sys
 import json
+from catalog_paths import append_to_catalog, load_catalog
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -521,11 +522,9 @@ class Application(QWidget):
         return self.moleculeBoxes.addToCatalogue(smiles, description)
 
     def readMolecules(self):
-        with open("../data/molecules.json", "r") as file:
-            data = json.load(file)
         return [
             self.create_individual(item["SMILES"], item["Description"])
-            for item in data
+            for item in load_catalog()
         ]
 
     def getMolecules(self):

@@ -1,5 +1,5 @@
 from individual import Individual
-import json
+from catalog_paths import append_to_catalog
 
 
 class MoleculeCatalogue:
@@ -19,20 +19,20 @@ class MoleculeCatalogue:
         self.saveToFile(smiles, description)
         return individual
 
-    def saveToFile(self, smiles, description, filepath="../data/molecules.json"):
-        try:
-            with open(filepath, "r") as file:
-                data = json.load(file)
-        except FileNotFoundError:
-            data = []
-
-        data.append({
-            "SMILES": smiles,
-            "Description": description
-        })
-
-        with open(filepath, "w") as file:
-            json.dump(data, file, indent=4)
+    def saveToFile(self, smiles, description, filepath=None):
+        if filepath is not None:
+            import json
+            try:
+                with open(filepath, encoding="utf-8") as file:
+                    data = json.load(file)
+            except FileNotFoundError:
+                data = []
+            data.append({"SMILES": smiles, "Description": description})
+            with open(filepath, "w", encoding="utf-8") as file:
+                json.dump(data, file, indent=4)
+                file.write("\n")
+            return
+        append_to_catalog(smiles, description)
 
     def removeFromCatalogue(self, individual: Individual) -> Individual:
         self.molecules.remove(individual)
