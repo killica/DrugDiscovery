@@ -1,5 +1,6 @@
-# Ceo LaTeX build output (latexmk -outdir=build)
-build/
+# LaTeX build output (latexmk -outdir=build); keep the compiled PDF for GitHub
+build/*
+!build/thesis.pdf
 
 # Fallback ako se ikad kompajlira bez .latexmkrc
 *.aux
@@ -12,4 +13,4 @@ build/
 *.toc
 *.xdv
 *.synctex.gz
-thesis.pdf
+/thesis.pdf
