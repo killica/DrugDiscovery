@@ -4,6 +4,7 @@ import re
 import random
 from typing import Any
 from catalog_paths import append_to_catalog
+from customMoleculeSelection import lookup_by_chembl_id
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -226,6 +227,22 @@ class MoleculeBoxes(QWidget):
         """)
         self.sampleButton.clicked.connect(self.onSampleButtonClicked)
 
+        self.selectCustomButton = QPushButton("Select custom")
+        self.selectCustomButton.setFixedWidth(112)
+        self.selectCustomButton.setStyleSheet("""
+            QPushButton {
+                background-color: #6a7ba2;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #4a5b82;
+            }
+        """)
+        self.selectCustomButton.clicked.connect(self.onSelectCustomButtonClicked)
+
         self.removeAllButton = QPushButton("Remove all")
         self.removeAllButton.setFixedWidth(108)
         self.removeAllButton.setStyleSheet("""
@@ -306,6 +323,7 @@ class MoleculeBoxes(QWidget):
         _cat_hdr.addStretch(1)
         _cat_hdr.addWidget(self.selectAllButton, 0, Qt.AlignVCenter)
         _cat_hdr.addWidget(self.sampleButton, 0, Qt.AlignVCenter)
+        _cat_hdr.addWidget(self.selectCustomButton, 0, Qt.AlignVCenter)
 
         self.selectedHeaderRow = QWidget()
         _sel_hdr = QHBoxLayout(self.selectedHeaderRow)
@@ -675,6 +693,150 @@ class MoleculeBoxes(QWidget):
             # self.molecules.pop(i)
         self.molecules = []
         self._reload_catalog_panels(recalculate_fitness=False)
+
+    @staticmethod
+    def _canonical_smiles(smiles: str) -> str | None:
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+        except ValueError:
+            return None
+        if mol is None:
+            return None
+        return Chem.MolToSmiles(mol, canonical=True)
+
+    def _is_same_molecule(self, left_smiles: str, right_smiles: str) -> bool:
+        left = self._canonical_smiles(left_smiles)
+        right = self._canonical_smiles(right_smiles)
+        return left is not None and left == right
+
+    def add_to_selection(self, smiles: str, description: str) -> str:
+        """Add a molecule to the selected list without updating catalog JSON files.
+
+        Returns one of: ``added``, ``moved_from_catalogue``, ``already_selected``,
+        ``invalid_smiles``.
+        """
+        canonical = self._canonical_smiles(smiles)
+        if canonical is None:
+            return "invalid_smiles"
+
+        for ind in self.selectedMolecules:
+            if self._is_same_molecule(ind.getSmiles(), smiles):
+                return "already_selected"
+
+        for index, ind in enumerate(self.molecules):
+            if self._is_same_molecule(ind.getSmiles(), smiles):
+                self.removeBoxes()
+                self.removeSelectedBoxes()
+                self.selectedMolecules.append(self.molecules.pop(index))
+                self._reload_catalog_panels(recalculate_fitness=False)
+                return "moved_from_catalogue"
+
+        self.removeBoxes()
+        self.removeSelectedBoxes()
+        self.selectedMolecules.append(
+            Individual(
+                smiles,
+                description,
+                self.application.getSliderValues(),
+                fitness_mode=self.application.get_fitness_mode_id(),
+            )
+        )
+        self._reload_catalog_panels(recalculate_fitness=False)
+        return "added"
+
+    def onSelectCustomButtonClicked(self):
+        if self.application.blockTransfer:
+            return
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Add to selection")
+        layout = QVBoxLayout(dlg)
+        info = QLabel(
+            "Add a molecule directly to the first-generation selection. "
+            "Enter a ChEMBL ID from the broader molecule dataset, or a SMILES string. "
+            "The molecule will not be saved to the catalogue files."
+        )
+        info.setWordWrap(True)
+        layout.addWidget(info)
+
+        chembl_label = QLabel("ChEMBL ID:")
+        chembl_edit = QLineEdit(dlg)
+        chembl_edit.setPlaceholderText("e.g. CHEMBL1234567")
+        layout.addWidget(chembl_label)
+        layout.addWidget(chembl_edit)
+
+        smiles_label = QLabel("SMILES:")
+        smiles_edit = QLineEdit(dlg)
+        smiles_edit.setPlaceholderText("Alternative to ChEMBL ID")
+        layout.addWidget(smiles_label)
+        layout.addWidget(smiles_edit)
+
+        def try_ok():
+            chembl_input = chembl_edit.text().strip()
+            smiles_input = smiles_edit.text().strip()
+
+            if chembl_input and smiles_input:
+                QMessageBox.warning(
+                    dlg,
+                    "Choose one input",
+                    "Enter either a ChEMBL ID or a SMILES string, not both.",
+                )
+                return
+
+            if chembl_input:
+                try:
+                    match = lookup_by_chembl_id(chembl_input)
+                except FileNotFoundError:
+                    QMessageBox.critical(
+                        dlg,
+                        "Dataset missing",
+                        "Could not find data/processed/features_meta.csv.",
+                    )
+                    return
+                if match is None:
+                    QMessageBox.warning(
+                        dlg,
+                        "Unknown ChEMBL ID",
+                        f"No molecule with ID {chembl_input!r} was found in the molecules catalog.",
+                    )
+                    return
+                chembl_id, smiles = match
+                description = chembl_id
+            elif smiles_input:
+                smiles = smiles_input
+                description = "Custom SMILES"
+            else:
+                QMessageBox.warning(
+                    dlg,
+                    "Missing input",
+                    "Enter a ChEMBL ID or a SMILES string.",
+                )
+                return
+
+            result = self.add_to_selection(smiles, description)
+            if result == "invalid_smiles":
+                QMessageBox.warning(
+                    dlg,
+                    "Invalid SMILES",
+                    "The SMILES string could not be parsed.",
+                )
+                return
+            if result == "already_selected":
+                QMessageBox.information(
+                    dlg,
+                    "Already selected",
+                    "That molecule is already in the selection for the first generation.",
+                )
+                return
+
+            dlg.accept()
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(try_ok)
+        buttons.rejected.connect(dlg.reject)
+        layout.addWidget(buttons)
+
+        dlg.exec_()
 
     def onSampleButtonClicked(self):
         if self.application.blockTransfer:
