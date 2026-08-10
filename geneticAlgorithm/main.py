@@ -1,17 +1,12 @@
 import sys
-import json
-from catalog_paths import append_to_catalog, load_catalog
+from catalog_paths import load_catalog
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
-    QSlider,
-    QDesktopWidget,
     QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QLabel,
-    QLineEdit,
     QScrollArea,
     QStackedWidget,
     QMessageBox,
@@ -23,8 +18,6 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QColor, QPalette
 from PyQt5.QtCore import Qt
-from rdkit import Chem
-from rdkit.Chem import Draw
 from GAConfig import GAConfig
 from moleculeBoxes import MoleculeBoxes
 from insertMolecule import NewMoleculeForm

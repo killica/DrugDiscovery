@@ -1,6 +1,9 @@
 # DrugDiscovery
 
-Project for Computational intelligence course. Genetic algorithm for discovery of molecular structures with potential medical properties, using developed GUI application.
+An interactive tool for **in silico** exploration of drug-like molecules. Instead of exhaustively testing large compound libraries in the lab, the application uses a **genetic algorithm** to evolve and rank structures against configurable fitness criteria — from drug-likeness (QED) to potency predictions from trained models.
+
+Accompanying repository for a **Master's thesis at Faculty of Mathematics, University of Belgrade** on applying computational intelligence to computer-aided drug discovery.
+
 
 ## 🔧 Setup
 
@@ -81,7 +84,7 @@ After step 3, the GUI can use all four fitness modes.
 | Virtual env             | `python3 -m venv .venv && source .venv/bin/activate` |
 | Install packages        | `pip install -r requirements.txt`                    |
 | Start app               | `cd geneticAlgorithm && python main.py`              |
-| pIC50 models (optional) | Run notebooks `data/01` → `02` → `03`                |
+| pIC50 models (optional) | Run notebooks `data/01` → `02` → `03` + restart app               |
 
 ## 🖼️ Gallery
 

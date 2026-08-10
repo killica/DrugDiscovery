@@ -1,5 +1,3 @@
-import json
-import copy
 import re
 import random
 from typing import Any
@@ -16,7 +14,6 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QScrollArea,
     QPushButton,
-    QProgressBar,
     QApplication,
     QFrame,
     QSizePolicy,
@@ -24,7 +21,7 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QLineEdit,
 )
-from PyQt5.QtGui import QImage, QPixmap, QColor, QFont, QPainter, QPainterPath, QPen, QCursor
+from PyQt5.QtGui import QImage, QPixmap, QColor, QPainter, QPainterPath, QPen, QCursor
 from PyQt5.QtCore import Qt, QRectF, QEvent, QTimer
 
 MOLECULE_IMAGE_SIZE = 200
@@ -109,7 +106,6 @@ from rdkit.Chem import Draw
 from fitness import format_fitness_display
 from individual import Individual
 import geneticAlgorithm
-from mutationInfo import MutationInfo
 class ClickableGroupBox(QGroupBox):
     def __init__(self, moleculeBoxes, index, ind, parent=None):
         super().__init__(parent)

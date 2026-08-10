@@ -7,7 +7,6 @@ import contextlib
 from rdkit import Chem
 from rdkit.Chem import BRICS
 import selfies as sf
-import mutationInfo
 from GAConfig import CrossoverMode, MutationMode
 from PyQt5.QtWidgets import QApplication
 from rdkit import RDLogger

@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 import joblib
-import numpy as np
 
 from potency.featurizer import MorganFeaturizer, default_fingerprint_config_path
 

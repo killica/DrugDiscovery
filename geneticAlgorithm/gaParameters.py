@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import (
     QButtonGroup,
     QProgressBar,
     QSizePolicy,
-    QMessageBox,
     QGroupBox,
     QGraphicsDropShadowEffect,
 )
@@ -22,7 +21,6 @@ from PyQt5.QtGui import QColor
 import geneticAlgorithm
 from GAConfig import CrossoverMode, MutationMode
 from fitness import mode_label
-from mutationInfo import MutationInfo
 
 EVOLUTION_PANEL_QSS = """
     QGroupBox#evolutionPanel {
