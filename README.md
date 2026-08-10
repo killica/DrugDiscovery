@@ -4,7 +4,7 @@ An interactive tool for **in silico** exploration of drug-like molecules. Instea
 
 Accompanying repository for a **Master's thesis at Faculty of Mathematics, University of Belgrade** on applying computational intelligence to computer-aided drug discovery.
 
-**Thesis (PDF):** [thesis/build/thesis.pdf](thesis/build/thesis.pdf) · LaTeX source in [`thesis/thesis.tex`](thesis/thesis.tex)
+**Thesis (PDF):** [thesis.pdf](thesis/build/thesis.pdf)
 
 ## 🔧 Setup
 
@@ -13,12 +13,16 @@ Accompanying repository for a **Master's thesis at Faculty of Mathematics, Unive
 - **Python 3.9 or newer** ([python.org](https://www.python.org/downloads/))
 - `git` (to clone the repository)
 
+
+
 ### 2. Clone and enter the project
 
 ```bash
 git clone <repository-url>
 cd DrugDiscovery
 ```
+
+
 
 ### 3. Create a virtual environment (recommended)
 
@@ -85,7 +89,10 @@ After step 3, the GUI can use all four fitness modes.
 | Virtual env             | `python3 -m venv .venv && source .venv/bin/activate` |
 | Install packages        | `pip install -r requirements.txt`                    |
 | Start app               | `cd geneticAlgorithm && python main.py`              |
-| pIC50 models (optional) | Run notebooks `data/01` → `02` → `03` + restart app               |
+| pIC50 models (optional) | Run notebooks `data/01` → `02` → `03` + restart app  |
+
+
+
 
 ## 🖼️ Gallery
 

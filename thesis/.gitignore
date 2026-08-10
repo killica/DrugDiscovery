@@ -1,4 +1,4 @@
-# LaTeX build output (latexmk -outdir=build); keep the compiled PDF for GitHub
+# LaTeX build output (latexmk -outdir=build);
 build/*
 !build/thesis.pdf
 
