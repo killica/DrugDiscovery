@@ -4,7 +4,7 @@ An interactive tool for **in silico** exploration of drug-like molecules. Instea
 
 Accompanying repository for a **Master's thesis at Faculty of Mathematics, University of Belgrade** on applying computational intelligence to computer-aided drug discovery.
 
-**Thesis (PDF):** [thesis.pdf](thesis/build/thesis.pdf)
+**Thesis:** [thesis.pdf](thesis/build/thesis.pdf)
 
 ## 🔧 Setup
 
@@ -18,7 +18,7 @@ Accompanying repository for a **Master's thesis at Faculty of Mathematics, Unive
 ### 2. Clone and enter the project
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/killica/DrugDiscovery.git
 cd DrugDiscovery
 ```
 
