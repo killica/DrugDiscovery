@@ -100,8 +100,8 @@ Extract the archive so that `data/models/` contains `ridge_best.joblib`, `lightg
 
 ## 🖼️ Gallery
 
-introafterLaunch
+To be added.
 
 ## 📸 Demo video
 
-[https://github.com/user-attachments/assets/2181ebf9-822a-4bc1-841e-367bea711e4f](https://github.com/user-attachments/assets/2181ebf9-822a-4bc1-841e-367bea711e4f)
+To be added.
