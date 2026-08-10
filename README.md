@@ -81,15 +81,19 @@ Fitness modes **Random Forest**, **LightGBM**, and **Ridge** load pretrained mod
 
 After step 3, the GUI can use all four fitness modes.
 
+Alternatively, these models are also available for download: (`.joblib` format): **[Download pretrained models (OneDrive)](https://1drv.ms/u/c/e8dfa526a80620bb/IQCuOso0IWgoSKAB_rlyJIV-AdUhLmeQ2q7e8UVmD9nhLsA?e=oEitfr)**
+
+Extract the archive so that `data/models/` contains `ridge_best.joblib`, `lightgbm_best.joblib`, and `random_forest_best.joblib`.
+
 ### Quick checklist
 
 
-| Step                    | Command / action                                     |
-| ----------------------- | ---------------------------------------------------- |
-| Virtual env             | `python3 -m venv .venv && source .venv/bin/activate` |
-| Install packages        | `pip install -r requirements.txt`                    |
-| Start app               | `cd geneticAlgorithm && python main.py`              |
-| pIC50 models (optional) | Run notebooks `data/01` → `02` → `03` + restart app  |
+| Step                    | Command / action                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| Virtual env             | `python3 -m venv .venv && source .venv/bin/activate`                                     |
+| Install packages        | `pip install -r requirements.txt`                                                        |
+| Start app               | `cd geneticAlgorithm && python main.py`                                                  |
+| pIC50 models (optional) | - Run notebooks `data/01` → `02` → `03` OR Download from the OneDrive link - Restart app |
 
 
 
