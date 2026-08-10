@@ -1,0 +1,21 @@
+# Third-party packages for DrugDiscovery
+# Install with: pip install -r requirements.txt
+
+# GUI application
+PyQt5
+matplotlib
+selfies
+
+# Cheminformatics
+rdkit
+
+# ML runtime (pIC50 fitness modes)
+numpy
+scipy
+scikit-learn
+joblib
+lightgbm
+
+# Data pipeline notebooks (data/01–03)
+pandas
+tqdm
