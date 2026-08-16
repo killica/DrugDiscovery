@@ -322,7 +322,7 @@ class GAParameters:
             moleculeBoxes.restartButton,
         )
         for button in action_buttons:
-            button.setMinimumWidth(220)
+            button.setMinimumWidth(0)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         actions_card = QGroupBox("Actions")
@@ -332,7 +332,7 @@ class GAParameters:
         actions_layout.setContentsMargins(12, 10, 12, 12)
         actions_layout.setSpacing(8)
         for button in action_buttons:
-            actions_layout.addWidget(button, 0, Qt.AlignTop)
+            actions_layout.addWidget(button)
 
         moleculeBoxes.actionsCard = actions_card
 
