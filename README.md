@@ -106,10 +106,6 @@ Screenshots of the desktop application workflow (PyQt5 GUI).
 
 ![Stage 1: molecule catalogue, initial population, and fitness mode](thesis/slike/app1.png)
 
-### QED component weights
-
-![QED weighted fitness: descriptor weight sliders](thesis/slike/app7.png)
-
 ### Stage 2 — Genetic algorithm parameters
 
 ![Stage 2: GA configuration (generations, selection, crossover, mutation)](thesis/slike/app4.png)
@@ -121,10 +117,6 @@ Screenshots of the desktop application workflow (PyQt5 GUI).
 ### Stage 4 — Evolution report
 
 ![Stage 4: run settings, best molecule, operators, fitness chart, and diversity](thesis/slike/app6.png)
-
-### Selection dialogs
-
-![Random sample and add-by-ChEMBL/SMILES dialogs](thesis/slike/app23.png)
 
 ## 📸 Demo video
 
