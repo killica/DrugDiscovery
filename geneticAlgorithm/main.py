@@ -290,14 +290,15 @@ class Application(QWidget):
 
         # --- Stage 4: evolution statistics report ---
         self.stage4Layout = QVBoxLayout()
-        self.stage4Layout.setContentsMargins(24, 20, 24, 20)
-        self.stage4Layout.setSpacing(16)
+        self.stage4Layout.setContentsMargins(24, 12, 24, 16)
+        self.stage4Layout.setSpacing(10)
 
         self.stage4Title = QLabel("Evolution report")
         self.stage4Title.setStyleSheet(
-            "font-size: 17px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;"
+            "font-size: 16px; font-weight: bold; color: #1b5e20; margin: 0; padding: 0;"
         )
-        self.stage4Layout.addWidget(self.stage4Title)
+        self.stage4Title.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.stage4Layout.addWidget(self.stage4Title, 0, Qt.AlignLeft)
 
         self.statsChart = EvolutionStatsChart()
         self.stage4Layout.addWidget(self.statsChart, 1)

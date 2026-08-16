@@ -5,6 +5,8 @@ import statistics
 from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
 
+from fitness import FITNESS_MODE_QED, format_qed_weights_compact, mode_label
+
 
 def plot_fitness_over_generations(ax, generations, best_fitness, average_fitness):
     ax.plot(
@@ -61,20 +63,41 @@ def _selection_label(config):
     return f"Tournament (size {config.get('tournament_size')})"
 
 
+def _fitness_function_label(config):
+    label = config.get("fitness_mode_label")
+    if label:
+        return str(label)
+    mode = config.get("fitness_mode")
+    if mode is not None:
+        try:
+            return mode_label(mode)
+        except ValueError:
+            pass
+    return "n/a"
+
+
 def run_config_table_rows(config, initial_population_size=None):
     if not config:
         return []
 
     rows = [
+        ("Fitness function", _fitness_function_label(config)),
+    ]
+
+    fitness_mode = config.get("fitness_mode")
+    if fitness_mode == FITNESS_MODE_QED and config.get("qed_weights"):
+        rows.append(("QED weights", format_qed_weights_compact(config.get("qed_weights"))))
+
+    rows.extend([
         ("Planned generations", str(config.get("generations", "n/a"))),
         ("Selection", _selection_label(config)),
         ("Elitism", str(config.get("elitism_size", "n/a"))),
         ("Mutation probability", str(config.get("mutation_probability", "n/a"))),
         ("Crossover mode", str(config.get("crossover_mode", "n/a"))),
         ("Mutation mode", str(config.get("mutation_mode", "n/a"))),
-    ]
+    ])
     if initial_population_size is not None:
-        rows.insert(4, ("Initial population", str(initial_population_size)))
+        rows.insert(len(rows) - 2, ("Initial population", str(initial_population_size)))
     return rows
 
 

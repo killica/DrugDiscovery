@@ -78,6 +78,15 @@ STATS_TABLE_QSS = """
     }
 """
 
+TABLE_ALIGN_CELL = Qt.AlignCenter
+
+
+def _apply_stats_table_header_alignment(table):
+    for col in range(table.columnCount()):
+        header_item = table.horizontalHeaderItem(col)
+        if header_item is not None:
+            header_item.setTextAlignment(TABLE_ALIGN_CELL)
+
 
 def _apply_card_shadow(widget):
     shadow = QGraphicsDropShadowEffect(widget)
@@ -240,14 +249,17 @@ class EvolutionStatsChart(QWidget):
     def _make_stats_table(self):
         table = QTableWidget(0, 2)
         table.setHorizontalHeaderLabels(["Parameter", "Value"])
+        _apply_stats_table_header_alignment(table)
         table.horizontalHeader().setStretchLastSection(True)
-        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         table.verticalHeader().setVisible(False)
         table.setShowGrid(True)
         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table.setSelectionMode(QAbstractItemView.NoSelection)
         table.setFocusPolicy(Qt.NoFocus)
         table.setStyleSheet(STATS_TABLE_QSS)
+        table.setWordWrap(True)
         table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -266,7 +278,8 @@ class EvolutionStatsChart(QWidget):
         card_layout.setAlignment(Qt.AlignTop)
 
         table = self._make_stats_table()
-        card_layout.addWidget(table, 0, Qt.AlignLeft)
+        table.setMinimumWidth(0)
+        card_layout.addWidget(table)
         return card, table
 
     def _populate_stats_table(self, table, rows, empty_message=None):
@@ -276,10 +289,12 @@ class EvolutionStatsChart(QWidget):
         if not rows:
             table.setColumnCount(2)
             table.setHorizontalHeaderLabels(["Parameter", "Value"])
+            _apply_stats_table_header_alignment(table)
             if empty_message:
                 table.setRowCount(1)
                 message_item = QTableWidgetItem(empty_message)
                 message_item.setFlags(Qt.ItemIsEnabled)
+                message_item.setTextAlignment(TABLE_ALIGN_CELL)
                 table.setItem(0, 0, message_item)
                 table.setSpan(0, 0, 1, 2)
                 table.resizeRowsToContents()
@@ -291,8 +306,10 @@ class EvolutionStatsChart(QWidget):
 
         table.setColumnCount(2)
         table.setHorizontalHeaderLabels(["Parameter", "Value"])
+        _apply_stats_table_header_alignment(table)
         table.horizontalHeader().setStretchLastSection(True)
-        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
         section_font = QFont()
         section_font.setBold(True)
@@ -307,20 +324,21 @@ class EvolutionStatsChart(QWidget):
                 section_item.setFont(section_font)
                 section_item.setBackground(QColor("#e8f5e9"))
                 section_item.setForeground(QColor("#1b5e20"))
+                section_item.setTextAlignment(TABLE_ALIGN_CELL)
                 table.setItem(row, 0, section_item)
                 table.setSpan(row, 0, 1, 2)
                 continue
 
             key_item = QTableWidgetItem(str(label))
             key_item.setFlags(Qt.ItemIsEnabled)
+            key_item.setTextAlignment(TABLE_ALIGN_CELL)
             value_item = QTableWidgetItem(str(value))
             value_item.setFlags(Qt.ItemIsEnabled)
-            value_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            value_item.setTextAlignment(TABLE_ALIGN_CELL)
             table.setItem(row, 0, key_item)
             table.setItem(row, 1, value_item)
 
         table.resizeRowsToContents()
-        table.resizeColumnToContents(0)
         total_height = table.horizontalHeader().height() + sum(
             table.rowHeight(row_index) for row_index in range(table.rowCount())
         ) + 6

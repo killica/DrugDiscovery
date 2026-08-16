@@ -20,7 +20,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 import geneticAlgorithm
 from GAConfig import CrossoverMode, MutationMode
-from fitness import mode_label
+from fitness import FITNESS_MODE_QED, mode_label
 
 EVOLUTION_PANEL_QSS = """
     QGroupBox#evolutionPanel {
@@ -433,8 +433,7 @@ class GAParameters:
         geneticAlgorithm.reset_mutation_stats()
         cfg = self.application.gaConfig
         fitness_mode = self.application.get_fitness_mode_id()
-        self.application.evolution_statistics.begin_run(
-            {
+        run_config = {
                 "generations": cfg.generations,
                 "tournament_size": cfg.tournamentSize,
                 "elitism_size": cfg.elitismSize,
@@ -445,7 +444,9 @@ class GAParameters:
                 "fitness_mode": fitness_mode,
                 "fitness_mode_label": mode_label(fitness_mode),
             }
-        )
+        if fitness_mode == FITNESS_MODE_QED:
+            run_config["qed_weights"] = list(self.application.getSliderValues())
+        self.application.evolution_statistics.begin_run(run_config)
         try:
             moleculeBoxes.newGenerationMolecules = geneticAlgorithm.geneticAlgorithm(
                 moleculeBoxes.selectedMolecules,

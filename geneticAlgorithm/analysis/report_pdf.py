@@ -44,7 +44,7 @@ def _draw_parameter_table(ax, title, rows):
     table.set_fontsize(8)
     table.scale(1.0, 1.15)
 
-    for row_index, (label, _value) in enumerate(rows):
+    for row_index, (label, value) in enumerate(rows):
         table_row = row_index + 1
         if label == "__section__":
             for col in (0, 1):
@@ -52,6 +52,13 @@ def _draw_parameter_table(ax, title, rows):
                 cell.set_facecolor("#e8f5e9")
                 cell.get_text().set_fontweight("bold")
                 cell.get_text().set_color("#1b5e20")
+            continue
+
+        line_count = str(value).count("\n") + 1
+        if line_count > 1:
+            for col in (0, 1):
+                cell = table[(table_row, col)]
+                cell.set_height(cell.get_height() * line_count)
 
 
 def _draw_best_molecule_panel(ax, best_molecule, image_size=250):

@@ -18,11 +18,13 @@ MODE_TO_MODEL_FAMILY = {
 }
 
 MODE_LABELS = {
-    FITNESS_MODE_QED: "QED",
+    FITNESS_MODE_QED: "QED (weighted)",
     FITNESS_MODE_RANDOM_FOREST: "Random Forest (pIC50)",
     FITNESS_MODE_LIGHTGBM: "LightGBM (pIC50)",
     FITNESS_MODE_RIDGE: "Ridge (pIC50)",
 }
+
+QED_DESCRIPTOR_NAMES = ("MW", "ALOGP", "HBA", "HBD", "PSA", "ROTB", "AROM", "ALERTS")
 
 INVALID_FITNESS = 0.0
 
@@ -44,6 +46,16 @@ def mode_label(mode: int) -> str:
         return MODE_LABELS[mode]
     except KeyError as exc:
         raise ValueError(f"Unknown fitness mode: {mode}") from exc
+
+
+def format_qed_weights_compact(weights) -> str:
+    """QED component weights for report tables (one descriptor per line)."""
+    if not weights or len(weights) != len(QED_DESCRIPTOR_NAMES):
+        return "n/a"
+    return "\n".join(
+        f"{name} {float(value):.2f}"
+        for name, value in zip(QED_DESCRIPTOR_NAMES, weights)
+    )
 
 
 def get_potency_predictor(mode: int) -> PotencyPredictor:
