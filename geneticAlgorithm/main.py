@@ -36,8 +36,10 @@ STAGE1_MIN_SIZE = (1180, 920)
 FITNESS_PANEL_MIN_HEIGHT = 480
 FITNESS_SCROLL_MIN_HEIGHT = 485
 FITNESS_SCROLL_MAX_HEIGHT = 900
-STAGE2_GA_WINDOW_SIZE = (560, 520)
-STAGE2_MIN_SIZE = (520, 480)
+STAGE2_GA_WINDOW_SIZE = (560, 400)
+STAGE2_MIN_SIZE = (520, 360)
+STAGE2_BUTTON_WIDTH = 320
+STAGE2_BACKGROUND = "#e8f5e9"
 STAGE3_WINDOW_SIZE = (1240, 900)
 STAGE4_WINDOW_SIZE = (1240, 900)
 
@@ -205,18 +207,19 @@ class Application(QWidget):
 
         # --- Stage 2: GA parameters + navigation ---
         self.stage2GaLayout = QVBoxLayout()
-        self.stage2GaLayout.setSpacing(20)
-        self.stage2GaLayout.setContentsMargins(24, 20, 24, 20)
+        self.stage2GaLayout.setSpacing(12)
+        self.stage2GaLayout.setContentsMargins(24, 16, 24, 16)
 
         self.stage2GaTitle = QLabel("Parameters for genetic algorithm")
         self.stage2GaTitle.setStyleSheet(
-            "font-size: 17px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;"
+            "font-size: 17px; font-weight: bold; color: #1b5e20; margin-bottom: 2px;"
         )
-        self.stage2GaLayout.addWidget(self.stage2GaTitle)
+        self.stage2GaLayout.addWidget(self.stage2GaTitle, 0, Qt.AlignHCenter)
 
-        self.stage2GaLayout.addWidget(self.gaParameters.getGAParametersWidget())
+        self.stage2GaLayout.addWidget(self.gaParameters.getGAParametersWidget(), 0, Qt.AlignLeft)
 
         self.backToStage1Button = QPushButton("← Back to catalogue and fitness")
+        self.backToStage1Button.setFixedWidth(STAGE2_BUTTON_WIDTH)
         self.backToStage1Button.setStyleSheet(
             """
             QPushButton {
@@ -224,7 +227,7 @@ class Application(QWidget):
                 color: white;
                 border: none;
                 border-radius: 6px;
-                padding: 10px 14px;
+                padding: 8px 14px;
                 font-size: 13px;
                 font-weight: bold;
             }
@@ -232,14 +235,23 @@ class Application(QWidget):
             """
         )
         self.backToStage1Button.clicked.connect(self.on_back_to_stage_1)
-        self.stage2GaLayout.addWidget(self.backToStage1Button, 0, Qt.AlignLeft)
-        self.stage2GaLayout.addStretch(1)
+
+        self.gaParameters.launchButton.setFixedWidth(STAGE2_BUTTON_WIDTH)
+
+        stage2_buttons = QVBoxLayout()
+        stage2_buttons.setSpacing(10)
+        stage2_buttons.setAlignment(Qt.AlignHCenter)
+        stage2_buttons.addWidget(self.gaParameters.launchButton, 0, Qt.AlignHCenter)
+        stage2_buttons.addWidget(self.backToStage1Button, 0, Qt.AlignHCenter)
+        self.stage2GaLayout.addLayout(stage2_buttons)
 
         self.stage2GaPage = QWidget()
         self.stage2GaPage.setLayout(self.stage2GaLayout)
         self.stage2GaPage.setMinimumSize(*STAGE2_MIN_SIZE)
         self.stage2GaPage.setMaximumWidth(620)
         self.stage2GaPage.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.stage2GaPage.setAutoFillBackground(True)
+        self.stage2GaPage.setStyleSheet(f"background-color: {STAGE2_BACKGROUND};")
 
         self.evolutionRowLayout = QHBoxLayout()
         self.evolutionRowLayout.setSpacing(16)
@@ -417,12 +429,19 @@ class Application(QWidget):
         self.moleculeBoxes.place_precedent_in_evolution_row()
         self._show_stage_2()
 
+    def _set_window_background(self, color: str):
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(color))
+        self.setPalette(palette)
+
     def _show_stage_2(self):
         self.setMinimumSize(*STAGE2_MIN_SIZE)
         self.stack.setCurrentIndex(1)
         self.resize(*STAGE2_GA_WINDOW_SIZE)
+        self._set_window_background(STAGE2_BACKGROUND)
 
     def show_stage_3(self):
+        self._set_window_background("#ffffff")
         self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(2)
         self.resize(*STAGE3_WINDOW_SIZE)
@@ -440,6 +459,7 @@ class Application(QWidget):
         }
 
     def show_stage_4(self):
+        self._set_window_background("#ffffff")
         self.statsChart.update_from_statistics(
             self.evolution_statistics,
             best_molecule=self._current_best_molecule(),
@@ -500,6 +520,7 @@ class Application(QWidget):
         self.show_stage_1()
 
     def show_stage_1(self):
+        self._set_window_background("#ffffff")
         self.moleculeBoxes.place_precedent_in_catalogue_column()
         self.setMinimumSize(*STAGE1_MIN_SIZE)
         self.stack.setCurrentIndex(0)

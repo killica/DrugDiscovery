@@ -122,7 +122,7 @@ class GAParameters:
     def __init__(self, application):
         self.application = application
         self.paramsLayout = QVBoxLayout()
-        self.paramsLayout.setSpacing(12)
+        self.paramsLayout.setSpacing(8)
         self.paramsLayout.setContentsMargins(0, 0, 0, 0)
 
         self.numGenLabel = QLabel("Number of generations:", application)
@@ -167,7 +167,7 @@ class GAParameters:
             self.crossoverLabel,
             self.mutationLabel,
         ):
-            label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         self.tournamentSpin = QSpinBox(application)
         self.tournamentSpin.setMaximum(100)
@@ -191,9 +191,9 @@ class GAParameters:
         tournament_row.addStretch(1)
 
         self.formLayout = QFormLayout()
-        self.formLayout.setSpacing(10)
+        self.formLayout.setSpacing(6)
         self.formLayout.setContentsMargins(0, 0, 0, 0)
-        self.formLayout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.formLayout.setLabelAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.formLayout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.formLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         self.formLayout.setRowWrapPolicy(QFormLayout.DontWrapRows)
@@ -251,15 +251,14 @@ class GAParameters:
         self.paramsLayout.addLayout(self.formLayout)
 
         self.launchButton = QPushButton("Launch search!", application)
-        self.launchButton.setFixedWidth(200)
         self.launchButton.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
                 color: white;
                 border: none;
                 border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
+                padding: 8px;
+                font-size: 15px;
                 font-weight: bold;
             }
             QPushButton:hover {
@@ -267,12 +266,6 @@ class GAParameters:
             }
         """)
         self.launchButton.clicked.connect(self.onLaunchButtonClicked)
-
-        launch_row = QHBoxLayout()
-        launch_row.setContentsMargins(0, 8, 0, 0)
-        launch_row.addWidget(self.launchButton, 0, Qt.AlignLeft)
-        launch_row.addStretch(1)
-        self.paramsLayout.addLayout(launch_row)
 
         self.container = QWidget()
         self.container.setLayout(self.paramsLayout)
@@ -350,8 +343,8 @@ class GAParameters:
                 color: white;
                 border: none;
                 border-radius: 5px;
-                padding: 10px;
-                font-size: 16px;
+                padding: 8px;
+                font-size: 15px;
                 font-weight: bold;
             }
         """)
