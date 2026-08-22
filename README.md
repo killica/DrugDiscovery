@@ -4,7 +4,7 @@ An interactive tool for **in silico** exploration of drug-like molecules. Instea
 
 Accompanying repository for a **Master's thesis at Faculty of Mathematics, University of Belgrade** on applying computational intelligence to computer-aided drug discovery.
 
-**Thesis:** [thesis.pdf](thesis/build/thesis.pdf)
+**Thesis:** [thesis.pdf](thesis.pdf)
 
 ## 🔧 Setup
 
