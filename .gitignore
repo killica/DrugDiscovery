@@ -175,9 +175,4 @@ test.py
 .DS_Store
 
 build/
-!thesis/
-
-thesis/**
-!thesis/build/
-thesis/build/**
-!thesis/build/thesis.pdf
+thesis/
