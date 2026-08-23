@@ -1,1 +1,18 @@
-[]
+[
+    {
+        "SMILES": "COC",
+        "Description": "Dimethyl ether"
+    },
+    {
+        "SMILES": "COC",
+        "Description": "Dimethylether"
+    },
+    {
+        "SMILES": "CCO",
+        "Description": "Ethanol"
+    },
+    {
+        "SMILES": "CCCO",
+        "Description": "Propanol"
+    }
+]
