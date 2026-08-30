@@ -39,7 +39,7 @@ Bioactivity data for **EGFR** (`CHEMBL203`) from [ChEMBL](https://www.ebi.ac.uk/
 
 ## How to run
 
-Run the notebooks **in order** from the `**data/` directory** (`01 → 02 → 03`). Paths in the notebooks are relative to `data/` (e.g. `molecules.csv`, `processed/`, `models/`).
+Run the notebooks **in order** from the `data/` directory (`01 → 02 → 03`). Paths in the notebooks are relative to `data/` (e.g. `molecules.csv`, `processed/`, `models/`).
 
 ## Environment setup
 
