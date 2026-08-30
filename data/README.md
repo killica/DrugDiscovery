@@ -25,12 +25,14 @@ We **predict pIC50 from molecular structure** (regression on Morgan fingerprints
 ```
 data/
 ├── README.md
-├── molecules.csv             ← raw ChEMBL export
-├── 01_preprocessing.ipynb    ← data analysis, cleaning, aggregation
-├── 02_fingerprints.ipynb     ← Morgan fingerprint generation
-├── 03_models.ipynb           ← training, evaluation, model saving
-├── processed/                ← intermediate artifacts (X, y, split, config)
-└── models/                   ← trained models, metrics, tuning logs
+├── Masinsko ucenje prezentacija.pdf   ← course presentation
+├── molecules.csv                      ← raw ChEMBL export
+├── 01_preprocessing.ipynb             ← data analysis, cleaning, aggregation
+├── 02_fingerprints.ipynb              ← Morgan fingerprint generation
+├── 03_models.ipynb                    ← training, evaluation, model saving
+├── assets/                            ← figures referenced in notebooks
+├── processed/                         ← intermediate pipeline artifacts
+└── models/                            ← trained models, metrics, tuning logs
 ```
 
 ## Dataset
