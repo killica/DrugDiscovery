@@ -18,14 +18,14 @@ Part of the wider [DrugDiscovery](../README.md) repository (Master's thesis + ge
 pIC50 = -log₁₀(IC50 in M) = 9 - log₁₀(IC50_nM)
 ```
 
-We **predict pIC50 from molecular structure** (regression on Morgan fingerprints, explained in `[02_fingerprints.ipynb](./02_fingerprints.ipynb)`). Higher pIC50 means lower IC50 and thus **greater potency**.
+We **predict pIC50 from molecular structure** (regression on Morgan fingerprints, explained in [02_fingerprints.ipynb](./02_fingerprints.ipynb)). Higher pIC50 means lower IC50 and thus **greater potency**.
 
 ## Directory structure
 
 ```
 data/
 ├── README.md
-├── Masinsko ucenje prezentacija.pdf   ← course presentation
+├── Masinsko ucenje prezentacija.pdf   ← project presentation
 ├── molecules.csv                      ← raw ChEMBL export
 ├── 01_preprocessing.ipynb             ← data analysis, cleaning, aggregation
 ├── 02_fingerprints.ipynb              ← Morgan fingerprint generation
@@ -37,7 +37,7 @@ data/
 
 ## Dataset
 
-Bioactivity data for **EGFR** (`CHEMBL203`) from [ChEMBL](https://www.ebi.ac.uk/chembl/), stored in `molecules.csv`. Full exploratory analysis and cleaning are in `[01_preprocessing.ipynb](./01_preprocessing.ipynb)`.
+Bioactivity data for **EGFR** (`CHEMBL203`) from [ChEMBL](https://www.ebi.ac.uk/chembl/), stored in `molecules.csv`. Full exploratory analysis and cleaning are in [01_preprocessing.ipynb](./01_preprocessing.ipynb).
 
 ## How to run
 
@@ -58,7 +58,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Dependencies are listed in `[requirements.txt](../requirements.txt)` at the repo root. The ML pipeline uses: `numpy`, `pandas`, `scipy`, `scikit-learn`, `lightgbm`, `joblib`, `rdkit`, `matplotlib`, `tqdm` (PyQt5/selfies in that file are for the GUI app, not the notebooks).
+Dependencies are listed in [requirements.txt](../requirements.txt) at the repo root. The ML pipeline uses: `numpy`, `pandas`, `scipy`, `scikit-learn`, `lightgbm`, `joblib`, `rdkit`, `matplotlib`, `tqdm` (PyQt5/selfies in that file are for the GUI app, not the notebooks).
 
 ## Trained models
 
@@ -70,5 +70,5 @@ Best models `.joblib` files are not posted here due to their size. Generate them
 2. **Akinnusi, O. T., et al.** — EGFR activity prediction (ECFP + descriptors, Extra Trees, **scaffold split**). [Journal of Computer-Aided Molecular Design](https://link.springer.com/article/10.1007/s10822-026-00853-y)
 3. **ChEMBL** — bioactive compound database. [https://www.ebi.ac.uk/chembl/](https://www.ebi.ac.uk/chembl/)
 4. **RDKit** — cheminformatics and fingerprint generation. [https://www.rdkit.org/](https://www.rdkit.org/)
-5. **Bemis, G. W.; Murcko, M. A.** — Murcko scaffold definition (used for splitting). *J. Med. Chem.* 1996.
+5. **Bemis, G. W.; Murcko, M. A.** — Murcko scaffold definition (used for splitting). *J. Med. Chem.* 1996. [https://pubmed.ncbi.nlm.nih.gov/8709122/](https://pubmed.ncbi.nlm.nih.gov/8709122/)
 
